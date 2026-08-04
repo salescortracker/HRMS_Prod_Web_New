@@ -45,7 +45,7 @@ onEdit(row: any) {
       candidateId: row.candidateId,
       interviewId: row.interviewId,
 
-      levelNo: row.levelNo,   // ⭐ VERY IMPORTANT
+      levelNo: res.levelNo,   // ⭐ VERY IMPORTANT
 
       interviewDate: row.interviewDate,
       location: row.location,

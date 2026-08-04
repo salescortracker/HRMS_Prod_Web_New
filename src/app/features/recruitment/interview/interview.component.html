@@ -155,13 +155,16 @@
   </label>
 
   <!-- Click Box -->
-  <div class="form-control" (click)="showDropdown = !showDropdown" style="cursor:pointer;">
-    Select Interviewers
+  <div class="form-control" (click)="toggleDropdown($event)" style="cursor:pointer;">
+    {{ selectedInterviewerNames.length > 0 
+      ? selectedInterviewerNames.join(', ') 
+      : 'Select Interviewers' }}
   </div>
 
   <!-- Dropdown -->
   <div *ngIf="showDropdown"
        class="border p-2 position-absolute w-100 bg-white"
+       (click)="$event.stopPropagation()"
        style="max-height:150px; overflow-y:auto; z-index:100;">
 
     <div *ngFor="let r of interviewer">

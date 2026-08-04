@@ -107,6 +107,7 @@ import { ApplicationResumesComponent } from './features/recruitment/application-
 import { SuperAdminMenumasterComponent } from './superAdmin/super-admin-menumaster/super-admin-menumaster.component';
 import { SuperAdminRolesPermissionsComponent } from './superAdmin/super-admin-roles-permissions/super-admin-roles-permissions.component';
 import { EmployeeAllDetailsComponent } from './features/employee-profile/employee-all-details/employee-all-details.component';
+import { CandidateDocumentsComponent } from './features/recruitment/candidate-documents/candidate-documents.component';
 const routes: Routes = [
   { path: '', component: LoginComponent },
    { path: 'forgot-password', component: ForgotPasswordComponent },
@@ -249,8 +250,8 @@ const routes: Routes = [
 { path: 'wfh-remote-request', component: WfoRemoteRequestComponent },
 { path: 'missed-punch-request', component: MissedPunchRequestComponent },
 { path: 'early-logout-request', component: EarlyLogoutRequestComponent },
- { path: 'offer-documents/:companyId/:branchId/:employeeId/:offerId',
-    component: OfferComponent
+ { path: 'offer-documents/:offerId/:candidateId/:companyId/:regionId',
+    component: CandidateDocumentsComponent
   },
 // { path: 'leave-management', component: LeaveManagementComponent },
 {
