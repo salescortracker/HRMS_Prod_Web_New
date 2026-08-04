@@ -563,7 +563,7 @@
         <!-- Actions -->
         <td>
           <button class="btn btn-sm btn-outline-success me-1" (click)="advanceStage(c)"
-            [disabled]="['Screening','Interview','Appointment','Offer','Onboarding','Selected','Rejected'].includes(c.stageName)">
+            [disabled]="c.stageId !== 1">
             Shortlist
           </button>
          

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import Swal from 'sweetalert2';
 import { RecruitmentService } from '../service/recruitment.service';
 @Component({
@@ -17,6 +17,7 @@ export class InterviewComponent {
   interviewer: any[] = [];
   candidates: any[] = [];
 showDropdown = false;
+selectedInterviewerNames: string[] = [];
 
   tabs = ['Resume Upload', 'Screening', 'Interview', 'Appointment', 'Offer', 'Onboarding', 'Application Resumes'];
   totalStages = this.tabs.length;
@@ -93,9 +94,14 @@ interviewForm: any = {
 onInterviewerChange(user: any, event: any) {
   if (event.target.checked) {
     this.interviewForm.interviewerIds.push(user.userId);
+    this.selectedInterviewerNames.push(user.fullName);
   } else {
     this.interviewForm.interviewerIds =
       this.interviewForm.interviewerIds.filter((id: number) => id !== user.userId);
+      this.selectedInterviewerNames =
+      this.selectedInterviewerNames.filter(
+        name => name !== user.fullName
+      );
   }
 }
 
@@ -283,6 +289,7 @@ loadDesignations() {
      this.interviewForm.hrEmail = '';
     this.interviewForm.result = 'Pending';
     this.showDropdown = false;
+    this.selectedInterviewerNames = [];
   }
   isSelected(candidate: any): boolean {
     return this.screeningSelectedCandidates.includes(candidate);
@@ -306,6 +313,10 @@ loadDesignations() {
     this.interviewForm.interviewerIds = this.interviewer
     .filter(x => row.interviewerName.split(', ').includes(x.fullName))
     .map(x => x.userId);
+    this.selectedInterviewerNames =
+  this.interviewer
+  .filter(x => this.interviewForm.interviewerIds.includes(x.userId))
+  .map(x => x.fullName);
     this.interviewForm.dt = this.toDateTimeLocal(row.interviewDate);
     this.interviewForm.location = row.location;
     this.interviewForm.meetingLink = row.meetingLink;
@@ -507,9 +518,17 @@ loadDesignations() {
     this.editingCandidateId = null;
     this.resetForm(); // reuse your existing method
   }
+@HostListener('document:click', ['$event'])
+closeDropdown(event: MouseEvent) {
+  const target = event.target as HTMLElement;
 
+  if (!target.closest('.position-relative')) {
+    this.showDropdown = false;
+  }
+}
 
-  toggleDropdown() {
+  toggleDropdown(event: MouseEvent) {
+    event.stopPropagation();
   this.showDropdown = !this.showDropdown;
 }
 canAddInterview = false;
