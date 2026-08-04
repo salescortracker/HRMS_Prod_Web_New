@@ -1,0 +1,28 @@
+.grade-management .form-label {
+  font-weight: 500;
+}
+
+.grade-management table th,
+.grade-management table td {
+  vertical-align: middle;
+}
+
+.grade-management .card {
+  border: none;
+}
+
+.grade-management .table-hover tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.grade-management .btn-dark {
+  min-width: 160px;
+}
+
+.grade-management .btn-danger {
+  min-width: 160px;
+}
+
+.text-danger {
+  font-size: 12px;
+}

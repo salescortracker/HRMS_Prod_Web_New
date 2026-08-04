@@ -1,0 +1,449 @@
+<div class="container-fluid p-4 break-policy-container">
+
+  <h4 class="fw-semibold mb-3">
+    <i class="fa-solid fa-mug-hot me-2 text-danger"></i>
+    Break Policy Management
+  </h4>
+
+  <!-- Add Button -->
+  <button class="btn btn-dark mb-3"
+          (click)="openForm()">
+    + Add Break Policy
+  </button>
+
+  <!-- Form -->
+  <div class="card shadow-sm mb-4" *ngIf="showForm">
+
+    <div class="card-body">
+
+      <form #breakPolicyForm="ngForm"
+            (ngSubmit)="save()"
+            novalidate>
+
+        <div class="row g-3">
+
+          <!-- Company -->
+
+          <div class="col-md-6">
+
+            <label class="form-label fw-semibold">
+              Company <span class="text-danger">*</span>
+            </label>
+
+            <select class="form-select"
+                    name="companyId"
+                    [(ngModel)]="breakPolicy.companyId"
+                    (change)="onCompanyChange()"
+                    required>
+
+              <option [ngValue]="0">Select Company</option>
+
+              <option *ngFor="let c of companies"
+                      [ngValue]="c.companyId">
+
+                {{c.companyName}}
+
+              </option>
+
+            </select>
+
+          </div>
+
+          <!-- Region -->
+
+          <div class="col-md-6">
+
+            <label class="form-label fw-semibold">
+              Region <span class="text-danger">*</span>
+            </label>
+
+            <select class="form-select"
+                    name="regionId"
+                    [(ngModel)]="breakPolicy.regionId"
+                    required>
+
+              <option [ngValue]="0">Select Region</option>
+
+              <option *ngFor="let r of filteredRegions"
+                      [ngValue]="r.regionID">
+
+                {{r.regionName}}
+
+              </option>
+
+            </select>
+
+          </div>
+
+          <!-- Policy Code -->
+
+          <div class="col-md-4">
+
+            <label class="form-label fw-semibold">
+              Policy Code
+            </label>
+
+            <input type="text"
+                   class="form-control"
+                   name="policyCode"
+                   [(ngModel)]="breakPolicy.policyCode"
+                   required>
+
+          </div>
+
+          <!-- Policy Name -->
+
+          <div class="col-md-4">
+
+            <label class="form-label fw-semibold">
+              Policy Name
+            </label>
+
+            <input type="text"
+                   class="form-control"
+                   name="policyName"
+                   [(ngModel)]="breakPolicy.policyName"
+                   required>
+
+          </div>
+
+          <!-- Break Type -->
+
+          <div class="col-md-4">
+
+            <label class="form-label fw-semibold">
+              Break Type
+            </label>
+
+            <select class="form-select"
+                    name="breakType"
+                    [(ngModel)]="breakPolicy.breakType">
+
+              <option value="">Select</option>
+              <option value="Paid">Paid</option>
+              <option value="Unpaid">Unpaid</option>
+
+            </select>
+
+          </div>
+<!-- Break From Time -->
+<div class="col-md-3">
+
+  <label class="form-label fw-semibold">
+    Break From Time
+  </label>
+
+  <input
+    type="time"
+    class="form-control"
+    name="breakFromTime"
+    [(ngModel)]="breakPolicy.breakFromTime">
+
+</div>
+
+<!-- Break To Time -->
+<div class="col-md-3">
+
+  <label class="form-label fw-semibold">
+    Break To Time
+  </label>
+
+  <input
+    type="time"
+    class="form-control"
+    name="breakToTime"
+    [(ngModel)]="breakPolicy.breakToTime">
+
+</div>
+
+          <!-- Duration -->
+
+          <div class="col-md-4">
+
+            <label class="form-label fw-semibold">
+              Duration (Minutes)
+            </label>
+
+            <input type="number"
+                   class="form-control"
+                   name="durationMinutes"
+                   [(ngModel)]="breakPolicy.durationMinutes">
+
+          </div>
+
+          <!-- Max Break -->
+
+          <div class="col-md-4">
+
+            <label class="form-label fw-semibold">
+              Max Breaks / Day
+            </label>
+
+            <input type="number"
+                   class="form-control"
+                   name="maxBreaksPerDay"
+                   [(ngModel)]="breakPolicy.maxBreaksPerDay">
+
+          </div>
+
+          <!-- Grace -->
+
+          <div class="col-md-4">
+
+            <label class="form-label fw-semibold">
+              Grace Minutes
+            </label>
+
+            <input type="number"
+                   class="form-control"
+                   name="graceMinutes"
+                   [(ngModel)]="breakPolicy.graceMinutes">
+
+          </div>
+
+          <!-- Shift -->
+
+          <div class="col-md-4">
+
+            <label class="form-label fw-semibold">
+              Shift
+            </label>
+
+            <select class="form-select"
+                    name="shiftId"
+                    [(ngModel)]="breakPolicy.shiftId">
+
+              <option [ngValue]="0">Select Shift</option>
+
+              <option *ngFor="let s of shifts"
+                      [ngValue]="s.shiftID">
+
+                {{s.shiftName}}
+
+              </option>
+
+            </select>
+
+          </div>
+
+          <!-- Status -->
+
+          <div class="col-md-2 d-flex align-items-center">
+
+            <div class="form-check form-switch mt-3">
+
+              <input class="form-check-input"
+                     type="checkbox"
+                     name="isActive"
+                     [(ngModel)]="breakPolicy.isActive">
+
+              <label class="form-check-label ms-2">
+
+                {{breakPolicy.isActive ? 'Active' : 'Inactive'}}
+
+              </label>
+
+            </div>
+
+          </div>
+
+          <!-- Save -->
+
+          <div class="col-md-2 d-flex align-items-end">
+
+            <button class="btn btn-dark w-100"
+                    type="submit"
+                    [disabled]="!breakPolicyForm.valid">
+
+              {{isEditMode ? 'Update Policy' : 'Save Policy'}}
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+  <!-- List -->
+
+  <div class="card shadow-sm">
+
+    <div class="card-body">
+
+      <!-- Filters -->
+
+      <div class="row g-3 mb-3">
+
+        <div class="col-md-4">
+
+          <input type="text"
+                 class="form-control"
+                 placeholder="Search Policy..."
+                 [(ngModel)]="searchText">
+
+        </div>
+
+        <div class="col-md-4">
+
+          <select class="form-select"
+                  [(ngModel)]="statusFilter">
+
+            <option value="">All Status</option>
+            <option [ngValue]="true">Active</option>
+            <option [ngValue]="false">Inactive</option>
+
+          </select>
+
+        </div>
+
+      </div>
+
+      <div class="table-responsive">
+
+        <table class="table table-bordered table-hover align-middle">
+
+          <thead class="table-light">
+
+            <tr>
+
+              <th>#</th>
+              <th>Company</th>
+              <th>Region</th>
+              <th>Policy Code</th>
+              <th>Policy Name</th>
+              <th>Break Type</th>
+              <th>Duration</th>
+              <th>Max Breaks</th>
+              <th>Grace</th>
+              <th>Shift</th>
+              <th>Status</th>
+              <th class="text-center">Action</th>
+
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            <tr *ngFor="let item of pagedBreakPolicies; let i=index">
+
+              <td>{{(currentPage-1)*pageSize+i+1}}</td>
+
+              <td>{{item.companyName}}</td>
+
+              <td>{{item.regionName}}</td>
+
+              <td>{{item.policyCode}}</td>
+
+              <td>{{item.policyName}}</td>
+
+              <td>{{item.breakType}}</td>
+
+              <td>{{item.durationMinutes}}</td>
+
+              <td>{{item.maxBreaksPerDay}}</td>
+
+              <td>{{item.graceMinutes}}</td>
+
+              <td>{{item.shiftName}}</td>
+
+              <td>
+
+                <span class="badge"
+                      [ngClass]="item.isActive ? 'bg-success':'bg-secondary'">
+
+                  {{item.isActive ? 'Active':'Inactive'}}
+
+                </span>
+
+              </td>
+
+              <td class="text-center">
+
+                <button class="btn btn-outline-primary btn-sm me-2"
+                        (click)="edit(item)">
+
+                  <i class="fa-solid fa-pen"></i>
+
+                </button>
+
+                <button class="btn btn-outline-danger btn-sm"
+                        (click)="delete(item.breakPolicyId)">
+
+                  <i class="fa-solid fa-trash"></i>
+
+                </button>
+
+              </td>
+
+            </tr>
+
+            <tr *ngIf="pagedBreakPolicies.length==0">
+
+              <td colspan="12"
+                  class="text-center text-muted">
+
+                No Records Found
+
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+      <!-- Pagination -->
+
+      <nav *ngIf="totalPages>1"
+           class="d-flex justify-content-end mt-3">
+
+        <ul class="pagination pagination-sm">
+
+          <li class="page-item"
+              [class.disabled]="currentPage==1">
+
+            <a class="page-link"
+               (click)="goToPage(currentPage-1)">
+              Previous
+            </a>
+
+          </li>
+
+          <li class="page-item"
+              *ngFor="let p of [].constructor(totalPages); let i=index"
+              [class.active]="currentPage==i+1">
+
+            <a class="page-link"
+               (click)="goToPage(i+1)">
+              {{i+1}}
+            </a>
+
+          </li>
+
+          <li class="page-item"
+              [class.disabled]="currentPage==totalPages">
+
+            <a class="page-link"
+               (click)="goToPage(currentPage+1)">
+              Next
+            </a>
+
+          </li>
+
+        </ul>
+
+      </nav>
+
+    </div>
+
+  </div>
+
+</div>

@@ -1,0 +1,155 @@
+<div class="card shadow-sm p-4">
+
+  <!-- HEADER -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="dashboard-title mb-0">Task Report</h2>
+
+    <div>
+      <button class="btn btn-sm me-2 custom-red-btn" type="button" (click)="downloadPdf()">
+        Download PDF
+      </button>
+
+      <button class="btn btn-sm custom-red-btn" type="button" (click)="exportToExcel()">
+        Download Excel
+      </button>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="card shadow-sm p-3 mb-3">
+    <h5 class="mb-3">Filters</h5>
+
+    <div class="row g-3">
+
+      <!-- Assigned To -->
+      <div class="col-md-3">
+        <label class="form-label">Assigned To</label>
+        <select class="form-control" [(ngModel)]="selectedEmployee">
+          <option value="">All Employees</option>
+          <option *ngFor="let e of employees" [value]="e.employeeName">
+            {{e.employeeName}}
+          </option>
+        </select>
+      </div>
+
+      <!-- Status -->
+      <div class="col-md-3">
+        <label class="form-label">Status</label>
+        <select class="form-control" [(ngModel)]="selectedStatus">
+          <option value="">All Status</option>
+          <option *ngFor="let s of taskStatuses" [value]="s.taskStatusId">
+            {{s.taskStatusName}}
+          </option>
+        </select>
+      </div>
+
+      <!-- Priority -->
+      <div class="col-md-3">
+        <label class="form-label">Priority</label>
+        <select class="form-control" [(ngModel)]="selectedPriority">
+          <option value="">All Priority</option>
+          <option *ngFor="let p of priorities" [value]="p.priorityId">
+            {{p.priorityName}}
+          </option>
+        </select>
+      </div>
+
+      <!-- From Date -->
+      <div class="col-md-3">
+        <label class="form-label">From Date</label>
+        <input type="date" class="form-control" [(ngModel)]="fromDate">
+      </div>
+
+      <!-- To Date -->
+      <div class="col-md-3">
+        <label class="form-label">To Date</label>
+        <input type="date" class="form-control" [(ngModel)]="toDate">
+      </div>
+
+      <!-- Buttons -->
+      <div class="col-md-3 d-flex align-items-end">
+        <button class="btn custom-red-btn w-100 me-2" (click)="searchReport()">
+          Search
+        </button>
+      </div>
+
+      <div class="col-md-3 d-flex align-items-end">
+        <button class="btn custom-red-btn w-100" (click)="clearFilters()">
+          Clear Filters
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+
+      <thead class="table-dark">
+        <tr>
+          <th>#</th>
+          <th>Task Name</th>
+          <th>Project</th>
+          <th>Assigned To</th>
+          <th>Priority</th>
+          <th>Status</th>
+          <th>Start Date</th>
+          <th>Due Date</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let task of reportTasks; let i=index">
+          <td>{{ ((currentPage - 1) * pageSize) + i + 1 }}</td>
+          <td>{{task.taskName}}</td>
+          <td>{{getProjectName(task.projectId)}}</td>
+          <td>{{task.assignedTo}}</td>
+          <td>{{getPriorityName(task.priorityId)}}</td>
+          <td>
+            <span class="badge" [ngClass]="{
+      'bg-warning': getStatusName(task.statusId) === 'Pending',
+      'bg-primary': getStatusName(task.statusId) === 'In Progress',
+      'bg-success': getStatusName(task.statusId) === 'Completed',
+      'bg-danger': getStatusName(task.statusId) === 'Overdue',
+      'bg-secondary': getStatusName(task.statusId) === 'On Hold',
+      'bg-info': getStatusName(task.statusId) === 'Done'
+    }">
+              {{getStatusName(task.statusId)}}
+            </span>
+          </td>
+          <td>{{task.startDate | date:'dd-MM-yyyy'}}</td>
+          <td>{{task.dueDate | date:'dd-MM-yyyy'}}</td>
+        </tr>
+
+        <tr *ngIf="reportTasks.length==0">
+          <td colspan="8" class="text-center text-muted">
+            No records found
+          </td>
+        </tr>
+      </tbody>
+
+    </table>
+  </div>
+
+  <div class="d-flex justify-content-between align-items-center mt-3">
+    <div>
+      <label class="me-2">Show:</label>
+      <select class="form-select d-inline w-auto" [(ngModel)]="pageSize" (change)="changePageSize(pageSize)">
+        <option *ngFor="let size of pageSizeOptions" [ngValue]="size">{{ size }}</option>
+      </select>
+      <span class="ms-2">entries</span>
+    </div>
+
+    <div>
+      <button class="btn btn-sm custom-red-btn me-2" (click)="changePage(currentPage - 1)" [disabled]="currentPage === 1">
+        Previous
+      </button>
+      <span>Page {{ currentPage }} of {{ totalPages }}</span>
+      <button class="btn btn-sm custom-red-btn ms-2" (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages">
+        Next
+      </button>
+    </div>
+  </div>
+
+</div>

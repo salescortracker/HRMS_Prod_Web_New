@@ -1,0 +1,25 @@
+.card {
+    border: none;
+    border-radius: 10px;
+}
+
+.card-header {
+    font-weight: 600;
+}
+
+.form-label {
+    font-weight: 600;
+}
+
+.table thead {
+    background: #b02828;
+    color: #fff;
+}
+
+.btn {
+    min-width: 80px;
+}
+
+.badge {
+    font-size: 12px;
+}

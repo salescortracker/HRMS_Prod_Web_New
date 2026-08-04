@@ -1,0 +1,399 @@
+<div class="card shadow-sm">
+  <div class="container-fluid p-4 user-management">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4 class="fw-semibold mb-0 text-dark">
+        <i class="fa-solid fa-user-gear me-2 text-danger"></i>
+        User Management
+      </h4>
+      <div class="d-flex gap-2">
+        <div class="dropdown">
+          <button
+            class="btn btn-outline-secondary dropdown-toggle"
+            type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
+            <i class="fa-solid fa-download me-2"></i>
+            Export
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end animate__animated animate__fadeIn">
+            <li><a class="dropdown-item" (click)="exportAs('pdf')">Download PDF</a></li>
+            <li><a class="dropdown-item" (click)="exportAs('excel')">Download Excel</a></li>
+          </ul>
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-danger"
+          (click)="openUploadPopup()"
+        >
+          <i class="fa-solid fa-upload me-2"></i>
+          Bulk Upload
+        </button>
+      </div>
+    </div>
+
+    <hr />
+
+    <!-- User Form -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <form (ngSubmit)="onSubmit()" #userForm="ngForm" novalidate>
+          <div class="row g-3">
+
+            <!-- Company -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Company <span class="text-danger">*</span></label>
+              <select class="form-select" name="CompanyID" [(ngModel)]="user.companyId"
+                (ngModelChange)="onCompanyChange($event)" required>
+                <option value="0">Select Company</option>
+                <option *ngFor="let c of companies" [ngValue]="c.companyId">{{ c.companyName }}</option>
+              </select>
+            </div>
+
+            <!-- Region -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Region <span class="text-danger">*</span></label>
+              <select class="form-select" name="RegionID" [(ngModel)]="user.regionId"
+                (ngModelChange)="onRegionChange($event)" required>
+                <option value="0">Select Region</option>
+                <option *ngFor="let r of filteredRegions" [ngValue]="r.regionID">{{ r.regionName }}</option>
+              </select>
+            </div>
+
+            <!-- Employee Code -->
+            <div class="col-md-3">
+  <label class="form-label fw-semibold">
+    Employee Code <span class="text-danger">*</span>
+  </label>
+  <input
+    type="text"
+    class="form-control"
+    name="EmployeeCode"
+    [(ngModel)]="user.userEmployeeCode"
+    required
+     (ngModelChange)="generateEmployeeId()"
+    placeholder="EMP" />
+</div>
+
+<div class="col-md-3">
+  <label class="form-label fw-semibold">
+    Running Number <span class="text-danger">*</span>
+  </label>
+  <input
+    type="number"
+    class="form-control"
+    name="employeeCode"
+    [(ngModel)]="user.employeeCode"
+    required
+     disabled />
+</div>
+
+<div class="col-md-6">
+  <label class="form-label fw-semibold">
+    Generated Employee ID
+  </label>
+  <input
+  type="text"
+  class="form-control"
+  [value]=" (user.userEmployeeCode || '').toString().padStart(4, '0')+user.employeeCode"
+  disabled
+  readonly />
+</div>
+
+            <!-- Full Name -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="FullName" [(ngModel)]="user.fullName" required
+                placeholder="Enter full name" />
+            </div>
+
+            <!-- Email -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+              <input type="email" class="form-control" name="Email" [(ngModel)]="user.email" required
+                placeholder="Enter email address" />
+            </div>
+
+            <!-- Role -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Role <span class="text-danger">*</span></label>
+              <select class="form-select" name="Role" [(ngModel)]="user.roleId" [disabled]="!user.regionId" required>
+                <option value="0">Select Role</option>
+                <option *ngFor="let r of filteredRoles" [ngValue]="r.roleId">
+                  {{ r.roleName }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Password -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Password<span class="text-danger">*</span></label>
+              <div class="input-group">
+                <input type="text" class="form-control" [(ngModel)]="user.password" name="Password"
+                  placeholder="Auto-generated or enter manually" />
+                <button class="btn btn-outline-secondary" type="button" (click)="generateFormPassword()">
+                  Generate
+                </button>
+              </div>
+            </div>
+           
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">
+                Department <span class="text-danger">*</span>
+              </label>
+
+              <select class="form-select" name="DepartmentId" [(ngModel)]="user.departmentId"
+                (ngModelChange)="onDepartmentChange($event)" [disabled]="!user.regionId" required>
+
+                <option [ngValue]="0">Select Department</option>
+
+                <option *ngFor="let d of filteredDepartments" [ngValue]="d.departmentId">
+                  {{ d.departmentName }}
+                </option>
+
+              </select>
+
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">
+                Designation <span class="text-danger">*</span>
+              </label>
+
+              <select class="form-select" name="DesignationId" [(ngModel)]="user.designationId"
+                [disabled]="!user.regionId" required>
+
+                <option [ngValue]="0">Select Designation</option>
+
+                <option *ngFor="let d of filteredDesignations" [ngValue]="d.designationID">
+                  {{ d.designationName }}
+                </option>
+
+              </select>
+            </div>
+
+            <!-- Reporting To -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Reporting To <span class="text-danger">*</span></label>
+              <select
+  class="form-select"
+  [(ngModel)]="user.reportingTo"
+  name="reportingTo">
+
+  <option [ngValue]="0">Select Reporting Manager</option>
+
+  <option
+    *ngFor="let emp of reportingToUsers"
+    [ngValue]="emp.userId">
+
+    {{ emp.fullName }} ({{ emp.employeeCode }})
+
+  </option>
+
+</select>
+            </div>
+            <!-- Reporting HR -->
+<!-- Reporting HR -->
+<div class="col-md-6">
+  <label class="form-label fw-semibold">
+    Reporting HR <span class="text-danger">*</span>
+  </label>
+
+  <select class="form-select"
+          name="reportingHr"
+          [(ngModel)]="user.reportingHr"
+          required>
+
+    <option [ngValue]="0">Select HR</option>
+
+    <option *ngFor="let hr of filteredHrUsers"
+            [ngValue]="hr.userId">
+      {{ hr.fullName }} ({{ hr.designationName }})
+    </option>
+
+  </select>
+</div>
+
+<!-- Joining Date -->
+<div class="col-md-6">
+  <label class="form-label fw-semibold">Joining Date <span class="text-danger">*</span></label>
+  <input type="date" class="form-control"
+         name="joiningDate"
+         [(ngModel)]="user.joiningDate" />
+</div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Login Type <span class="text-danger">*</span></label>
+              <select class="form-select" name="loginType" [(ngModel)]="user.loginType" required>
+                <option value="">Select Login Type</option>
+                <option value="Admin">Admin</option>
+                <option value="User">User</option>
+              </select>
+            </div>
+
+            <!-- Status -->
+            <div class="col-md-6 d-flex align-items-center">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="statusSwitch" [checked]="user.status === 'Active'"
+                  (change)="onStatusChange($event)" />
+                <label class="form-check-label" for="statusSwitch">
+                  {{ user.status === 'Active' ? 'Active' : 'Inactive' }}
+                </label>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="col-md-12 text-end mt-3">
+               <button
+    type="button"
+    class="btn btn-danger me-2"
+    (click)="cancelForm()">
+    <i class="fa-solid fa-times me-2"></i>
+    Cancel
+  </button>
+              <button type="submit" class="btn btn-dark px-4" [disabled]="!userForm.valid">
+                <i class="fa-solid fa-save me-2"></i>
+                {{ isEditMode ? 'Update User' : 'Create User' }}
+              </button>
+            </div>
+
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h5 class="mb-3 fw-semibold">Filters</h5>
+
+        <div class="row g-3">
+
+          <!-- Employee Name -->
+          <div class="col-md-4">
+            <input type="text" class="form-control" placeholder="Search by Employee Name"
+              [(ngModel)]="filter.employeeName" (input)="applyFilters()" />
+          </div>
+
+          <!-- Company -->
+          <div class="col-md-4">
+            <select class="form-select" [(ngModel)]="filter.companyId" (change)="onFilterCompanyChange()">
+              <option value="0">All Companies</option>
+              <option *ngFor="let c of companies" [ngValue]="c.companyId">
+                {{ c.companyName }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Region -->
+          <div class="col-md-4">
+            <select class="form-select" [(ngModel)]="filter.regionId" (change)="applyFilters()">
+              <option value="0">All Regions</option>
+              <option *ngFor="let r of filterRegions" [ngValue]="r.regionID">
+                {{ r.regionName }}
+              </option>
+            </select>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- User List -->
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="mb-3 fw-semibold">User List</h5>
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>#</th>
+                <th>Employee Code</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Company</th>
+                <th>Region</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th class="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let u of paginatedUsers; let i = index">
+                <td>{{ ((currentPage - 1) * pageSize) + i + 1 }}</td>
+                <td>{{ u.employeeCode }}</td>
+                <td>{{ u.fullName }}</td>
+                <td>{{ u.email }}</td>
+                <td>{{ getCompanyName(u.companyId) }}</td>
+                <td>{{ getRegionName(u.regionId) }}</td>
+                <td>{{ getRoleName(u.roleId) }}</td>
+                <td>
+                  <span class="badge" [ngClass]="u.status === 'Active' ? 'bg-success' : 'bg-secondary'">
+                    {{ u.status }}
+                  </span>
+                </td>
+                <!-- <td>
+                  <input type="text" class="form-control form-control-sm" [value]="u.password" readonly />
+                </td> -->
+                <td class="text-center">
+                  <button class="btn btn-sm btn-outline-primary me-2" (click)="editUser(u)">
+                    <i class="fa-solid fa-pen"></i>
+                  </button>
+                  <!-- <button class="btn btn-sm btn-outline-success me-2" (click)="sendPasswordEmail(u)">
+                    <i class="fa-solid fa-envelope"></i>
+                  </button> -->
+                  <button class="btn btn-sm btn-outline-danger" (click)="deleteUser(u)">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="users.length === 0">
+                <td colspan="10" class="text-center text-muted">No users found</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+              Showing {{ (currentPage - 1) * pageSize + 1 }}
+              to {{ (currentPage - 1) * pageSize + paginatedUsers.length }}
+              of {{ filteredUsers.length }} entries
+            </div>
+
+            <nav>
+              <ul class="pagination mb-0">
+
+                <li class="page-item" [class.disabled]="currentPage === 1">
+                  <button class="page-link" (click)="prevPage()">Previous</button>
+                </li>
+
+                <li class="page-item" *ngFor="let page of [].constructor(totalPages); let i = index"
+                  [class.active]="currentPage === i + 1">
+                  <button class="page-link" (click)="changePage(i + 1)">
+                    {{ i + 1 }}
+                  </button>
+                </li>
+
+                <li class="page-item" [class.disabled]="currentPage === totalPages">
+                  <button class="page-link" (click)="nextPage()">Next</button>
+                </li>
+
+              </ul>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Bulk Upload Component -->
+<app-common-upload
+  [visible]="showUploadPopup"
+  [screenName]="'User'"
+  [model]="userModel"
+  (close)="closeUploadPopup()"
+  (uploadCompleted)="onBulkUploadComplete($event)">
+</app-common-upload>

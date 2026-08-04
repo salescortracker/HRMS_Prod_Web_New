@@ -1,0 +1,202 @@
+import { Component, OnInit } from '@angular/core';
+import { AdminService } from '../../admin/servies/admin.service';
+import Swal from 'sweetalert2';
+import { NgxSpinnerService } from 'ngx-spinner';
+import { finalize } from 'rxjs/operators';
+
+@Component({
+  selector: 'app-project-master',
+  standalone: false,
+  templateUrl: './project-master.component.html',
+  styleUrl: './project-master.component.css'
+})
+export class ProjectMasterComponent implements OnInit {
+  projects: any[] = [];
+  companies: any[] = [];
+  regions: any[] = [];
+
+  project: any = this.getEmptyProject();
+
+  isEditMode = false;
+  searchText = '';
+  statusFilter: boolean | '' = '';
+
+  pageSize = 5;
+  currentPage = 1;
+
+  userId = Number(sessionStorage.getItem("UserId"));
+  filteredRegions: any[] = [];
+
+  constructor(private service: AdminService, private spinner: NgxSpinnerService) { }
+
+  ngOnInit(): void {
+    this.loadProjects();
+    this.loadCompanies();
+    this.loadRegions();
+  }
+
+  getEmptyProject() {
+    return {
+      ProjectMasterId: 0,
+      projectName: '',
+      companyId: null,
+      regionId: null,
+      isActive: true,
+      userId: this.userId = Number(sessionStorage.getItem("UserId"))
+    };
+  }
+  onCompanyChange(): void {
+  this.project.regionId = null;
+
+  this.filteredRegions = this.project.companyId
+    ? this.regions.filter(r => Number(r.companyID) === Number(this.project.companyId))
+    : [];
+}
+
+  loadProjects() {
+  this.service.getProjects(this.userId).subscribe((res: any) => {
+    this.projects = res?.map((p: any) => ({
+      ProjectMasterId: p.projectMasterId,
+      projectName: p.projectName,
+      companyId: p.companyId,
+      regionId: p.regionId,
+      isActive: p.isActive
+    })) || [];
+  }, () => {
+    this.projects = []; 
+  });
+}
+
+  loadCompanies(): void {
+    this.service.getCompanies(null, this.userId).subscribe({
+      next: (res: any) => {
+  
+        this.companies = res.filter(
+          (x: any) => x.isActive === true || x.isActive === 1
+        );
+  
+      },
+      error: () => {
+        Swal.fire('Error', 'Failed to load companies.', 'error');
+      }
+    });
+  }
+  
+  loadRegions(): void {
+    this.service.getRegions(null, this.userId).subscribe({
+      next: (res: any) => {
+  
+        this.regions = res.filter(
+          (x: any) => x.isActive === true || x.isActive === 1
+        );
+  
+      },
+      error: () => {
+        Swal.fire('Error', 'Failed to load regions.', 'error');
+      }
+    });
+  }
+
+  onSubmit() {
+     this.userId = Number(sessionStorage.getItem("UserId"));
+
+    if (this.isEditMode) {
+      this.service.updateProject(this.project)
+        .subscribe(() => {
+          Swal.fire('Updated!', 'Project updated', 'success');
+          this.loadProjects();
+          this.resetForm();
+        });
+    } else {
+      this.service.createProject(this.project)
+        .subscribe(() => {
+          Swal.fire('Created!', 'Project added', 'success');
+          this.loadProjects();
+          this.resetForm();
+        });
+    }
+  }
+
+  editProject(p: any) {
+    this.project = { ...p };
+    this.isEditMode = true;
+    this.filteredRegions = this.regions.filter(r =>
+    Number(r.companyID) === Number(this.project.companyId)
+  );
+  }
+
+  deleteProject(p: any) {
+
+  Swal.fire({
+    title: `Delete "${p.projectName}"?`,
+    text: 'This will deactivate the project.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, delete it'
+  }).then((result) => {
+
+    if (result.isConfirmed) {
+
+      this.spinner.show();
+
+      this.service.deleteProject(p.ProjectMasterId)
+        .pipe(
+          finalize(() => this.spinner.hide()) // 🔥 always stops spinner
+        )
+        .subscribe({
+          next: (res: any) => {
+
+            Swal.fire(
+              'Deleted!',
+              res?.message || 'Project deactivated.',
+              'success'
+            );
+
+            this.loadProjects();
+          },
+
+          error: () => {
+            Swal.fire(
+              'Error',
+              'Delete failed. Please try again.',
+              'error'
+            );
+          }
+        });
+
+    }
+  });
+}
+  resetForm() {
+    this.project = this.getEmptyProject();
+    this.isEditMode = false;
+    this.filteredRegions = [];
+  }
+
+  onCancel() {
+    this.resetForm();
+  }
+
+  filteredProjects() {
+    return this.projects.filter(p => {
+      return (
+        p.projectName.toLowerCase().includes(this.searchText.toLowerCase()) &&
+        (this.statusFilter === '' || p.isActive === this.statusFilter)
+      );
+    });
+  }
+
+  get pagedProjects() {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredProjects().slice(start, start + this.pageSize);
+  }
+
+  getCompanyName(id: number) {
+    return this.companies.find(x => x.companyId === id)?.companyName || '-';
+  }
+
+  getRegionName(id: number) {
+    return this.regions.find(x => x.regionID === id)?.regionName || '-';
+  }
+
+}

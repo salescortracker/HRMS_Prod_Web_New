@@ -1,0 +1,53 @@
+<app-header></app-header>
+<app-sidebar></app-sidebar>
+
+<!-- Page Header -->
+<div class="dashboard-header">
+  <h2 class="dashboard-title">Employee Finance</h2>
+
+  <nav class="breadcrumb">
+    <a href="#">Home</a> &gt;
+    <a href="#">Employee Profile</a> &gt;
+    <span>Employee Finance</span>
+  </nav>
+</div>
+
+<!-- Finance Tabs -->
+<div class="tab-container">
+
+  <div class="tab-header">
+
+    <button
+      *ngIf="canViewBank"
+      type="button"
+      class="tab-label"
+      routerLink="/finance/bank-details"
+      routerLinkActive="active">
+      Bank Details
+    </button>
+
+    <button
+      *ngIf="canViewDD"
+      type="button"
+      class="tab-label"
+      routerLink="/finance/dd"
+      routerLinkActive="active">
+      DD
+    </button>
+
+    <button
+      *ngIf="canViewW4"
+      type="button"
+      class="tab-label"
+      routerLink="/finance/w4"
+      routerLinkActive="active">
+      W4 (USA)
+    </button>
+
+  </div>
+
+  <div class="tab-content">
+    <router-outlet></router-outlet>
+  </div>
+
+</div>

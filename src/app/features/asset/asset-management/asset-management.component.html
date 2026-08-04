@@ -1,0 +1,79 @@
+<app-header></app-header>
+<app-sidebar></app-sidebar>
+
+<div class="dashboard-header">
+  <h2 class="dashboard-title">Asset Management</h2>
+  <nav class="breadcrumb">
+    <a href="#">Home</a> &gt;
+    <a href="#">Assets</a> &gt;
+    <span>Asset Module</span>
+  </nav>
+</div>
+
+<div class="tab-container">
+
+  <div class="tab-header">
+
+    <button
+      *ngIf="canViewAddAsset"
+      type="button"
+      class="tab-label"
+      routerLink="/asset/add-asset"
+      routerLinkActive="active">
+      Add Asset
+    </button>
+
+    <button
+      *ngIf="canViewAssetRequests"
+      type="button"
+      class="tab-label"
+      routerLink="/asset/asset-request"
+      routerLinkActive="active">
+      Asset Requests
+    </button>
+
+    <button
+      *ngIf="canViewAssetApproval"
+      type="button"
+      class="tab-label"
+      routerLink="/asset/asset-approval"
+      routerLinkActive="active">
+      Asset Approval
+    </button>
+
+    <button
+      *ngIf="canViewAssignAssetScreen"
+      type="button"
+      class="tab-label"
+      routerLink="/asset/assign-asset"
+      routerLinkActive="active">
+      Assign Asset Screen
+    </button>
+
+    <button
+      *ngIf="canViewMyAssets"
+      type="button"
+      class="tab-label"
+      routerLink="/asset/my-assets"
+      routerLinkActive="active">
+      My Assets
+    </button>
+
+    <button
+      *ngIf="canViewAssetReports"
+      type="button"
+      class="tab-label"
+      routerLink="/asset/asset-reports"
+      routerLinkActive="active">
+      Asset Reports
+    </button>
+
+  </div>
+
+  <div class="tab-content">
+    <router-outlet></router-outlet>
+  </div>
+
+</div>
+
+<app-footer></app-footer>

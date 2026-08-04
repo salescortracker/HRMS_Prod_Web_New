@@ -1,0 +1,61 @@
+<app-header></app-header>
+<app-sidebar></app-sidebar>
+
+<div class="dashboard-header">
+  <h2 class="dashboard-title">Help Desk</h2>
+  <nav class="breadcrumb">
+    <a href="#">Home</a> &gt;
+    <a href="#">Support</a> &gt;
+    <span>Help Desk</span>
+  </nav>
+</div>
+
+<div class="tab-container">
+
+  <div class="tab-header">
+
+    <button
+      *ngIf="canViewRaiseTicket"
+      type="button"
+      class="tab-label"
+      routerLink="/help-desk/raise-ticket"
+      routerLinkActive="active">
+      Raise Ticket
+    </button>
+
+    <button
+      *ngIf="canViewMyTickets"
+      type="button"
+      class="tab-label"
+      routerLink="/help-desk/my-tickets"
+      routerLinkActive="active">
+      My Tickets
+    </button>
+
+    <button
+      *ngIf="canViewTicketApproval"
+      type="button"
+      class="tab-label"
+      routerLink="/help-desk/ticket-approval"
+      routerLinkActive="active">
+      Ticket Approval
+    </button>
+
+    <button
+      *ngIf="canViewTicketReports"
+      type="button"
+      class="tab-label"
+      routerLink="/help-desk/ticket-reports"
+      routerLinkActive="active">
+      Ticket Reports
+    </button>
+
+  </div>
+
+  <div class="tab-content">
+    <router-outlet></router-outlet>
+  </div>
+
+</div>
+
+<app-footer></app-footer>

@@ -1,0 +1,428 @@
+import { Component, OnInit } from '@angular/core';
+import { AdminService, Region, Company } from '../../servies/admin.service';
+import Swal from 'sweetalert2';
+import { NgxSpinnerService } from 'ngx-spinner';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+@Component({
+  selector: 'app-region',
+  standalone: false,
+  templateUrl: './region.component.html',
+  styleUrl: './region.component.css'
+})
+export class RegionComponent {
+ regions: Region[] = [];
+  companies: Company[] = [];
+  region: Region = this.getEmptyRegion();
+
+  isEditMode = false;
+  searchText = '';
+  statusFilter: boolean | '' = '';
+  showUploadPopup = false;
+
+  // Sorting
+  sortColumn: string = 'regionID';
+  sortDirection: 'asc' | 'desc' = 'desc';
+
+  // Pagination
+  currentPage = 1;
+  pageSize = 5;
+  totalPages = 0;
+  pagedRegions: Region[] = [];
+
+  constructor(
+    private adminService: AdminService,
+    private spinner: NgxSpinnerService
+  ) {}
+
+  ngOnInit(): void {
+    this.loadCompanies();
+    this.loadRegions();
+  }
+
+  // ✅ Load Companies
+  loadCompanies(): void {
+    this.adminService.getCompanies(null, this.region.userId).subscribe({
+    next: (data: any[]) => {
+      console.log('All Companies 👉', data);
+
+      // 🔥 Filter only active companies
+      this.companies = (data || []).filter((c: any) => c.isActive === true);
+
+      console.log('Active Companies 👉', this.companies);
+    },
+    error: (err) => console.error('Error loading companies:', err)
+  });
+  }
+
+  // ✅ Get Company Name
+  getCompanyName(companyID: number): string {
+    const company = this.companies.find(c => c.companyId === companyID);
+    return  company ? company.companyName : '-';
+  }
+
+  // ✅ Empty Region Template
+  getEmptyRegion(): Region {
+   return { regionID: 0, companyID: 0, regionName: '', country: '', timeZoneId: '', isActive: true,userId: sessionStorage.getItem('UserId') ? Number(sessionStorage.getItem('UserId')) : 0 };
+  }
+  
+
+  // ✅ Load Regions (Latest First)
+  loadRegions(): void {
+    this.spinner.show();
+    this.adminService.getRegions(null,this.region.userId).subscribe({
+      next: (data: Region[]) => {
+        // Sort by regionID descending → latest first
+        this.regions = data.sort((a, b) => b.regionID - a.regionID);
+        this.applySorting();
+        this.updatePagedRegions();
+        this.spinner.hide();
+      },
+      error: (err) => {
+        console.error('Error loading regions:', err);
+        this.spinner.hide();
+      }
+    });
+  }
+
+  // ✅ Save / Update Region
+onSubmit(): void {
+
+  // Normalize input
+  this.region.regionName = this.region.regionName
+    ?.trim()
+    .replace(/\s+/g, ' ');
+
+  this.region.country = this.region.country
+    ?.trim()
+    .replace(/\s+/g, ' ');
+
+  // Company Validation
+  if (!this.region.companyID) {
+    Swal.fire('Validation', 'Please select company.', 'warning');
+    return;
+  }
+
+  // Region Validation
+  if (!this.region.regionName) {
+    Swal.fire('Validation', 'Region Name is required.', 'warning');
+    return;
+  }
+
+  if (this.region.regionName.length > 100) {
+    Swal.fire('Validation', 'Region Name cannot exceed 100 characters.', 'warning');
+    return;
+  }
+
+  if (!/^[A-Za-z ]+$/.test(this.region.regionName)) {
+    Swal.fire(
+      'Validation',
+      'Region Name should contain only alphabets and single spaces.',
+      'warning'
+    );
+    return;
+  }
+
+  // Country Validation
+  if (!this.region.country) {
+    Swal.fire('Validation', 'Country is required.', 'warning');
+    return;
+  }
+
+  if (this.region.country.length > 100) {
+    Swal.fire('Validation', 'Country cannot exceed 100 characters.', 'warning');
+    return;
+  }
+
+  if (!/^[A-Za-z ]+$/.test(this.region.country)) {
+    Swal.fire(
+      'Validation',
+      'Country should contain only alphabets and single spaces.',
+      'warning'
+    );
+    return;
+  }
+if (!this.region.timeZoneId) {
+  Swal.fire(
+    'Validation',
+    'Please select Time Zone.',
+    'warning'
+  );
+  return;
+}
+  this.spinner.show();
+
+  const operation = this.isEditMode
+    ? this.adminService.updateRegion(this.region.regionID, this.region)
+    : this.adminService.createRegion(this.region);
+
+  operation.subscribe({
+
+    next: () => {
+
+      Swal.fire(
+        'Success!',
+        this.isEditMode
+          ? 'Region updated successfully.'
+          : 'Region added successfully.',
+        'success'
+      );
+
+      this.loadRegions();
+      this.resetForm();
+      this.spinner.hide();
+
+    },
+
+    error: (err) => {
+
+      this.spinner.hide();
+
+      let errorMessage = 'Operation failed.';
+
+      if (err?.error) {
+
+        if (typeof err.error === 'string') {
+          errorMessage = err.error;
+        }
+        else if (err.error.message) {
+          errorMessage = err.error.message;
+        }
+        else if (err.error.title) {
+          errorMessage = err.error.title;
+        }
+
+      }
+
+      Swal.fire('Error!', errorMessage, 'error');
+
+    }
+
+  });
+
+}
+timeZones = [
+  {
+    label: 'India Standard Time (IST)',
+    value: 'Asia/Kolkata'
+  },
+  {
+    label: 'US Eastern Time (EST/EDT)',
+    value: 'America/New_York'
+  },
+  {
+    label: 'US Central Time (CST/CDT)',
+    value: 'America/Chicago'
+  },
+  {
+    label: 'US Mountain Time (MST/MDT)',
+    value: 'America/Denver'
+  },
+  {
+    label: 'US Pacific Time (PST/PDT)',
+    value: 'America/Los_Angeles'
+  },
+  {
+    label: 'Canada Eastern',
+    value: 'America/Toronto'
+  },
+  {
+    label: 'UK Time',
+    value: 'Europe/London'
+  },
+  {
+    label: 'UAE Time',
+    value: 'Asia/Dubai'
+  },
+  {
+    label: 'Singapore Time',
+    value: 'Asia/Singapore'
+  },
+  {
+    label: 'Australia Sydney',
+    value: 'Australia/Sydney'
+  }
+];
+getTimeZoneLabel(value: string): string {
+  const timezone = this.timeZones.find(
+    x => x.value === value
+  );
+
+  return timezone ? timezone.label : '-';
+}
+
+  editRegion(r: Region): void {
+    this.region = { ...r };
+    this.isEditMode = true;
+  }
+
+  deleteRegion(r: Region): void {
+    Swal.fire({
+      title: 'Are you sure?',
+      text: `Delete region "${r.regionName}"?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Yes, delete it!'
+    }).then(result => {
+      if (result.isConfirmed) {
+        this.spinner.show();
+        this.adminService.deleteRegion(r.regionID).subscribe({
+          next: () => {
+            Swal.fire('Deleted!', 'Region deleted successfully.', 'success');
+            this.loadRegions();
+            this.spinner.hide();
+          },
+          error: () => {
+            this.spinner.hide();
+            Swal.fire('Error!', 'Unable to delete region.', 'error');
+          }
+        });
+      }
+    });
+  }
+
+  // ✅ Filter + Sorting + Pagination Combined
+  filteredRegions(): Region[] {
+    const search = this.searchText.trim().toLowerCase();
+    let filtered = this.regions.filter(r => {
+      const matchesSearch = !search || r.regionName.toLowerCase().includes(search);
+      const matchesStatus = this.statusFilter === '' || r.isActive === this.statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+
+    // Apply sorting
+    filtered = filtered.sort((a, b) => this.compareValues(a, b));
+
+    return filtered;
+  }
+
+  // ✅ Sorting Logic
+  sortData(column: string): void {
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
+    this.applySorting();
+  }
+
+  applySorting(): void {
+    this.regions.sort((a, b) => this.compareValues(a, b));
+    this.updatePagedRegions();
+  }
+
+  compareValues(a: any, b: any): number {
+    const valA = a[this.sortColumn];
+    const valB = b[this.sortColumn];
+
+    if (typeof valA === 'string' && typeof valB === 'string') {
+      return this.sortDirection === 'asc'
+        ? valA.localeCompare(valB)
+        : valB.localeCompare(valA);
+    }
+
+    if (typeof valA === 'boolean' && typeof valB === 'boolean') {
+      return this.sortDirection === 'asc'
+        ? Number(valA) - Number(valB)
+        : Number(valB) - Number(valA);
+    }
+
+    return this.sortDirection === 'asc' ? valA - valB : valB - valA;
+  }
+
+  // ✅ Pagination
+  updatePagedRegions(): void {
+    const filtered = this.filteredRegions();
+    this.totalPages = Math.ceil(filtered.length / this.pageSize);
+    const start = (this.currentPage - 1) * this.pageSize;
+    this.pagedRegions = filtered.slice(start, start + this.pageSize);
+  }
+
+  goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+    this.updatePagedRegions();
+  }
+
+  changePageSize(event: any): void {
+    this.pageSize = +event.target.value;
+    this.currentPage = 1;
+    this.updatePagedRegions();
+  }
+
+  toggleStatus(r: Region): void {
+    r.isActive = !r.isActive;
+    this.adminService.updateRegion(r.regionID, r).subscribe({
+      next: () => Swal.fire('Success!', 'Status updated.', 'success'),
+      error: () => Swal.fire('Error!', 'Failed to update status.', 'error')
+    });
+  }
+
+  exportExcel(): void {
+    const exportData = this.regions.map((r, index) => ({
+      'S.No': index + 1,
+      'Region Name': r.regionName,
+      'Company': this.getCompanyName(r.companyID),
+      'Country': r.country,
+      'Status': r.isActive ? 'Active' : 'Inactive'
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Regions');
+    XLSX.writeFile(workbook, 'RegionList.xlsx');
+  }
+
+  exportPDF(): void {
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+    doc.setFontSize(14);
+    doc.text('Region List', 40, 40);
+    autoTable(doc, {
+      startY: 60,
+      head: [['S.No', 'Region Name', 'Company', 'Country', 'Status']],
+      body: this.regions.map((r, i) => [
+        i + 1,
+        r.regionName,
+        this.getCompanyName(r.companyID),
+        r.country,
+        r.isActive ? 'Active' : 'Inactive'
+      ]),
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [41, 128, 185] }
+    });
+    doc.save('RegionList.pdf');
+  }
+
+  resetForm(): void {
+    this.region = this.getEmptyRegion();
+    this.isEditMode = false;
+  }
+
+  regionModel: any;
+  openUploadPopup(): void {
+    this.regionModel = [
+      { regionName: 'South Zone', companyName: 'ABC Technologies Pvt Ltd', country: 'India', isActive: true },
+      { regionName: 'North Zone', companyName: 'Global Solutions Ltd', country: 'India', isActive: false }
+    ];
+    this.showUploadPopup = false;
+    setTimeout(() => (this.showUploadPopup = true), 0);
+  }
+
+  closeUploadPopup(): void {
+    this.showUploadPopup = false;
+  }
+
+  onBulkUploadComplete(event: any): void {
+    if (event?.success) {
+      Swal.fire('Upload Complete!', event.message, 'success');
+      this.loadRegions();
+    }
+  }
+    onCancel(): void {
+  this.resetForm();
+
+}
+}

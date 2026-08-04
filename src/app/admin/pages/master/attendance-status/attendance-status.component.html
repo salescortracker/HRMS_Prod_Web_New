@@ -1,0 +1,221 @@
+<div class="card shadow-sm">
+  <div class="container-fluid p-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4 class="fw-semibold mb-0">
+        <i class="fa-solid fa-user-check me-2 text-danger"></i> Attendance Status Management
+      </h4>
+
+      <div class="d-flex gap-2">
+        <!-- Export Dropdown -->
+        <!-- <div class="dropdown">
+          <button class="btn btn-outline-dark dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <i class="fa-solid fa-download me-2"></i> Export
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end animate__animated animate__fadeIn">
+            <li><a class="dropdown-item" (click)="exportAs('pdf')">Download PDF</a></li>
+            <li><a class="dropdown-item" (click)="exportAs('excel')">Download Excel</a></li>
+          </ul>
+        </div> -->
+
+        <!-- Bulk Upload -->
+        <!-- <button class="btn btn-danger" (click)="openUploadPopup()">
+          <i class="fa-solid fa-upload me-2"></i> Bulk Upload
+        </button> -->
+      </div>
+    </div>
+
+    <hr class="mb-4" />
+
+    <!-- Form -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <form #statusForm="ngForm" (ngSubmit)="onSubmit(statusForm)" novalidate>
+
+          <div class="row g-3">
+
+
+
+            <!-- ✅ Company -->
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Company *</label>
+              <select class="form-select" [(ngModel)]="companyId" name="companyId" (change)="onCompanyChange()"
+                required>
+
+                <option value="">-- Select Company --</option>
+                <option *ngFor="let c of companies" [value]="c.companyId">
+                  {{ c.companyName }}
+                </option>
+              </select>
+            </div>
+
+            <!-- ✅ Region -->
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Region *</label>
+              <select class="form-select" [(ngModel)]="regionId" name="regionId" (change)="onRegionChange()" required>
+
+                <option value="">-- Select Region --</option>
+                <option *ngFor="let r of regions" [value]="r.regionID">
+                  {{ r.regionName }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Attendance Status -->
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Attendance Status *</label>
+              <input type="text" class="form-control" name="attendanceStatusName"
+                [(ngModel)]="attendance.attendanceStatusName" required placeholder="Enter Status Name"
+                (input)="checkDuplicate()">
+            </div>
+
+            <!-- Active -->
+            <div class="col-md-2 d-flex align-items-center mt-4">
+              <label class="me-2 fw-semibold">Is Active</label>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" [(ngModel)]="attendance.isActive" name="isActive">
+              </div>
+            </div>
+
+            <!-- Buttons -->
+            <!-- <div class="col-md-10 mt-4 text-end">
+              <button class="btn btn-success me-2" type="submit" [disabled]="!statusForm.valid || isDuplicate">
+
+                {{ isEditMode ? 'Update' : 'Save' }}
+              </button>
+
+              <button class="btn btn-secondary" type="button" (click)="resetForm()">
+                Reset
+              </button>
+            </div> -->
+            <!-- Buttons -->
+<div class="col-md-6 d-flex align-items-end gap-2">
+
+  <button
+    type="button"
+    class="btn btn-danger w-100"
+    (click)="onCancel()">
+    <i class="fa-solid fa-xmark me-2"></i>
+    Cancel
+  </button>
+
+  <button
+    type="submit"
+    class="btn btn-dark w-100"
+    [disabled]="!statusForm.valid || isDuplicate">
+
+    <i class="fa-solid fa-save me-2"></i>
+    {{ isEditMode ? 'Update Attendance Status' : 'Save Attendance Status' }}
+  </button>
+
+</div>
+
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card shadow-sm">
+      <div class="card-body">
+
+        <!-- Filters -->
+        <div class="mb-3 row g-3 align-items-end">
+
+          <div class="col-md-4">
+            <input type="text" class="form-control" placeholder="Search Status" [(ngModel)]="searchText" />
+          </div>
+
+          <div class="col-md-4">
+            <select class="form-select" [(ngModel)]="statusFilter">
+              <option value="">All</option>
+              <option [ngValue]="true">Active</option>
+              <option [ngValue]="false">Inactive</option>
+            </select>
+          </div>
+
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>#</th>
+                <th (click)="sortTable('attendanceStatusName')" class="sortable">
+                  Attendance Status
+                  <i class="fa" [ngClass]="getSortIcon('attendanceStatusName')"></i>
+                </th>
+                <th>Company</th>
+                <th>Region</th>
+
+                <th>Status</th>
+                <th class="text-center">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr *ngFor="let s of pagedAttendance; let i = index">
+                <td>{{ (currentPage - 1) * pageSize + i + 1 }}</td>
+                <td>{{ s.attendanceStatusName }}</td>
+                <td>{{ companyMap[s.companyId] || '-' }}</td>
+                <td>{{ regionMap[s.regionId] || '-' }}</td>
+
+                <td>
+                  <span class="badge" [ngClass]="s.isActive ? 'bg-success' : 'bg-secondary'">
+                    {{ s.isActive ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+
+                <td class="text-center">
+                  <button class="btn btn-sm btn-outline-primary me-2" (click)="editAttendance(s)">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+
+                  <button class="btn btn-sm btn-outline-danger" (click)="deleteAttendance(s)">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+
+              <tr *ngIf="pagedAttendance.length === 0">
+                <td colspan="4" class="text-center text-muted">No records found</td>
+              </tr>
+            </tbody>
+
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <nav *ngIf="totalPages > 1" class="d-flex justify-content-end mt-3">
+          <ul class="pagination pagination-sm mb-0">
+
+            <li class="page-item" [class.disabled]="currentPage === 1">
+              <a class="page-link" (click)="goToPage(currentPage - 1)">Previous</a>
+            </li>
+
+            <li class="page-item" *ngFor="let page of [].constructor(totalPages); let i = index"
+              [class.active]="currentPage === i + 1">
+              <a class="page-link" (click)="goToPage(i + 1)">{{ i + 1 }}</a>
+            </li>
+
+            <li class="page-item" [class.disabled]="currentPage === totalPages">
+              <a class="page-link" (click)="goToPage(currentPage + 1)">Next</a>
+            </li>
+
+          </ul>
+        </nav>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Bulk Upload -->
+<app-common-upload [visible]="showUploadPopup" [screenName]="'Attendance Status'" [model]="attendanceModel"
+  (close)="closeUploadPopup()" (uploadComplete)="onBulkUploadComplete($event)">
+</app-common-upload>

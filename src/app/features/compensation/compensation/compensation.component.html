@@ -1,0 +1,43 @@
+<app-header></app-header>
+<app-sidebar></app-sidebar>
+
+<div class="dashboard-header">
+  <h2 class="dashboard-title">Employee Compensation</h2>
+  <nav class="breadcrumb">
+    <a href="#">Home</a> &gt;
+    <a href="#">Payroll</a> &gt;
+    <span>Compensation</span>
+  </nav>
+</div>
+
+<div class="tab-container">
+
+  <div class="tab-header">
+
+    <button
+      *ngIf="canViewPayslip"
+      type="button"
+      class="tab-label"
+      routerLink="/compensation/employee-payslip"
+      routerLinkActive="active">
+      Employee Payslip
+    </button>
+
+    <button
+      *ngIf="canViewHRDashboard"
+      type="button"
+      class="tab-label"
+      routerLink="/compensation/hr-payslip"
+      routerLinkActive="active">
+      HR Payslip Dashboard
+    </button>
+
+  </div>
+
+  <div class="tab-content">
+    <router-outlet></router-outlet>
+  </div>
+
+</div>
+
+<app-footer></app-footer>

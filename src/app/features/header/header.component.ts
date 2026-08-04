@@ -1,0 +1,2508 @@
+
+import { Component, HostListener, NgZone } from '@angular/core';
+import { Router } from '@angular/router';
+import { timeEnd } from 'node:console';
+import { EmployeeResignationService } from '../employee-profile/employee-services/employee-resignation.service';
+import { AdminService } from '../../admin/servies/admin.service';
+import { environment } from '../../../environments/environment';
+import Swal from 'sweetalert2';
+import { AttendanceService } from '../attendance/service/attendance.service';
+import { BreakPolicyService } from '../../admin/services/break-policy.service';
+interface LocationMap {
+  [key: string]: string[];
+}
+@Component({
+  selector: 'app-header',
+  standalone: false,
+  templateUrl: './header.component.html',
+  styleUrl: './header.component.css'
+})
+
+export class HeaderComponent {
+  role: string = '';
+  roleName: any = '';
+  userName: any = '';
+  superadmin: any;
+  selectedFile: File | null = null;
+
+  // User Late/Early login show 
+  earlyLateStatus: string = '';  // FINAL TEXT to show in UI
+  graceTime: string = '';        // from API
+
+  loading: any
+  isClockedIn = false;
+  isMobileMenuOpen = false;
+  shiftStartTime: string = ''; // e.g. "09:00"
+  shiftEndTime: string = '';
+  showClockButton: boolean = false;
+  allowedClockTimeText: string = '';
+  isWFHApproved: boolean = false;
+
+  clockStatus = 'Not Clocked In';
+  clockInDisplay = '--:--:--';
+  totalHoursDisplay = '00:00:00';
+  employeeCode = sessionStorage.getItem('EmployeeCode');
+  companyId = sessionStorage.getItem('CompanyId') as unknown as number;
+  regionId = sessionStorage.getItem('RegionId') as unknown as number;
+  private clockInTime!: Date;
+  private timerRef: any;
+  profilePicture: string = '';
+  companyLogo: string = '/assets/images/cor-logo.png';
+  //profilePicture: string = 'assets/images/default-profile.png';
+  userId: number = Number(sessionStorage.getItem('UserId'));
+  private accumulatedMs: number = 0;
+  firstClockIn: string | null = null;
+lastClockOut: string | null = null;
+notifications: any[] = [];
+notificationCount: number = 0;
+unreadCount = 0;
+unreadNotifications: any[] = [];
+showNotifications = false;
+isOnBreak = false;
+
+
+breakLoading = false;
+private timer:any;
+  constructor(private router: Router, private employeeResignationService: EmployeeResignationService,
+    private adminService: AdminService, private ngZone: NgZone, private attendanceService: AttendanceService
+  ,private breakService: BreakPolicyService) { }
+  ngOnInit() {
+    this.loadProfilePicture();
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    this.role = currentUser.role;
+    sessionStorage.setItem('role', this.role);
+    this.roleName = sessionStorage.getItem('roleName');
+    if (this.roleName === 'Super Admin') {
+      this.superadmin = true;
+      this.companyLogo = '/assets/images/cor-logo.png';
+    } else {
+      this.loadEmployeeCompanyLogo();
+    }
+    this.userName = sessionStorage.getItem('Name');
+    
+    this.loadAttendance();
+
+    this.loadUserShift();
+
+    this.checkWFHStatus();
+    this.loadNotifications();
+
+    // ⏱️ Check every minute (important)
+    setInterval(() => {
+      this.checkClockButtonVisibility();
+    }, 60000);
+
+
+  }
+  loadNotifications(){
+
+  const userId = Number(sessionStorage.getItem('UserId'));
+
+  this.adminService.getUserNotifications(userId)
+  .subscribe({
+    next:(res:any)=>{
+
+      this.notifications = res;
+
+      this.unreadNotifications = this.notifications
+        .filter(x => x.isRead == false);
+
+      this.unreadCount = this.unreadNotifications.length;
+
+    },
+    error:(err)=>{
+      console.log(err);
+    }
+  });
+
+}
+toggleNotification(event: MouseEvent){
+
+    event.stopPropagation();
+
+    this.showNotifications = true;
+
+}
+@HostListener('document:click')
+clickOutside(){
+
+  this.showNotifications = false;
+
+}
+openNotifications(){
+    clearTimeout(this.timer);
+    this.showNotifications = true;
+}
+
+closeNotifications(){
+    this.timer = setTimeout(()=>{
+        this.showNotifications = false;
+    },200);
+}
+readNotification(notification: any): void {
+
+  if (!notification.isRead) {
+
+    this.adminService.markAsRead(notification.notificationId)
+      .subscribe({
+        next: () => {
+
+
+          // Remove from dropdown after read
+          this.unreadNotifications =
+            this.unreadNotifications.filter(
+              x => x.notificationId !== notification.notificationId
+            );
+
+
+          this.unreadCount = this.unreadNotifications.length;
+
+
+          this.showNotifications = false;
+
+
+          this.navigateNotification(notification);
+
+        },
+        error: (err) => console.log(err)
+      });
+
+  }
+
+}
+navigateNotification(notification: any): void {
+
+  const role = (sessionStorage.getItem('roleName') || '').toLowerCase();
+
+  switch (notification.type) {
+
+    case 'EmployeeLetter':
+      this.router.navigate(['/documents/my-letters']);
+      break;
+
+    case 'EmployeeForm':
+      this.router.navigate(['/documents/forms']);
+      break;
+
+    case 'Leave':
+      this.router.navigate([
+        role.includes('manager') || role.includes('hr')
+          ? '/leave-management/leave-approvals'
+          : '/leave-management/apply-leave'
+      ]);
+      break;
+
+    case 'Asset':
+      this.router.navigate([
+        role.includes('manager')
+          ? '/asset/asset-approval'
+          : '/asset/asset-request'
+      ]);
+      break;
+
+    case 'Expense':
+      this.router.navigate([
+        role.includes('manager')
+          ? '/expenses/approve-expenses'
+          : '/expenses/all-expenses'
+      ]);
+      break;
+
+    case 'Timesheet':
+      this.router.navigate([
+        role.includes('manager')
+          ? '/timesheet/approve-timesheet'
+          : '/timesheet/submit-timesheet'
+      ]);
+      break;
+
+    case 'Helpdesk':
+      this.router.navigate([
+        role.includes('manager') || role.includes('hr')
+          ? '/help-desk/ticket-approval'
+          : '/help-desk/my-tickets'
+      ]);
+      break;
+
+    case 'Attendance':
+      this.router.navigate([
+        role.includes('manager') || role.includes('hr')
+          ? '/attendance-list'
+          : '/missed-punch-request'
+      ]);
+      break;
+
+    case 'Work From Home':
+      this.router.navigate(['/wfh-remote-request']);
+      break;
+
+    case 'Employee Exit':
+      this.router.navigate([
+        role.includes('manager') || role.includes('hr')
+          ? '/resignation/manager-approval'
+          : '/resignation/details'
+      ]);
+      break;
+
+    case 'Birthday':
+    case 'Work Anniversary':
+      this.router.navigate(['/empdashboard']);
+      break;
+
+    case 'CompanyEvent':
+      this.router.navigate(['/my-event']);
+      break;
+
+    case 'CompanyPolicy':
+      this.router.navigate(['/company-policies']);
+      break;
+
+    case 'CompanyNews':
+      this.router.navigate(['/company-news']);
+      break;
+
+    default:
+      console.warn('Unknown Notification Type:', notification.type);
+      break;
+  }
+}
+  loadEmployeeCompanyLogo() {
+    const companyId = Number(sessionStorage.getItem('CompanyId'));
+    if (!companyId) return;
+
+    this.adminService.getCompanyById(companyId).subscribe({
+      next: (company: any) => {
+        console.log('Company Response:', company); // ✅ Debug check
+
+        // check exact property name from API
+        const logo = company?.companyLogo;
+
+        if (logo && logo.trim() !== '') {
+          if (logo.startsWith('data:')) {
+            this.companyLogo = logo; // base64 directly
+          } else {
+            const logoPath = logo.replace(/\\/g, '/');
+            this.companyLogo = environment.baseurl
+              ? `${environment.baseurl}/${logoPath}`
+              : `/${logoPath}`;
+          }
+        } else {
+          this.companyLogo = '/assets/images/cor-logo.png';
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load company logo:', err);
+        this.companyLogo = '/assets/images/cor-logo.png';
+      }
+    });
+  }
+  toggleMobileMenu() {
+    this.isMobileMenuOpen = !this.isMobileMenuOpen;
+  }
+
+loadProfilePicture() {
+  this.employeeResignationService.GetByUserIdempProfile(this.userId)
+    .subscribe({
+      next: (res: any) => {
+
+        console.log("PROFILE RESPONSE 👉", res);
+
+        const path = res?.profilePictureName;
+
+        this.profilePicture = path
+          ? `${environment.baseurl}/${path}`
+          : 'assets/images/default-profile.png';
+
+      },
+      error: () => {
+        this.profilePicture = 'assets/images/default-profile.png';
+      }
+    });
+    this.loadMenus();
+
+    // this.messages.push({
+    //   type: 'bot',
+    //   text: 'Hi 👋 Ask me anything like "leave", "attendance", "profile"'
+    // });
+
+    this.addMessage(
+      'bot',
+      "Hi 👋 I'm your HRMS Assistant. Here are some things I can help you with 👇",
+      this.getInitialOptions()
+    );
+
+    this.scrollToBottom();
+  }
+  loadMenus() {
+    this.adminService.getMenus().subscribe(res => {
+      this.menus = res;
+    });
+  }
+  logout() {
+    // Optional: clear localStorage/sessionStorage or token
+    localStorage.clear();
+    this.router.navigate(['/login']); // Navigate to admin login
+  }
+  isProfileOpen = false;
+
+  toggleProfileMenu(): void {
+    this.isProfileOpen = !this.isProfileOpen;
+  }
+
+  closeProfileMenu(): void {
+    this.isProfileOpen = false;
+  }
+  isLocationOpen = false;
+  selectedRegion = 'Select Location';
+
+  locations: LocationMap = {
+    INDIA: [
+      'Andhra Pradesh',
+      'Telangana',
+      'Tamil Nadu',
+      'Karnataka',
+      'Maharashtra',
+      'Kerala'
+    ],
+    US: [
+      'California',
+      'Texas',
+      'New York',
+      'Florida',
+      'Washington'
+    ],
+    CANADA: [
+      'Ontario',
+      'Quebec',
+      'British Columbia',
+      'Alberta'
+    ],
+    AUSTRALIA: [
+      'New South Wales',
+      'Victoria',
+      'Queensland'
+    ],
+    DUBAI: [
+      'Dubai City',
+      'Deira',
+      'Jumeirah'
+    ],
+    SINGAPORE: [
+      'Central',
+      'North-East',
+      'East',
+      'West'
+    ]
+  };
+
+  selectedCountry: keyof LocationMap = 'INDIA';
+  regionList: string[] = this.locations[this.selectedCountry];
+  toggleLocationMenu(event: Event) {
+    event.stopPropagation();
+    this.isLocationOpen = !this.isLocationOpen;
+  }
+
+  selectCountry(country: keyof LocationMap) {
+    this.selectedCountry = country;
+    this.regionList = this.locations[country];
+  }
+
+  selectRegion(region: string) {
+    this.selectedRegion = region;
+    this.isLocationOpen = false;
+
+    // Optional: save globally
+    // localStorage.setItem('region', region);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onGlobalClick(event: Event) {
+
+    const target = event.target as HTMLElement;
+
+    // ================= PROFILE DROPDOWN CLOSE =================
+    if (!target.closest('.profile-menu')) {
+      this.isProfileOpen = false;
+    }
+
+    // ================= LOCATION DROPDOWN CLOSE =================
+    if (!target.closest('.location-wrapper')) {
+      this.isLocationOpen = false;
+    }
+
+    // ================= MOBILE MENU CLOSE =================
+    if (!target.closest('.mobile-dropdown') &&
+      !target.closest('.mobile-menu-btn')) {
+      this.isMobileMenuOpen = false;
+    }
+  }
+
+  getSystemTime(): Date {
+    return new Date(); // browser system time
+  }
+
+  formatTime(date: Date): string {
+    const h = date.getHours().toString().padStart(2, '0');
+    const m = date.getMinutes().toString().padStart(2, '0');
+    const s = date.getSeconds().toString().padStart(2, '0');
+    return `${h}:${m}:${s}`;
+  }
+  startTimer(baseMs: number, lastIn: Date) {
+
+  this.stopTimer(); // 🔥 ADD THIS (MOST IMPORTANT)
+
+  this.timerRef = setInterval(() => {
+
+    const now = new Date();
+    const liveMs = now.getTime() - lastIn.getTime();
+    const total = baseMs + liveMs;
+
+    const hrs = Math.floor(total / 3600000);
+    const mins = Math.floor((total % 3600000) / 60000);
+    const secs = Math.floor((total % 60000) / 1000);
+
+    this.totalHoursDisplay =
+      `${hrs.toString().padStart(2, '0')}:` +
+      `${mins.toString().padStart(2, '0')}:` +
+      `${secs.toString().padStart(2, '0')}`;
+
+  }, 1000);
+}
+  stopTimer() {
+    if (this.timerRef) {
+      clearInterval(this.timerRef);
+      this.timerRef = null;
+    }
+  }
+  getSystemTime24(): string {
+    const now = new Date(); // USER SYSTEM TIME
+    const hh = now.getHours().toString().padStart(2, '0');
+    const mm = now.getMinutes().toString().padStart(2, '0');
+    return `${hh}:${mm}`;   // HH:mm
+  }
+
+  // ========================================== Clock In Clock Out Function  ==================================================
+
+//  async toggleClock() {
+// debugger;
+//   // ✅ STEP 1: CHECK SHIFT
+//   if (!this.shiftStartTime) {
+
+//     Swal.fire(
+//       'Not Allowed',
+//       'You are not assigned to any shift. Please contact HR.',
+//       'warning'
+//     );
+
+//     return;
+//   }
+//   // Only validate shift end while CLOCKING IN
+//   if (!this.isClockedIn) {
+
+//     const now = this.getSystemTime();
+
+//     const [endHours, endMinutes] =
+//       this.shiftEndTime.split(':').map(Number);
+
+//     const shiftEnd = new Date();
+
+//     shiftEnd.setHours(
+//       endHours,
+//       endMinutes,
+//       0,
+//       0
+//     );
+
+//     if (now > shiftEnd) {
+
+//       Swal.fire({
+//         icon: 'warning',
+//         title: 'Clock In Not Allowed',
+//         text: `You cannot clock in because your shift time has already ended at ${this.formatDisplayTime(shiftEnd)}.`,
+//         confirmButtonText: 'OK'
+//       });
+
+//       return; // ⭐ VERY IMPORTANT
+//     }
+//   }
+
+//   // ✅ STEP 2: CHECK WFH APPROVAL
+//   let geoAllowed = true;
+
+//   if (!this.isWFHApproved) {
+
+//     geoAllowed = await this.checkGeoFence();
+
+//     if (!geoAllowed) return;
+
+//   } else {
+
+//     console.log('✅ WFH Approved → Skipping Geo Fence');
+//   }
+
+//   // ✅ CURRENT TIME
+//   const now = this.getSystemTime();
+
+//   // =====================================================
+//   // ✅ CLOCK IN
+//   // =====================================================
+//   if (!this.isClockedIn) {
+
+//     this.isClockedIn = true;
+
+//     this.clockInTime = now;
+
+//     sessionStorage.setItem(
+//       'clockInTime',
+//       now.toISOString()
+//     );
+
+//     this.clockStatus = 'Clocked In';
+
+//     this.clockInDisplay = this.formatTime(now);
+
+//     this.totalHoursDisplay = '00:00:00';
+
+//    this.startTimer(0, now);
+
+//     // ✅ API CALL
+//     this.employeeResignationService.addClockInOut({
+
+//       userId: Number(sessionStorage.getItem('UserId')),
+
+//       employeeCode: this.employeeCode,
+
+//       employeeName: sessionStorage.getItem('Name') || '',
+
+//       department: 0,
+
+//       attendanceDate: new Date(),
+
+//       actionType: 'ClockIn',
+
+//       actionTime: this.getSystemTime24(),
+
+//       clockInTime: this.getSystemTime24(),
+
+//       clockOutTime: '',
+
+//       totalWorkedHours: null,
+
+//       companyId: this.companyId,
+     
+//       regionId: this.regionId
+
+//     }).subscribe({
+
+//       next: () => {
+
+//         this.loadAttendance();
+//         this.attendanceService.notifyAttendanceChanged();
+
+//       },
+
+//       error: (err) => {
+
+//         console.error(err);
+
+//         Swal.fire(
+//           'Error',
+//           'Clock In Failed',
+//           'error'
+//         );
+//       }
+//     });
+//   }
+
+//   // =====================================================
+//   // ✅ CLOCK OUT
+//   // =====================================================
+//   else {
+
+//     this.isClockedIn = false;
+
+//     sessionStorage.removeItem('clockInTime');
+
+//     this.clockStatus = 'Clocked Out';
+
+//     this.stopTimer();
+
+//     // ✅ FORCE HH:mm:ss FORMAT
+//     const formattedTotalHours =
+//       this.formatWorkedHours();
+
+//     console.log(
+//       'Formatted Total Hours:',
+//       formattedTotalHours
+//     );
+
+//     // ✅ API CALL
+//     this.employeeResignationService.addClockInOut({
+
+//       userId: Number(sessionStorage.getItem('UserId')),
+
+//       employeeCode: this.employeeCode,
+
+//       employeeName: sessionStorage.getItem('Name') || '',
+
+//       department: 0,
+
+//       attendanceDate: new Date(),
+
+//       actionType: 'ClockOut',
+
+//       actionTime: this.getSystemTime24(),
+
+//       clockInTime: '',
+
+//       clockOutTime: this.getSystemTime24(),
+
+//       totalWorkedHours: formattedTotalHours,
+
+//       companyId: this.companyId,
+
+//       regionId: this.regionId
+
+//     }).subscribe({
+
+//       next: () => {
+
+//         this.loadAttendance();
+//         this.attendanceService.notifyAttendanceChanged();
+
+//         Swal.fire(
+//           'Clock Out Successful',
+//           `Total Worked Hours: ${formattedTotalHours}`,
+//           'success'
+//         );
+//       },
+
+//       error: (err) => {
+
+//         console.error(err);
+
+//         Swal.fire(
+//           'Error',
+//           'Clock Out Failed',
+//           'error'
+//         );
+//       }
+//     });
+//   }
+// }
+async toggleClock() {
+
+  // ✅ STEP 1: CHECK SHIFT
+  if (!this.shiftStartTime || !this.shiftEndTime) {
+
+    Swal.fire(
+      'Not Allowed',
+      'You are not assigned to any shift. Please contact HR.',
+      'warning'
+    );
+
+    return;
+  }
+
+  const now = new Date();
+
+  const { shiftStart, shiftEnd } = this.getShiftDateTimes();
+
+  // =====================================================
+  // ✅ ONLY VALIDATE SHIFT END WHILE CLOCKING IN
+  // =====================================================
+  if (!this.isClockedIn) {
+
+    if (now > shiftEnd) {
+
+      Swal.fire({
+        icon: 'warning',
+        title: 'Clock In Not Allowed',
+        text: `You cannot clock in because your shift time has already ended at ${this.formatDisplayTime(shiftEnd)}.`,
+        confirmButtonText: 'OK'
+      });
+
+      return;
+    }
+  }
+
+  // =====================================================
+  // ✅ GEOFENCE / WFH CHECK
+  // =====================================================
+  let geoAllowed = true;
+
+  if (!this.isWFHApproved) {
+
+    geoAllowed = await this.checkGeoFence();
+
+    if (!geoAllowed) {
+      return;
+    }
+
+  } else {
+
+    console.log('✅ WFH Approved → GeoFence Skipped');
+
+  }
+
+  // =====================================================
+  // ✅ CLOCK IN
+  // =====================================================
+  if (!this.isClockedIn) {
+
+    this.isClockedIn = true;
+
+    this.clockInTime = now;
+
+    sessionStorage.setItem(
+      'clockInTime',
+      now.toISOString()
+    );
+
+    this.clockStatus = 'Clocked In';
+
+    this.clockInDisplay = this.formatTime(now);
+
+    this.totalHoursDisplay = '00:00:00';
+
+    this.startTimer(0, now);
+
+    this.employeeResignationService.addClockInOut({
+
+      userId: Number(sessionStorage.getItem('UserId')),
+
+      employeeCode: this.employeeCode,
+
+      employeeName: sessionStorage.getItem('Name') || '',
+
+      department: 0,
+
+      attendanceDate: new Date(),
+
+      actionType: 'ClockIn',
+
+      actionTime: this.getSystemTime24(),
+
+      clockInTime: this.getSystemTime24(),
+
+      clockOutTime: '',
+
+      totalWorkedHours: null,
+
+      companyId: this.companyId,
+
+      regionId: this.regionId
+
+    }).subscribe({
+
+      next: () => {
+
+        this.loadAttendance();
+
+        this.attendanceService.notifyAttendanceChanged();
+
+      },
+
+      error: (err) => {
+
+        console.error(err);
+
+        this.isClockedIn = false;
+
+        this.stopTimer();
+
+        Swal.fire(
+          'Error',
+          'Clock In Failed',
+          'error'
+        );
+
+      }
+
+    });
+
+  }
+
+  // =====================================================
+  // ✅ CLOCK OUT
+  // =====================================================
+  else {
+
+    this.isClockedIn = false;
+
+    sessionStorage.removeItem('clockInTime');
+
+    this.clockStatus = 'Clocked Out';
+
+    this.stopTimer();
+
+    const formattedTotalHours =
+      this.formatWorkedHours();
+
+    this.employeeResignationService.addClockInOut({
+
+      userId: Number(sessionStorage.getItem('UserId')),
+
+      employeeCode: this.employeeCode,
+
+      employeeName: sessionStorage.getItem('Name') || '',
+
+      department: 0,
+
+      attendanceDate: new Date(),
+
+      actionType: 'ClockOut',
+
+      actionTime: this.getSystemTime24(),
+
+      clockInTime: '',
+
+      clockOutTime: this.getSystemTime24(),
+
+      totalWorkedHours: formattedTotalHours,
+
+      companyId: this.companyId,
+
+      regionId: this.regionId
+
+    }).subscribe({
+
+      next: () => {
+
+        this.loadAttendance();
+
+        this.attendanceService.notifyAttendanceChanged();
+
+        Swal.fire(
+          'Clock Out Successful',
+          `Total Worked Hours : ${formattedTotalHours}`,
+          'success'
+        );
+
+      },
+
+      error: (err) => {
+
+        console.error(err);
+
+        Swal.fire(
+          'Error',
+          'Clock Out Failed',
+          'error'
+        );
+
+      }
+
+    });
+
+  }
+
+}
+private getShiftDateTimes() {
+
+  const now = new Date();
+
+  const [startHour, startMinute] =
+    this.shiftStartTime.split(':').map(Number);
+
+  const [endHour, endMinute] =
+    this.shiftEndTime.split(':').map(Number);
+
+  let shiftStart = new Date(now);
+  shiftStart.setHours(startHour, startMinute, 0, 0);
+
+  let shiftEnd = new Date(now);
+  shiftEnd.setHours(endHour, endMinute, 0, 0);
+
+  // Night Shift (Example: 18:30 -> 03:30)
+  const isNightShift =
+    endHour < startHour ||
+    (endHour === startHour && endMinute < startMinute);
+
+  if (isNightShift) {
+
+    // If after midnight but before shift end
+    if (now.getHours() < endHour ||
+       (now.getHours() === endHour && now.getMinutes() <= endMinute)) {
+
+      shiftStart.setDate(shiftStart.getDate() - 1);
+
+    } else {
+
+      shiftEnd.setDate(shiftEnd.getDate() + 1);
+
+    }
+
+  }
+
+  return {
+    shiftStart,
+    shiftEnd
+  };
+
+}
+
+// // ✅ RETURNS HH:mm:ss FORMAT
+// formatWorkedHours(): string {
+
+//   if (!this.clockInTime) {
+
+//     return '00:00:00';
+//   }
+
+//   const now = new Date();
+
+//   const diffMs =
+//     now.getTime() -
+//     this.clockInTime.getTime();
+
+//   const totalSeconds =
+//     Math.floor(diffMs / 1000);
+
+//   const hours =
+//     Math.floor(totalSeconds / 3600);
+
+//   const minutes =
+//     Math.floor((totalSeconds % 3600) / 60);
+
+//   const seconds =
+//     totalSeconds % 60;
+
+//   return (
+//     String(hours).padStart(2, '0') + ':' +
+//     String(minutes).padStart(2, '0') + ':' +
+//     String(seconds).padStart(2, '0')
+//   );
+// }
+
+formatWorkedHours(): string {
+
+    const totalMs =
+        this.accumulatedMs +
+        (new Date().getTime() - this.clockInTime.getTime());
+
+    const totalSeconds = Math.floor(totalMs / 1000);
+
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${hours.toString().padStart(2,'0')}:` +
+           `${minutes.toString().padStart(2,'0')}:` +
+           `${seconds.toString().padStart(2,'0')}`;
+}
+  //================================================== Clock In Clock Out method =================================================
+
+  checkGeoFence(): Promise<boolean> {
+
+    return new Promise((resolve) => {
+
+      if (!navigator.geolocation) {
+        Swal.fire('Error', 'Location not supported', 'error');
+        resolve(false);
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+
+        (position) => {
+
+          const userLat = position.coords.latitude;
+          const userLng = position.coords.longitude;
+
+          console.log('🟢 USER LOCATION');
+          console.log('Latitude:', userLat);
+          console.log('Longitude:', userLng);
+          console.log('Accuracy (meters):', position.coords.accuracy);
+
+          const companyId = Number(sessionStorage.getItem('CompanyId'));
+          const regionId = Number(sessionStorage.getItem('RegionId'));
+
+          this.adminService.getGeoLocationsByCompanyRegion(companyId, regionId)
+            .subscribe((locations: any[]) => {
+
+              console.log('🏢 GEO LOCATIONS FROM DB:', locations);
+
+              if (!locations || locations.length === 0) {
+                Swal.fire('Error', 'No Geo Locations configured', 'error');
+                resolve(false);
+                return;
+              }
+
+              let isInside = false;
+
+              for (let loc of locations) {
+
+                const distance = this.getDistance(
+                  userLat,
+                  userLng,
+                  Number(loc.latitude),
+                  Number(loc.longitude)
+                );
+
+                console.log('📍 Checking Location:');
+                console.log('Office Lat:', loc.latitude);
+                console.log('Office Lng:', loc.longitude);
+                console.log('Radius:', loc.radius, 'meters');
+                console.log('Distance:', distance, 'meters');
+
+                // ✅ BUFFER ADDED (important for real-time GPS issues)
+                const buffer = 50; // meters tolerance
+
+                if (distance <= (Number(loc.radius) + buffer)) {
+                  console.log('✅ INSIDE GEOFENCE');
+                  isInside = true;
+                  break;
+                }
+              }
+
+              if (isInside) {
+                resolve(true);
+              } else {
+                console.log('❌ OUTSIDE GEOFENCE');
+                Swal.fire(
+                  'Access Denied',
+                  'You are outside office premises',
+                  'error'
+                );
+                resolve(false);
+              }
+
+            },
+              (error) => {
+                console.error('❌ API Error:', error);
+                Swal.fire('Error', 'Failed to fetch geo locations', 'error');
+                resolve(false);
+              });
+
+        },
+
+        (error) => {
+          console.error('❌ GEOLOCATION ERROR:', error);
+          Swal.fire('Error', 'Please enable location access', 'error');
+          resolve(false);
+        },
+
+        {
+          enableHighAccuracy: true,
+          timeout: 20000,
+          maximumAge: 0
+        }
+      );
+    });
+  }
+
+  //===============================  geo fencing =================================
+
+  getDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+
+    const R = 6371e3; // meters
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+    const a =
+      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+      Math.cos(φ1) * Math.cos(φ2) *
+      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c;
+  }
+
+  //===============================  check WFH Status =================================
+
+  checkWFHStatus() {
+    const today = new Date().toISOString().split('T')[0];
+
+    this.attendanceService
+      .getMyRequests(this.userId, this.companyId, this.regionId)
+      .subscribe((res: any[]) => {
+
+        // ✅ Check if any APPROVED WFH for today
+        const approvedWFH = res.find(x =>
+          x.status === 'Approved' &&
+          x.fromDate <= today &&
+          x.toDate >= today
+        );
+
+        this.isWFHApproved = !!approvedWFH;
+
+        console.log('WFH Approved Today:', this.isWFHApproved);
+      });
+  }
+
+  records: any;
+  loadTodayAttendance() {
+    this.employeeResignationService
+      .getTodayByEmployee(this.employeeCode, this.companyId, this.regionId)
+      .subscribe(res => {
+        this.records = res;
+      });
+  }
+  attendanceRecords: any;
+  //  loadAttendance() {
+  //     this.adminService.getTodayAttendance(
+  //       String(this.employeeCode),
+  //       this.companyId,
+  //       this.regionId
+  //     ).subscribe(res => {
+  //       this.attendanceRecords = res;
+  //       this.setTodaySummary();
+  //       this.setAvailableActions(); 
+  //     });
+  //   }
+  todayDuration: any;
+  todayClockIn: any = '--:--';
+  todayClockOut: any = '--:--'
+
+  setTodaySummary() {
+    const today = new Date().toISOString().split('T')[0];
+
+    const todayRecords = this.attendanceRecords
+      .filter((r: any) => r.attendanceDate.startsWith(today))
+      .sort((a: any, b: any) => a.actionTime.localeCompare(b.actionTime));
+
+    const clockIns = todayRecords.filter((r: any) => r.actionType === 'ClockIn');
+    const clockOuts = todayRecords.filter((r: any) => r.actionType === 'ClockOut');
+
+    // First ClockIn
+    this.todayClockIn = clockIns.length
+      ? clockIns[0].actionTime
+      : '--:--';
+
+    // Last ClockOut
+    this.todayClockOut = clockOuts.length
+      ? clockOuts[clockOuts.length - 1].actionTime
+      : '--:--';
+
+    // 🟢 Calculate duration
+    if (this.todayClockIn !== '--:--' && this.todayClockOut !== '--:--') {
+      const start = this.parseTime(this.todayClockIn);
+      const end = this.parseTime(this.todayClockOut);
+
+      const diffMs = end.getTime() - start.getTime();
+
+      if (diffMs > 0) {
+        const hours = Math.floor(diffMs / (1000 * 60 * 60));
+        const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+        this.todayDuration =
+          `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      } else {
+        this.todayDuration = '--:--';
+      }
+    } else {
+      this.todayDuration = '--:--';
+    }
+  }
+ parseTime(time: string): Date {
+    const [hours, minutes] = time.split(':').map(Number);
+
+    const d = new Date();
+    d.setHours(hours, minutes, 0, 0);
+
+    return d;
+}
+  availableActions: string[] = [];
+  setAvailableActions() {
+    const today = new Date().toISOString().split('T')[0];
+
+    const todayRecords = this.attendanceRecords
+      .filter((r: any) => r.attendanceDate.startsWith(today))
+      .sort((a: any, b: any) => a.actionTime.localeCompare(b.actionTime));
+
+    // FIRST record of the day
+    if (todayRecords.length === 0) {
+      this.availableActions = ['ClockIn'];
+      //this.attendanceForm.patchValue({ clockType: 'ClockIn' });
+      return;
+    }
+  }
+  loadAttendance() {
+
+    this.adminService
+        .getTodayAttendance(
+            String(this.employeeCode),
+            this.companyId,
+            this.regionId
+        )
+        .subscribe(res => {
+
+            this.attendanceRecords = res;
+
+            this.syncClockStateWithAPI();
+
+            this.calculateStatus();
+
+        });
+
+}
+ syncClockStateWithAPI() {
+
+    this.stopTimer();
+
+    if (!this.attendanceRecords || this.attendanceRecords.length == 0) {
+
+        this.isClockedIn = false;
+        this.clockStatus = 'Not Clocked In';
+        this.clockInDisplay = '--:--';
+        this.totalHoursDisplay = '00:00:00';
+        this.accumulatedMs = 0;
+        return;
+    }
+
+    const records = [...this.attendanceRecords]
+        .sort((a: any, b: any) => {
+
+            const d1 = new Date(a.createdDate || a.attendanceDate + ' ' + a.actionTime);
+
+            const d2 = new Date(b.createdDate || b.attendanceDate + ' ' + b.actionTime);
+
+            return d1.getTime() - d2.getTime();
+
+        });
+
+    let totalMs = 0;
+
+    let lastClockIn: Date | null = null;
+
+    this.firstClockIn = null;
+    this.lastClockOut = null;
+
+    for (const r of records) {
+
+        const recordTime = new Date(
+            `${r.attendanceDate.split('T')[0]}T${r.actionTime}`
+        );
+
+        if (r.actionType === 'ClockIn') {
+
+            if (!this.firstClockIn) {
+
+                this.firstClockIn = r.actionTime;
+
+            }
+
+            lastClockIn = recordTime;
+
+        }
+
+        if (r.actionType === 'ClockOut') {
+
+            this.lastClockOut = r.actionTime;
+
+            if (lastClockIn) {
+
+                totalMs += recordTime.getTime() - lastClockIn.getTime();
+
+                lastClockIn = null;
+
+            }
+
+        }
+
+    }
+
+    this.accumulatedMs = totalMs;
+
+    if (lastClockIn) {
+
+        this.isClockedIn = true;
+
+        this.clockStatus = 'Clocked In';
+
+        this.clockInTime = lastClockIn;
+
+        this.clockInDisplay = this.firstClockIn!;
+
+        this.startTimer(totalMs, lastClockIn);
+
+    }
+    else {
+
+        this.isClockedIn = false;
+
+        this.clockStatus = 'Clocked Out';
+
+        this.clockInDisplay = this.firstClockIn || '--:--';
+
+        this.stopTimer();
+
+    }
+
+    const finalSeconds = Math.floor(totalMs / 1000);
+
+    const hrs = Math.floor(finalSeconds / 3600);
+
+    const mins = Math.floor((finalSeconds % 3600) / 60);
+
+    const secs = finalSeconds % 60;
+
+    this.totalHoursDisplay =
+        hrs.toString().padStart(2, '0') + ':' +
+        mins.toString().padStart(2, '0') + ':' +
+        secs.toString().padStart(2, '0');
+
+}
+async clockIn() {
+
+  if (this.isClockedIn) {
+    return;
+  }
+
+  // ✅ CHECK SHIFT
+  if (!this.shiftStartTime || !this.shiftEndTime) {
+
+    Swal.fire(
+      'Not Allowed',
+      'You are not assigned to any shift. Please contact HR.',
+      'warning'
+    );
+
+    return;
+  }
+
+  const now = new Date();
+
+  const { shiftEnd } = this.getShiftDateTimes();
+
+  // ✅ Prevent Clock In after Shift End
+  if (now > shiftEnd) {
+
+    Swal.fire({
+      icon: 'warning',
+      title: 'Clock In Not Allowed',
+      text: `You cannot clock in because your shift time has already ended at ${this.formatDisplayTime(shiftEnd)}.`,
+      confirmButtonText: 'OK'
+    });
+
+    return;
+  }
+
+  // ✅ WFH / Geo Fence
+  if (!this.isWFHApproved) {
+
+    const geoAllowed = await this.checkGeoFence();
+
+    if (!geoAllowed) {
+      return;
+    }
+
+  } else {
+
+    console.log('✅ WFH Approved → GeoFence Skipped');
+
+  }
+
+  this.loading = true;
+
+  this.isClockedIn = true;
+
+  this.clockInTime = now;
+
+  sessionStorage.setItem(
+    'clockInTime',
+    now.toISOString()
+  );
+
+  this.clockStatus = 'Clocked In';
+
+  this.clockInDisplay = this.formatTime(now);
+
+  this.totalHoursDisplay = '00:00:00';
+
+  this.startTimer(0, now);
+
+  this.employeeResignationService.addClockInOut({
+
+    userId: Number(sessionStorage.getItem('UserId')),
+
+    employeeCode: this.employeeCode,
+
+    employeeName: sessionStorage.getItem('Name') || '',
+
+    department: 0,
+
+    attendanceDate: new Date(),
+
+    actionType: 'ClockIn',
+
+    actionTime: this.getSystemTime24(),
+
+    clockInTime: this.getSystemTime24(),
+
+    clockOutTime: '',
+
+    totalWorkedHours: null,
+
+    companyId: this.companyId,
+
+    regionId: this.regionId
+
+  }).subscribe({
+
+    next: () => {
+
+      this.loading = false;
+
+      this.loadAttendance();
+
+      this.attendanceService.notifyAttendanceChanged();
+
+    },
+
+    error: (err) => {
+
+      console.error(err);
+
+      this.loading = false;
+
+      this.isClockedIn = false;
+
+      this.stopTimer();
+
+      Swal.fire(
+        'Error',
+        'Clock In Failed',
+        'error'
+      );
+
+    }
+
+  });
+
+}
+async clockOut() {
+debugger;
+  if (!this.isClockedIn) {
+    return;
+  }
+
+  this.loading = true;
+
+  this.isClockedIn = false;
+
+  sessionStorage.removeItem('clockInTime');
+
+  this.clockStatus = 'Clocked Out';
+
+  this.stopTimer();
+
+  const formattedTotalHours = this.formatWorkedHours();
+
+  this.employeeResignationService.addClockInOut({
+
+    userId: Number(sessionStorage.getItem('UserId')),
+
+    employeeCode: this.employeeCode,
+
+    employeeName: sessionStorage.getItem('Name') || '',
+
+    department: 0,
+
+    attendanceDate: new Date(),
+
+    actionType: 'ClockOut',
+
+    actionTime: this.getSystemTime24(),
+
+    clockInTime: '',
+
+    clockOutTime: this.getSystemTime24(),
+
+    totalWorkedHours: formattedTotalHours,
+
+    companyId: this.companyId,
+
+    regionId: this.regionId
+
+  }).subscribe({
+
+    next: () => {
+
+      this.loading = false;
+
+      this.loadAttendance();
+
+      this.attendanceService.notifyAttendanceChanged();
+
+      Swal.fire(
+        'Clock Out Successful',
+        `Total Worked Hours : ${formattedTotalHours}`,
+        'success'
+      );
+
+    },
+
+    error: (err) => {
+
+      console.error(err);
+
+      this.loading = false;
+
+      this.isClockedIn = true;
+
+      this.startTimer(this.accumulatedMs, this.clockInTime);
+
+      Swal.fire(
+        'Error',
+        'Clock Out Failed',
+        'error'
+      );
+
+    }
+
+  });
+
+}
+formatDuration(totalMinutes: number): string {
+
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (hours > 0 && minutes > 0) {
+    return `${hours} hr ${minutes} min`;
+  }
+
+  if (hours > 0) {
+    return `${hours} hr`;
+  }
+
+  return `${minutes} min`;
+}
+  isOpen: boolean = false;
+
+
+  // ================= CHATBOT =================
+
+  // ================= CHATBOT =================
+
+  // showQuickOptions = true;
+
+  intentMap = [
+    // NAVIGATION
+    { keywords: ['leave', 'leaves'], action: 'navigate', url: '/leave-management', label: 'Leave' },
+    { keywords: ['attendance'], action: 'navigate', url: '/attendance-list', label: 'Attendance' },
+    { keywords: ['dashboard', 'home'], action: 'navigate', url: '/dashboard', label: 'Dashboard' },
+    { keywords: ['expense', 'expenses'], action: 'navigate', url: '/expenses', label: 'Expenses' },
+    { keywords: ['asset', 'assets'], action: 'navigate', url: '/asset', label: 'Assets' },
+    { keywords: ['profile'], action: 'navigate', url: '/profile', label: 'Profile' },
+
+    // ACTIONS
+    { keywords: ['punch in', 'clock in'], action: 'punch_in' },
+    { keywords: ['punch out', 'clock out'], action: 'punch_out' }
+  ];
+
+
+
+
+
+  formatLabel(text: string): string {
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  }
+
+
+  getInitialOptions() {
+    return [
+      { label: '📊 HR Services', action: 'section_hr' },
+      { label: '🏢 Company Info', action: 'section_company' }
+    ];
+  }
+
+  getFaqResponse(input: string): any {
+
+    input = input.toLowerCase();
+
+    for (let faq of this.faqList) {
+      for (let key of faq.keywords) {
+        if (input.includes(key)) {
+          return faq;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  userInput = '';
+  messages: any[] = [];
+  menus: any[] = [];
+  isTyping = false;
+
+  // Toggle Chat
+  toggleChat() {
+    this.isOpen = !this.isOpen;
+
+    if (this.isOpen && this.messages.length === 0) {
+
+      this.addMessage(
+        'bot',
+        "Hi 👋 I'm your HRMS Assistant. You can manage HR tasks or explore company info 👇",
+        this.getInitialOptions()
+      );
+    }
+  }
+
+  // Add message
+  addMessage(type: string, text: string, buttons: any[] = []) {
+    const time = new Date().toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    this.messages.push({ type, text, time, buttons });
+    this.scrollToBottom();
+  }
+
+  // Send message
+  sendMessage() {
+    // allow text OR file
+    if (!this.userInput.trim() && !this.selectedFile) return;
+
+    const input = this.userInput.trim();
+
+    // show text
+    if (input) {
+      this.addMessage('user', input);
+    }
+
+    this.userInput = '';
+    this.isTyping = true;
+
+    setTimeout(() => {
+
+      this.isTyping = false;
+
+      // 📎 FILE LOGIC
+      if (this.selectedFile) {
+        this.addMessage(
+          'bot',
+          `📄 File "${this.selectedFile.name}" received successfully ✅`
+        );
+
+        this.selectedFile = null;
+        return;
+      }
+
+      // 🤖 EXISTING CHATBOT
+      if (input) {
+        this.handleUserQuery(input.toLowerCase());
+      }
+
+    }, 1000);
+  }
+
+
+  handleUserQuery(input: string) {
+
+    input = input.toLowerCase().trim();
+
+    // =========================
+    // ✅ FAQ FIRST
+    // =========================
+    const faq = this.getFaqResponse(input);
+    if (faq) {
+      this.addMessage('bot', faq.text, faq.buttons || []);
+      return;
+    }
+
+    // =========================
+    // ✅ SMART INTENT MATCHING (NEW 🔥)
+    // =========================
+    const matchedIntent = this.intentMap.find(intent =>
+      intent.keywords.some(k => input.includes(k))
+    );
+
+    if (matchedIntent) {
+
+      // =========================
+      // 🔴 PUNCH IN
+      // =========================
+      if (matchedIntent.action === 'punch_in') {
+
+        if (this.isClockedIn) {
+          this.addMessage('bot', '⚠️ You are already clocked in ⏱️');
+          return;
+        }
+
+        this.addMessage('bot', 'Punching you in... ⏱️');
+
+        setTimeout(() => {
+          this.toggleClock(); // ✅ uses your existing API
+          this.addMessage('bot', `✅ Clocked in at ${this.clockInDisplay}`);
+        }, 500);
+
+        return;
+      }
+
+      // =========================
+      // 🔴 PUNCH OUT
+      // =========================
+      if (matchedIntent.action === 'punch_out') {
+
+        if (!this.isClockedIn) {
+          this.addMessage('bot', '⚠️ You are not clocked in');
+          return;
+        }
+
+        this.addMessage('bot', 'Punching you out... ⏱️');
+
+        setTimeout(() => {
+          this.toggleClock(); // ✅ API call
+          this.addMessage('bot', `🕒 Total time worked: ${this.totalHoursDisplay}`);
+        }, 500);
+
+        return;
+      }
+
+      // =========================
+      // 📍 NAVIGATION
+      // =========================
+      if (matchedIntent.action === 'navigate' && matchedIntent.url) {
+
+        this.addMessage('bot', `Opening ${matchedIntent.label}...`);
+
+        setTimeout(() => {
+          this.router.navigateByUrl(matchedIntent.url!);
+        }, 400);
+
+        return;
+      }
+
+      // =========================
+      // ❌ FALLBACK
+      // =========================
+      this.addMessage(
+        'bot',
+        'I didn’t understand. Try: leave, attendance, dashboard, punch in/out 👇'
+      );
+
+      this.showQuickOptions();
+    }
+  }
+  // faq list questions and answers
+  faqList = [
+    {
+      keywords: ['cortracker', 'about'],
+      text: `CORtracker is an enterprise software company providing ERP, CRM, supply chain, and analytics solutions. It focuses on digital transformation using AI, automation, and modern technologies. The platform helps organizations streamline operations and improve efficiency across departments. CORtracker is headquartered in Michigan, USA, with a significant presence in India. It serves clients globally across various industries, offering both cloud and on-premise deployment options.`,
+    },
+    {
+      keywords: ['services'],
+      text: 'CORtracker offers ERP, CRM, supply chain, analytics, and custom software development.',
+      buttons: [
+        { label: 'ERP Modules', action: 'faq', value: 'erp' },
+        { label: 'CRM Features', action: 'faq', value: 'crm' }
+      ]
+    },
+    {
+      keywords: ['erp'],
+      text: 'ERP includes finance, HR, procurement, inventory, production, maintenance, and accounting modules.'
+    },
+    {
+      keywords: ['crm'],
+      text: 'CRM includes lead management, sales automation, customer support, marketing, and analytics.'
+    },
+    {
+      keywords: ['deployment'],
+      text: 'CORtracker supports both cloud-based and on-premise deployment.'
+    },
+    {
+      keywords: ['headquarters'],
+      text: 'CORtracker is headquartered in Michigan, USA.'
+    },
+    {
+      keywords: ['india'],
+      text: 'CORtracker IT Pvt Ltd is located in Jubilee Hills, Hyderabad, India.'
+    },
+    {
+      keywords: ['technology'],
+      text: 'CORtracker uses AI, IoT, big data, and automation for advanced solutions.'
+    },
+
+    {
+      keywords: ['culture'],
+      text: 'Work culture includes good learning opportunities, but varies across roles.'
+    },
+
+    {
+      keywords: ['modules'],
+      text: 'CORtracker ERP includes finance, HR, procurement, inventory, production, maintenance, and accounting modules.'
+    },
+  ];
+
+  // Handle button click
+  // showingQuickOptions functions
+  showQuickOptions() {
+    this.addMessage(
+      'bot',
+      'Here are some things I can help you with 👇',
+      [
+        { label: 'About CORtracker', action: 'faq', value: 'cortracker' },
+        { label: 'Services', action: 'faq', value: 'services' },
+        // { label: 'What modules are included in CORtracker ERP?', action: 'faq', value: 'modules' },
+        // { label: 'ERP Modules', action: 'faq', value: 'erp' },
+        // { label: 'CRM Features', action: 'faq', value: 'crm' },
+        { label: 'Work Culture', action: 'faq', value: 'culture' },
+        // {label: 'Leave Balance', action: 'navigate', url: '/leave-management'},
+        // {label: 'Pay Roll', action: 'navigate', url: '/payroll'},
+
+      ]
+    );
+  }
+
+  handleAction(btn: any) {
+
+    // Show user click
+    this.addMessage('user', btn.label);
+
+    this.isTyping = true;
+
+    setTimeout(() => {
+      this.isTyping = false;
+
+      // =========================
+      // ✅ SECTION: HR SERVICES
+      // =========================
+      if (btn.action === 'section_hr') {
+        this.addMessage(
+          'bot',
+          'Here are HR services you can access 👇',
+          [
+            { label: 'Leave Balance', action: 'navigate', url: '/leave-management' },
+            { label: 'Attendance', action: 'navigate', url: '/attendance-list' },
+            { label: 'Job History', action: 'navigate', url: '/skills' },
+            { label: 'Profile Info', action: 'navigate', url: '/profile' }
+          ]
+        );
+        return;
+      }
+
+      // =========================
+      // ✅ SECTION: COMPANY INFO
+      // =========================
+      if (btn.action === 'section_company') {
+        this.addMessage(
+          'bot',
+          'Here is company information 👇',
+          [
+            { label: 'About CORtracker', action: 'faq', value: 'cortracker' },
+            { label: 'Services', action: 'faq', value: 'services' },
+            { label: 'Work Culture', action: 'faq', value: 'culture' },
+            // { label: 'What modules are included in CORtracker ERP?', action: 'faq', value: 'modules' },
+            // {label: 'Leave Balance', action: 'navigate', url: '/leave-management'},
+            // {label: 'Pay Roll', action: 'navigate', url: '/payroll'},
+          ]
+        );
+        return;
+      }
+
+      // =========================
+      // ✅ FAQ FLOW
+      // =========================
+      if (btn.action === 'faq') {
+        this.handleUserQuery(btn.value);
+
+        // 🔥 SPECIAL CASE: ABOUT CORTRACKER → OPEN WEBSITE
+        if (btn.value === 'cortracker') {
+          setTimeout(() => {
+            this.addMessage(
+              'bot',
+              'Want to explore more? ',
+              [
+                {
+                  label: 'Open Official Website',
+                  action: 'external',
+                  url: 'https://www.cortracker360.com/index.php'
+                }
+              ]
+            );
+          }, 500);
+        }
+
+        return;
+      }
+
+      // =========================
+      // ✅ INTERNAL NAVIGATION
+      // =========================
+      if (btn.action === 'navigate') {
+
+        this.addMessage('bot', `Opening ${btn.label}...`);
+
+        setTimeout(() => {
+          this.router.navigateByUrl(btn.url);
+        }, 500);
+
+        return;
+      }
+
+      // =========================
+      // ✅ EXTERNAL NAVIGATION (NEW 🔥)
+      // =========================
+      if (btn.action === 'external') {
+
+        this.addMessage('bot', 'Opening official website... 🌐');
+
+        setTimeout(() => {
+          window.open(btn.url, '_blank');
+        }, 500);
+
+        return;
+      }
+
+      // =========================
+      // fallback
+      // =========================
+      this.addMessage('bot', 'Okay 👍');
+
+    }, 600);
+  }
+
+
+  // Auto scroll
+  scrollToBottom() {
+    setTimeout(() => {
+      const container = document.getElementById('chatContainer');
+      if (container) {
+        container.scrollTop = container.scrollHeight + 500;
+      }
+    }, 100);
+  }
+
+  resetChat() {
+    this.messages = [];
+    this.userInput = '';
+    this.isTyping = false;
+
+    // Restart conversation
+    this.addMessage(
+      'bot',
+      "Hi 👋 I'm your HRMS Assistant. How can I help you today?",
+      this.getInitialOptions()
+    );
+  }
+
+  // Adding voice commands
+  recognition: any;
+  isListening: boolean = false;
+
+  initVoiceRecognition() {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert('Voice recognition not supported in this browser');
+      return;
+    }
+
+    this.recognition = new SpeechRecognition();
+    this.recognition.lang = 'en-US';
+    this.recognition.continuous = false;
+    this.recognition.interimResults = false;
+
+    this.recognition.onstart = () => {
+      this.isListening = true;
+    };
+
+    this.recognition.onend = () => {
+      this.isListening = false;
+    };
+
+    this.recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+
+      // Show user message
+      this.addMessage('user', transcript);
+
+      // Process command
+      this.handleUserQuery(transcript.toLowerCase());
+    };
+
+    this.recognition.onerror = () => {
+      this.isListening = false;
+      this.addMessage('bot', '🎤 Voice error. Try again');
+    };
+  }
+
+  startListening() {
+    if (!this.recognition) {
+      this.initVoiceRecognition();
+    }
+
+    this.recognition.start();
+  }
+
+  stopListening() {
+    if (this.recognition) {
+      this.recognition.stop();
+    }
+  }
+
+  // loadUserShift() {
+
+  //   const companyId = Number(sessionStorage.getItem('CompanyId'));
+  //   const regionId = Number(sessionStorage.getItem('RegionId'));
+
+  //   this.employeeResignationService.getAllAllocations(this.userId)
+  //     .subscribe((allocations: any[]) => {
+
+  //       console.log('Allocations 👉', allocations);
+
+  //       const today = new Date().toISOString().split('T')[0];
+
+  //       // ✅ STEP 1: Filter by Company + Region + Active Date
+  //       const activeAllocation = allocations.find(a => {
+
+  //         const start = a.startDate ? a.startDate.split('T')[0] : null;
+  //         const end = a.endDate ? a.endDate.split('T')[0] : null;
+
+  //         return (
+  //           a.isActive &&
+  //           a.companyID == companyId &&
+  //           a.regionID == regionId &&
+  //           start <= today &&
+  //           (!end || end >= today)
+  //         );
+  //       });
+
+  //       if (!activeAllocation) {
+  //         console.warn('No active shift found');
+  //         this.showClockButton = false;
+  //         return;
+  //       }
+
+  //       console.log('Active Allocation 👉', activeAllocation);
+
+  //       // ✅ STEP 2: Get Shift Master Details
+  //       this.adminService
+  //         .getShiftsForDropdown(companyId, regionId)
+  //         .subscribe((shifts: any[]) => {
+
+  //           console.log('Shifts 👉', shifts);
+
+  //           const shift = shifts.find(s => s.shiftID == activeAllocation.shiftID);
+
+  //           if (!shift) {
+  //             console.warn('Shift not found in master');
+  //             return;
+  //           }
+
+  //           // ✅ FINAL: Assign Start Time
+  //           this.shiftStartTime = shift.shiftStartTime;
+
+  //           console.log('Shift Start Time 👉', this.shiftStartTime);
+
+  //           this.checkClockButtonVisibility();
+  //         });
+  //     });
+  // }
+  loadUserShift() {
+
+    const companyId = Number(sessionStorage.getItem('CompanyId'));
+    const regionId = Number(sessionStorage.getItem('RegionId'));
+
+    this.employeeResignationService.getAllAllocations(this.userId)
+      .subscribe((allocations: any[]) => {
+
+        console.log('Allocations 👉', allocations);
+
+        const today = new Date().toISOString().split('T')[0];
+
+        // ✅ STEP 1: Filter active allocation
+        const activeAllocation = allocations.find(a => {
+
+          const start = a.startDate ? a.startDate.split('T')[0] : null;
+          const end = a.endDate ? a.endDate.split('T')[0] : null;
+
+          return (
+            a.isActive &&
+            a.companyID == companyId &&
+            a.regionID == regionId &&
+            start <= today &&
+            (!end || end >= today)
+          );
+        });
+
+        if (!activeAllocation) {
+          console.warn('No active shift found');
+          this.showClockButton = false;
+          return;
+        }
+
+        console.log('Active Allocation 👉', activeAllocation);
+
+        // ✅ STEP 2: Get Shift Master
+        this.adminService
+          .getShiftsForDropdown(companyId, regionId)
+          .subscribe((shifts: any[]) => {
+
+            console.log('Shifts 👉', shifts);
+
+            const shift = shifts.find(s => s.shiftID == activeAllocation.shiftID);
+
+            if (!shift) {
+              console.warn('Shift not found in master');
+              return;
+            }
+
+            // ✅ SET SHIFT START
+            this.shiftStartTime = shift.shiftStartTime;
+            this.shiftEndTime = shift.shiftEndTime;
+
+            console.log('Shift Start Time 👉', this.shiftStartTime);
+
+            // ✅ STEP 3: GET GRACE TIME (NEW 🔥)
+            this.employeeResignationService
+              .getShiftallocationNameForClockInOut(
+                this.employeeCode || '',   // ✅ SAFE FIX
+                companyId,
+                regionId
+              )
+              .subscribe(res => {
+
+                console.log('Shift Extra Info 👉', res);
+
+                this.graceTime = res.grassTime;
+
+                console.log('Grace Time 👉', this.graceTime);
+
+                this.checkClockButtonVisibility();
+                //   this.calculateEarlyLate();
+              });
+
+          });
+      });
+  }
+  getReferenceTime(): string | null {
+
+  if (this.isClockedIn) {
+    return this.firstClockIn;   // 🟢 running state
+  }
+
+  return this.lastClockOut;     // 🔴 completed state
+}
+
+// calculateStatus() {
+// debugger;
+//   const refTime = this.getReferenceTime();
+
+//   if (!refTime || !this.shiftStartTime || !this.graceTime) {
+//     this.earlyLateStatus = '';
+//     return;
+//   }
+
+//   const time = this.parseTime(refTime);
+
+//   const [sH, sM] = this.shiftStartTime.split(':').map(Number);
+
+//   const shiftStart = new Date();
+//   shiftStart.setHours(sH, sM, 0, 0);
+
+//   // On Time Window = 5 mins
+//   const onTimeEnd = new Date(
+//     shiftStart.getTime() + (5 * 60000)
+//   );
+
+//   // Grace Window
+//   const [gH, gM] = this.graceTime.split(':').map(Number);
+
+//   const graceEnd = new Date(
+//     shiftStart.getTime() + ((gH * 60) + gM) * 60000
+//   );
+
+//   // EARLY
+//   if (time < shiftStart) {
+
+//     const mins = Math.floor(
+//       (shiftStart.getTime() - time.getTime()) / 60000
+//     );
+
+//     this.earlyLateStatus = `Early by ${this.formatDuration(mins)}`;
+//   }
+//    // ON TIME (0-5 mins)
+//   else if (time <= onTimeEnd && time==time) {
+
+//     this.earlyLateStatus = 'On Time';
+//   }
+// // GRACE
+//   else if (time <= onTimeEnd) {
+
+//     const mins = Math.floor(
+//       (time.getTime() - shiftStart.getTime()) / 60000
+//     );
+
+//     this.earlyLateStatus = `Grace ${this.formatDuration(mins)}`;
+//   }
+ 
+
+  
+
+//   // LATE
+//   else {
+
+//     const mins = Math.floor(
+//       (time.getTime() - onTimeEnd.getTime()) / 60000
+//     );
+
+//     this.earlyLateStatus = `Late by ${this.formatDuration(mins)}`;
+//   }
+// }
+
+
+calculateStatus() {
+
+  if (!this.isClockedIn && this.lastClockOut) {
+  this.earlyLateStatus = `Clocked Out At ${this.lastClockOut}`;
+  return;
+}
+
+  const refTime = this.getReferenceTime();
+
+  // if (!refTime || !this.shiftStartTime || !this.graceTime) {
+  //   this.earlyLateStatus = '';
+  //   return;
+  // }
+
+  // const time = this.parseTime(refTime);
+  if (!this.firstClockIn || !this.shiftStartTime || !this.graceTime) {
+  this.earlyLateStatus = '';
+  return;
+}
+
+const time = this.parseTime(this.firstClockIn);
+
+  const [sH, sM] = this.shiftStartTime.split(':').map(Number);
+
+  const shiftStart = new Date();
+  shiftStart.setHours(sH, sM, 0, 0);
+
+  // 5 minute on-time window
+  const onTimeEnd = new Date(shiftStart.getTime() + 5 * 60000);
+console.log('Shift Start:', this.shiftStartTime);
+console.log('Clock In:', refTime);
+console.log('Grace Time:', this.graceTime);
+  // Grace end
+  const [gH, gM, gS] = this.graceTime.split(':').map(Number);
+
+  const graceEnd = new Date(
+    shiftStart.getTime() +
+    (((gH * 60) + gM) * 60000) +
+    ((gS || 0) * 1000)
+  );
+
+  if (time < shiftStart) {
+
+    const mins = Math.floor(
+      (shiftStart.getTime() - time.getTime()) / 60000
+    );
+
+    this.earlyLateStatus = `Early by ${this.formatDuration(mins)}`;
+  }
+
+  else if (time <= onTimeEnd) {
+
+    this.earlyLateStatus = 'On Time';
+  }
+
+  else if (time <= graceEnd) {
+
+    const mins = Math.floor(
+      (graceEnd.getTime() - time.getTime()) / 60000
+    );
+
+    this.earlyLateStatus = `Grace ${this.formatDuration(mins)}`;
+  }
+
+  else {
+
+    const mins = Math.floor(
+      (time.getTime() - graceEnd.getTime()) / 60000
+    );
+
+    this.earlyLateStatus = `Late by ${this.formatDuration(mins)}`;
+  }
+}
+
+  getEarlyLateClass(): string {
+
+  if (!this.earlyLateStatus) {
+    return '';
+  }
+
+  const status = this.earlyLateStatus.toLowerCase();
+
+  if (status.includes('on time')) {
+    return 'status-ontime';
+  }
+
+  if (status.includes('early')) {
+    return 'status-early';
+  }
+
+  if (status.includes('grace')) {
+    return 'status-grace';
+  }
+
+  if (status.includes('late')) {
+    return 'status-late';
+  }
+  if (status.includes('clocked out')) {
+  return 'status-clockout';
+}
+
+  return '';
+}
+
+  checkClockButtonVisibility() {
+    if (!this.shiftStartTime) {
+      this.showClockButton = false;
+      return;
+    }
+
+    const now = new Date();
+
+    const [hours, minutes] = this.shiftStartTime.split(':').map(Number);
+
+    const shiftStart = new Date();
+    shiftStart.setHours(hours, minutes, 0, 0);
+
+    // ⏪ 30 mins before
+    const allowedTime = new Date(shiftStart.getTime() - (30 * 60 * 1000));
+
+    // ❌ After shift start + grace (optional)
+    const shiftEndLimit = new Date(shiftStart.getTime() + (2 * 60 * 60 * 1000)); // 2 hrs buffer
+
+    this.allowedClockTimeText = this.formatDisplayTime(allowedTime);
+
+    // ✅ FINAL CONDITION
+    this.showClockButton = now >= allowedTime && now <= shiftEndLimit;
+
+    console.log('Now:', now);
+    console.log('Allowed:', allowedTime);
+    console.log('Shift Start:', shiftStart);
+    console.log('Show Button:', this.showClockButton);
+  }
+
+  formatDisplayTime(date: Date): string {
+    let hours = date.getHours();
+    let minutes: any = date.getMinutes();
+
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+
+    hours = hours % 12;
+    hours = hours ? hours : 12; // 0 => 12
+
+    minutes = minutes.toString().padStart(2, '0');
+
+    return `${hours}:${minutes} ${ampm}`;
+  }
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.selectedFile = file;
+
+      // show in chat
+      this.addMessage('user', `📎 ${file.name}`);
+    }
+  }
+  breakIn() {
+
+  if (!this.isClockedIn) {
+
+    Swal.fire(
+      'Warning',
+      'Please Clock In first.',
+      'warning');
+
+    return;
+  }
+
+  this.breakLoading = true;
+
+  const request = {
+
+      companyId: this.companyId,
+      regionId: this.regionId,
+      userId: this.userId
+
+  };
+
+  this.breakService.breakIn(request)
+  .subscribe({
+
+      next: (res:any)=>{
+
+          this.breakLoading=false;
+
+          this.isOnBreak=true;
+
+          Swal.fire(
+            'Success',
+            res.message,
+            'success');
+
+      },
+
+      error:(err)=>{
+
+          this.breakLoading=false;
+
+          Swal.fire(
+            'Warning',
+            err.error.message,
+            'warning');
+
+      }
+
+  });
+
+}
+breakOut() {
+
+    this.breakLoading=true;
+
+    const request={
+
+        companyId:this.companyId,
+        regionId:this.regionId,
+        userId:this.userId
+
+    };
+
+    this.breakService.breakOut(request)
+    .subscribe({
+
+        next:(res:any)=>{
+
+            this.breakLoading=false;
+
+            this.isOnBreak=false;
+
+            Swal.fire(
+              'Success',
+              res.message,
+              'success');
+
+        },
+
+        error:(err)=>{
+
+            this.breakLoading=false;
+
+            Swal.fire(
+              'Warning',
+              err.error.message,
+              'warning');
+
+        }
+
+    });
+
+}
+}
+
+

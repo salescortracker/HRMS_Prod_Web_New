@@ -1,0 +1,86 @@
+<!-- =======================
+     FILTER SECTION
+======================= -->
+<form class="row mb-3">
+
+ <!-- Asset Type -->
+<div class="col-md-3">
+  <label>Asset Type</label>
+  <select class="form-select"
+          [(ngModel)]="filter.assetType"
+          name="assetType">
+    <option value="">All</option>
+    <option *ngFor="let type of assetTypes" [value]="type.assetTypeId">
+      {{ type.assetTypeName }}
+    </option>
+  </select>
+</div>
+
+
+  <!-- Status -->
+  <div class="col-md-2">
+    <label class="form-label">Status</label>
+    <select class="form-select" [(ngModel)]="filter.assetStatusId" name="assetStatusId">
+      <option value="">All</option>
+      <option *ngFor="let s of statuses" [value]="s.assetStatusId">
+        {{ s.assetStatusName }}
+      </option>
+    </select>
+  </div>
+
+  
+
+  <!-- Buttons -->
+  <div class="col-md-2 d-flex align-items-end gap-2">
+    <button type="button" class="btn btn-primary w-100" (click)="applyFilters()">
+      Filter
+    </button>
+
+    <button type="button" class="btn btn-outline-secondary w-100" (click)="clearFilters()">
+      Clear
+    </button>
+  </div>
+
+</form>
+
+<!-- =======================
+     TABLE SECTION
+======================= -->
+<div class="dashboard-tables full-row mt-2">
+  <div class="table-card">
+    <h3>My Assets</h3>
+
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Request ID</th>
+          <th>Asset Type</th>
+          <th>Category</th>
+          <th>Required Date</th>
+          <th>Priority</th>
+          <th>Reason</th>
+
+          <th>Status</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let r of filteredRequests">
+          <td>{{ r.requestID }}</td>
+          <td>{{ getAssetTypeName(r.assetType) }}</td>
+          <td>{{ getAssetCategoryName(r.assetCategory) }}</td>
+          <td>{{ r.requiredDate | date:'dd-MM-yyyy' }}</td>
+          <td>{{ getPriorityName(r.priority) }}</td>
+          <td>{{ r.reason }}</td>
+
+          <td>
+            <span class="badge bg-warning" *ngIf="r.status=='Pending'">Pending</span>
+            <span class="badge bg-success" *ngIf="r.status=='Approved'">Approved</span>
+            <span class="badge bg-danger" *ngIf="r.status=='Rejected'">Rejected</span>
+            <span class="badge bg-primary" *ngIf="r.status=='Assigned'">Assigned</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

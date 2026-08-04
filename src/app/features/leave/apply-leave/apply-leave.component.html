@@ -1,0 +1,381 @@
+<div class="row g-4 mb-4">
+
+  <div class="col-xl-3 col-lg-4 col-md-6"
+       *ngFor="let balance of leaveBalances">
+
+    <div class="leave-card premium-card h-100">
+
+      <!-- Glow Effect -->
+      <div class="card-glow"></div>
+
+      <div class="card-content">
+
+        <!-- HEADER -->
+        <div class="d-flex justify-content-between align-items-start mb-4">
+
+          <div>
+            <h5 class="leave-title mb-1">
+              {{ balance.leaveTypeName }}
+            </h5>
+
+            <small class="allocated-text">
+              Allocated:
+              <span>{{ balance.allocatedLeaves }}</span>
+            </small>
+          </div>
+
+          <div class="leave-icon">
+            <i class="fas fa-calendar-check"></i>
+          </div>
+
+        </div>
+
+        <!-- REMAINING -->
+        <div class="remaining-section mb-4">
+
+          <h2 class="remaining-count mb-0">
+            {{ getRemaining(balance) }}
+          </h2>
+
+          <span *ngIf="balance.remainingLeaves < 0"
+                class="text-danger">
+            {{ Math.abs(balance.remainingLeaves) }} LOP
+          </span>
+          <small class="d-block text-info mt-2">
+            Previous Balance: {{ balance.previousBalance || 0 }}
+          </small>
+
+        </div>
+
+        <!-- PROGRESS -->
+        <div class="progress-wrapper mb-4">
+
+          <div class="d-flex justify-content-between mb-2">
+
+            <small class="usage-label">Usage</small>
+
+            <small class="usage-percent">
+              {{
+                balance.allocatedLeaves > 0
+                ? (((balance.approvedLeaves + balance.pendingLeaves)
+                    / balance.allocatedLeaves) * 100 | number:'1.0-0')
+                : 0
+              }}%
+            </small>
+
+          </div>
+
+          <div class="premium-progress">
+
+            <div class="premium-progress-bar"
+                 [style.width.%]="
+                   balance.allocatedLeaves > 0
+                   ? ((balance.approvedLeaves + balance.pendingLeaves)
+                     / balance.allocatedLeaves) * 100
+                   : 0">
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- FOOTER STATS -->
+        <div class="stats-grid">
+
+          <div class="stat-box approved">
+            <span class="stat-number">
+              {{ balance.approvedLeaves }}
+            </span>
+            <span class="stat-label">
+              Approved
+            </span>
+          </div>
+
+          <div class="stat-box pending">
+            <span class="stat-number">
+              {{ balance.pendingLeaves }}
+            </span>
+            <span class="stat-label">
+              Pending
+            </span>
+          </div>
+
+          <div class="stat-box rejected">
+            <span class="stat-number">
+              {{ balance.rejectedLeaves }}
+            </span>
+            <span class="stat-label">
+              Rejected
+            </span>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<div class="card p-4 shadow-sm">
+  <h5 class="mb-3">Apply for Leave</h5>
+  <!-- Apply Leave Form -->
+  <form (ngSubmit)="onSubmit()" #leaveForm="ngForm">
+    <div class="row mb-3 align-items-end">
+
+      <!-- Leave Type -->
+      <div class="col-md-3">
+        <label class="form-label">Leave Type <span class="text-danger">*</span></label>
+        <select class="form-select" required [(ngModel)]="leaveType" name="leaveType" (change)="onLeaveTypeChange()">
+          <option value="">Select leave type</option>
+          <option *ngFor="let lt of leaveTypes" [value]="lt.leaveTypeName">
+            {{ lt.leaveTypeName }}
+          </option>
+
+        </select>
+        <div class="mt-2" *ngIf="leaveType">
+
+          <small class="text-success d-block">
+            Available Leaves : {{ availableLeaves }}
+          </small>
+
+          <small class="text-info d-block"
+                *ngIf="leaveType === 'Casual Leave'">
+            Previous Balance : {{ previousBalance }}
+          </small>
+
+          <small class="text-primary d-block"
+                *ngIf="leaveType === 'Casual Leave'">
+            Future Leaves : {{ futureLeaves }}
+          </small>
+
+        </div>
+
+        <!-- NEW OPTIONS -->
+        <div class="mt-3"
+            *ngIf="leaveType === 'Casual Leave'">
+
+          <div class="form-check">
+            <input class="form-check-input"
+                  type="checkbox"
+                  [(ngModel)]="usePreviousBalance"
+                  name="usePreviousBalance"
+                  (change)="checkLOP()">
+
+            <label class="form-check-label">
+              Use Previous Balance
+              ({{ previousBalance }})
+            </label>
+          </div>
+
+          <div class="form-check">
+            <input class="form-check-input"
+                  type="checkbox"
+                  [(ngModel)]="useLOP"
+                  name="useLOP"
+                  (change)="checkLOP()">
+
+            <label class="form-check-label text-danger">
+              Convert Remaining Days To LOP
+            </label>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Half Day Checkbox -->
+      <div class="col-md-2">
+        <label class="form-label d-block">Half Day</label>
+        <div class="form-check mt-2">
+          <input type="checkbox" class="form-check-input" [(ngModel)]="isHalfDay" name="isHalfDay"
+            (change)="onHalfDayChange()">
+
+        </div>
+      </div>
+
+      <!-- Start Date -->
+      <div class="col-md-3">
+        <label class="form-label">Start Date <span class="text-danger">*</span></label>
+        <input type="date" class="form-control" required [(ngModel)]="startDate" name="startDate" 
+         (change)="onStartDateChange()">
+        <small class="text-danger">{{ startDateError }}</small>
+      </div>
+
+      <!-- End Date -->
+      <div class="col-md-3">
+        <label class="form-label">End Date <span class="text-danger">*</span></label>
+        <input type="date" class="form-control" required [(ngModel)]="endDate" name="endDate" [min]="startDate"[disabled]="isHalfDay"
+          (change)="onEndDateChange()">
+        <small class="text-danger">{{ endDateError }}</small>
+      </div>
+
+    </div>
+
+
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <label class="form-label">Total Days</label>
+        <input type="number" class="form-control" readonly [(ngModel)]="totalDays" name="totalDays"
+          placeholder="Total leave days">
+
+      </div>
+      <div *ngIf="showLopWarning"
+     class="alert alert-warning mt-2">
+
+  <strong>Warning!</strong><br>
+
+  Available Leaves :
+  {{ availableLeaves }}
+
+  <br>
+
+  Requested Leaves :
+  {{ totalDays }}
+
+  <br>
+
+  LOP Days :
+  {{ lopDays }}
+
+</div>
+
+      <div class="col-md-4">
+        <label class="form-label">Reason / Remarks<span class="text-danger">*</span></label>
+        <textarea class="form-control" rows="2" placeholder="Enter reason for leave" [(ngModel)]="reason"
+          name="reason"></textarea>
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label">Supporting Document</label>
+        <input type="file" class="form-control" accept=".pdf,.jpg,.png" (change)="onFileSelected($event)">
+
+      </div>
+    </div>
+    <!-- Reporting Manager (Auto-filled) -->
+    <div class="col-md-4 mb-3">
+      <label class="form-label">Reporting Manager</label>
+
+      <input type="text" class="form-control" [(ngModel)]="reportingManagerName" name="reportingManagerName" readonly>
+    </div>
+    <div class="mb-3 col-md-4">
+      <label class="form-label">HR Email (CC)</label>
+      <input type="email" class="form-control" [(ngModel)]="hrEmail" name="hrEmail" multiple placeholder="Enter comma-separated HR email addresses">
+    </div>
+
+
+    <div class="text-start mt-3 d-flex gap-2">
+      <button *ngIf="canCreate" type="submit" class="btn btn-primary">
+        Submit Leave Request
+      </button>
+
+      <!-- ✅ Reset Button -->
+      <button type="button" class="btn btn-primary" (click)="resetForm()">
+        Reset
+      </button>
+    </div>
+
+
+  </form>
+</div>
+
+<!-- FILTER SECTION -->
+
+
+<!-- LEAVE LIST -->
+<div class="card p-4 shadow-sm mt-4">
+  <h5 class="mb-3">My Leave Requests</h5>
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+      <thead class="table-light">
+
+        <tr>
+          <th>S.No</th>
+
+          <th (click)="sortBy('appliedDate')" style="cursor:pointer">
+            Applied Date
+            <span *ngIf="sortColumn === 'appliedDate'">{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
+          </th>
+
+          <th (click)="sortBy('leaveType')" style="cursor:pointer">
+            Leave Type
+            <span *ngIf="sortColumn === 'leaveType'">{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
+          </th>
+
+          <th>From</th>
+          <th>To</th>
+          <th>Total Days</th>
+          <th>Reason</th>
+          <th>File</th>
+
+          <th (click)="sortBy('status')" style="cursor:pointer">
+            Status
+            <span *ngIf="sortColumn === 'status'">{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
+          </th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let item of filteredLeaves(); let i = index">
+          <td>{{ (currentPage - 1) * pageSize + i + 1 }}</td>
+          <td>{{ item.appliedDate | date:'dd-MM-yyyy' }}</td>
+          <td>{{ item.leaveType }}</td>
+          <td>{{ item.fromDate | date:'dd-MM-yyyy' }}</td>
+          <td>{{ item.toDate | date:'dd-MM-yyyy' }}</td>
+          <td>{{ item.totalDays }}</td>
+          <td>{{ item.reason }}</td>
+          <td>
+            <!-- If file exists -->
+            <a *ngIf="item.fileName; else noFile" style="cursor:pointer; color: #0d6efd; font-weight: 500;"
+              (click)="viewDocument(item.fileName)">
+              View
+            </a>
+
+            <!-- If no file -->
+            <ng-template #noFile>
+              <span class="text-muted">No File</span>
+            </ng-template>
+          </td>
+
+
+          <td>
+            <span class="badge" [ngClass]="{
+                    'bg-warning text-dark': item.status === 'Pending',
+                    'bg-success': item.status === 'Approved',
+                    'bg-danger': item.status === 'Rejected'
+                  }">
+              {{ item.status }}
+            </span>
+          </td>
+          <!-- <td class="text-center">
+                <a href="#" data-bs-toggle="modal" data-bs-target="#viewLeaveModal">
+                  <i class="fa-solid fa-eye text-primary"></i>
+                </a>
+              </td> -->
+        </tr>
+      </tbody>
+
+    </table>
+    <div class="d-flex justify-content-between align-items-center mt-3">
+      <div>
+        <label>Show:
+          <select class="form-select d-inline w-auto ms-2" [(ngModel)]="pageSize" (change)="changePageSize(pageSize)">
+            <option *ngFor="let size of pageSizeOptions" [ngValue]="size">{{ size }}</option>
+          </select> entries
+        </label>
+      </div>
+
+      <div>
+        <button class="btn btn-outline-secondary btn-sm me-2" (click)="changePage(currentPage - 1)"
+          [disabled]="currentPage === 1">Previous</button>
+
+        <span>Page {{ currentPage }} of {{ totalPages }}</span>
+
+        <button class="btn btn-outline-secondary btn-sm ms-2" (click)="changePage(currentPage + 1)"
+          [disabled]="currentPage === totalPages">Next</button>
+      </div>
+    </div>
+
+  </div>
+</div>

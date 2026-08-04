@@ -1,0 +1,252 @@
+<app-header></app-header>
+<app-sidebar></app-sidebar>
+
+<div class="attendance-wrapper">
+
+    <!-- PAGE HEADER -->
+    <div class="attendance-card">
+        <h2 class="dashboard-title">Attendance Management</h2>
+    </div>
+
+
+    <!-- ATTENDANCE ENTRY CARD -->
+    <div class="attendance-card">
+
+        <!-- CURRENT DATE -->
+        <div class="attendance-date">
+            Employees Attendance - {{ todayDate | date:'dd MMM yyyy' }}
+        </div>
+
+        <!-- ✅ SHOW ONLY IF UNSAVED DATES EXIST -->
+        <!-- <div *ngIf="unsavedDates.length > 0"> -->
+        <div>
+            <!-- DATE FILTER -->
+            <div class="date-filter">
+                <label>Select Date To Save Missed Attendance:</label>
+
+                <input type="date" [(ngModel)]="selectedDate" (change)="onDateChange()" class="date-input">
+
+                <button class="btn-search" (click)="loadEmployeesByDate()">
+                    Load Attendance
+                </button>
+            </div>
+
+            <!-- UNSAVED WARNING -->
+            <div class="unsaved-warning">
+                ⚠️ You have not saved attendance for:
+                <span *ngFor="let d of unsavedDates">
+                    {{ d | date:'dd MMM yyyy' }},
+                </span>
+            </div>
+
+        </div>
+
+        <div class="card-header">
+            <h3>Employee Attendance</h3>
+
+            <button class="btn-save" *ngIf="canCreate" (click)="saveAllAttendance()">
+                Save All Attendance
+            </button>
+        </div>
+
+        <table class="attendance-table">
+
+            <thead>
+                <tr>
+                    <th>Employee Code</th>
+                    <th>Employee Name</th>
+                    <th>Shift Timings</th>
+                    <th>Clock In</th>
+                    <th>Late Arrivals</th>
+                    <th>Clock Out</th>
+                    <th>Gross Time</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                <!-- PAGINATED EMPLOYEE LIST -->
+                <tr *ngFor="let emp of paginatedEmployees">
+
+                    <td>{{ emp.employeeCode }}</td>
+
+                    <td>{{ emp.employeeName }}</td>
+                    <td>
+                        {{ emp.shiftName }} ({{ emp.shiftStartTime }} - {{ emp.shiftEndTime }})
+                    </td>
+
+                    <td>
+                        {{ emp.clockIn ? emp.clockIn : '--:--' }}
+                    </td>
+                    <td>
+                        <span *ngIf="emp.arrivalStatus" [ngClass]="getArrivalClass(emp)">
+                            {{ emp.arrivalStatus }}
+                        </span>
+                    </td>
+
+                    <td>
+                        {{ emp.clockOut ? emp.clockOut : '--:--' }}
+                    </td>
+                    <td>
+                        {{ emp.grossTime ? emp.grossTime : '--:--' }}
+                    </td>
+
+                    <td>
+                        <span class="status-badge" [ngClass]="getStatusClass(emp.status)">
+                            {{ emp.status }}
+                        </span>
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+        <!-- EMPLOYEE TABLE PAGINATION -->
+        <div class="pagination" *ngIf="employees.length > itemsPerPage">
+
+            <button *ngFor="let page of [].constructor(totalPages); let i = index" (click)="changePage(i+1)"
+                [class.active]="currentPage === (i+1)">
+
+                {{i+1}}
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+
+
+    <!-- DATE RANGE FILTER -->
+    <div class="attendance-card report-filter-card">
+
+        <div class="report-filter">
+
+            <label>From Date:</label>
+            <input type="date" [(ngModel)]="fromDate">
+
+            <label>To Date:</label>
+            <input type="date" [(ngModel)]="toDate">
+
+            <button class="btn-search" (click)="searchReport()">
+                Search
+            </button>
+
+            <button class="btn-report pdf" (click)="downloadPDF()">
+                Download PDF
+            </button>
+
+            <button class="btn-report excel" (click)="downloadExcel()">
+                Download Excel
+            </button>
+
+            <button class="btn-report weekly" (click)="weekly()">
+                View Weekly Report
+            </button>
+
+            <button class="btn-report monthly" (click)="monthly()">
+                View Monthly Report
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- REPORT TABLE -->
+    <div class="attendance-card" *ngIf="showReport">
+
+        <h3 class="report-title">Attendance Report</h3>
+
+        <table class="attendance-table">
+
+            <thead>
+                <tr>
+                    <th>Employee Code</th>
+                    <th>Employee Name</th>
+                    <th>Shift Timings</th>
+                    <th>Date</th>
+                    <th>Clock In</th>
+                    <th>Late Arrivals</th>
+                    <th>Clock Out</th>
+                    <th>Gross Time</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                <!-- PAGINATED REPORT LIST -->
+                <tr *ngFor="let r of paginatedReports">
+
+                    <td>{{ r.employeeCode }}</td>
+
+                    <td>{{ r.employeeName }}</td>
+                    <td>
+                        {{ r.shiftName }}
+                        ({{ r.shiftStartTime }} - {{ r.shiftEndTime }})
+                    </td>
+
+
+                    <td>{{ r.attendanceDate | date:'dd-MM-yyyy' }}</td>
+                    <td>{{ r.clockIn }}</td>
+                    <td>
+                        <span class="text-danger fw-bold" *ngIf="r.lateMinutes && r.lateMinutes > 0">
+                            Late by {{ formatLateMinutes(r.lateMinutes) }}
+                        </span>
+                    </td>
+                    <td>{{ r.clockOut }}</td>
+                    <td>{{ r.grossTime }}</td>
+
+                    <td>
+                        <span class="status-badge" [ngClass]="getStatusClass(r.status)">
+                            {{ r.status }}
+                        </span>
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+
+
+        <!-- REPORT TABLE PAGINATION -->
+        <div class="pagination-container" *ngIf="reportTotalPages > 0">
+
+            <!-- FIRST -->
+            <button (click)="goToReportFirst()" [disabled]="reportPage === 1">
+                << </button>
+
+                    <!-- PREVIOUS -->
+                    <button (click)="previousPage()" [disabled]="reportPage === 1">
+                        Prev
+                    </button>
+
+                    <!-- PAGE NUMBERS (ONLY 5) -->
+                    <button *ngFor="let page of visibleReportPages" (click)="changeReportPage(page)"
+                        [class.active]="reportPage === page">
+                        {{ page }}
+                    </button>
+
+                    <!-- NEXT -->
+                    <button (click)="nextPage()" [disabled]="reportPage === reportTotalPages">
+                        Next
+                    </button>
+
+                    <!-- LAST -->
+                    <button (click)="goToReportLast()" [disabled]="reportPage === reportTotalPages">
+                        >>
+                    </button>
+
+        </div>
+    </div>
+
+</div>
+
+<app-footer></app-footer>

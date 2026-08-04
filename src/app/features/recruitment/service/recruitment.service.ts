@@ -1,0 +1,390 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { environment } from '../../../../environments/environment';
+@Injectable({
+  providedIn: 'root'
+})
+export class RecruitmentService {
+ private baseUrl = environment.apiUrl; // same pattern as LeaveService
+  constructor(private http: HttpClient) { }
+  ///////////////////////////////////////////////////////
+//////////////Resuem Upload - Recruitment /////////////
+///////////////////////////////////////////////////////
+  getReferenceUsers(companyId: number, regionId: number) {
+  return this.http.get<any[]>(
+    `${this.baseUrl}/Recruitment/GetReferenceUsers/${companyId}/${regionId}`
+  );
+}
+getDesignations(companyId: number, regionId: number) {
+  return this.http.get<any[]>(
+    `${this.baseUrl}/Recruitment/GetDesignations/${companyId}/${regionId}`
+  );
+}
+getNoticePeriods(companyId: number, regionId: number) {
+  return this.http.get<any[]>(
+    `${this.baseUrl}/Recruitment/GetNoticePeriods/${companyId}/${regionId}`
+  );
+}
+
+  
+getMaritalStatuses(companyId: number, regionId: number) {
+  return this.http.get<any[]>(
+    `${this.baseUrl}/Recruitment/GetMaritalStatuses/${companyId}/${regionId}`
+  );
+}
+  // 🔹 Stage Master
+  getStages(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/Recruitment/GetStages`);
+  }
+
+  // 🔹 Save Candidate (Resume Upload)
+  saveCandidate(formData: FormData): Observable<any> {
+    return this.http.post(`${this.baseUrl}/Recruitment/SaveCandidate`, formData);
+  }
+
+  // 🔹 Get Candidates Listing
+  getCandidates(userId: number,companyId: number, regionId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/Recruitment/GetCandidates/${userId}/${companyId}/${regionId}`);
+  }
+
+  // 🔹 Move Stage
+  moveStage(candidateId: number, stageId: number): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/Recruitment/MoveStage?candidateId=${candidateId}&stageId=${stageId}`,
+      {}
+    );
+  }
+deleteCandidate(candidateId: number) {
+  return this.http.delete(
+    `${this.baseUrl}/Recruitment/DeleteCandidate/${candidateId}`
+  );
+}
+
+rejectCandidate(candidateId: number) {
+  return this.http.put(
+    `${this.baseUrl}/Recruitment/RejectCandidate/${candidateId}`,
+    {}
+  );
+}
+
+getCandidateById(candidateId: number) {
+  return this.http.get<any>(
+    `${this.baseUrl}/Recruitment/GetCandidateById/${candidateId}`
+  );
+}
+updateCandidate(formData: FormData) {
+  debugger;
+  return this.http.post(
+    `${this.baseUrl}/Recruitment/UpdateCandidate`,
+    formData
+  );
+}
+getResumeById(candidateId: number) {
+  return this.http.get<any>(
+    `${this.baseUrl}/Recruitment/GetResumeById/${candidateId}`
+  );
+}
+assignCompanyRegion(data: any) {
+  debugger;
+  return this.http.post(
+    `${this.baseUrl}/Recruitment/assign-company-region`,
+    data
+  );
+}
+
+downloadResume(fileName: string) {
+  return this.http.get(
+    `${this.baseUrl}/Recruitment/DownloadResume/${fileName}`,
+    { responseType: 'blob' }
+  );
+}
+// parseResume(file: File) {
+//   const formData = new FormData();
+//   formData.append('resume', file);
+//   return this.http.post<any>(
+//     `${this.baseUrl}/Recruitment/ParseResume`,
+//     formData
+//   );
+// }
+
+
+///////screening Service ///////////
+
+
+
+// getRecruiterseUsers() {
+//   return this.http.get<any[]>(
+//     `${this.baseUrl}/Recruitment/GetRecruiters`
+//   );
+// }
+getScreeningCandidatesTopTable(
+  userId: number,
+  department: string,
+  designation: string
+) {
+  return this.http.get<any[]>(
+    `${this.baseUrl}/Recruitment/GetScreeningCandidatesTopTable`,
+    {
+      params: {
+        userId,
+        department,
+        designation
+      }
+    }
+  );
+}
+
+
+saveCandidateScreening(payload: any): Observable<any> {
+  return this.http.post(
+    `${this.baseUrl}/Recruitment/SaveCandidateScreening`,
+    payload
+  );
+}
+getScreeningRecords(userId: number,companyId: number, regionId: number): Observable<any[]> {
+  return this.http.get<any[]>(
+    `${this.baseUrl}/Recruitment/GetScreeningRecords/${userId}/${companyId}/${regionId}`
+  );
+}
+updateCandidateScreening(payload: any): Observable<any> {
+  return this.http.post(`${this.baseUrl}/Recruitment/UpdateScreening`, payload);
+}
+
+
+
+//////////////Interview Service /////////////
+getScreeningCandidatesTopTableInterview(
+  userId: number,
+  department: string,
+  designation: string
+) {
+  return this.http.get<any[]>(
+    `${this.baseUrl}/Recruitment/GetScreeningCandidatesTopTableInterview`,
+    {
+      params: {
+        userId,
+        department,
+        designation
+      }
+    }
+  );
+}
+getInterviewLevels(companyId: number, regionId: number) {
+  return this.http.get<any[]>(
+    `${this.baseUrl}/Recruitment/GetInterviewLevels/${companyId}/${regionId}`
+  );
+}
+saveCandidateInterview(payload: any): Observable<any> {
+  return this.http.post(
+    `${this.baseUrl}/Recruitment/SaveCandidateInterview`,
+    payload
+  );
+}
+
+getInterviewRecords(userId: number,companyId: number, regionId: number): Observable<any[]> {
+  return this.http.get<any[]>(
+    `${this.baseUrl}/Recruitment/GetInterviewRecords/${userId}/${companyId}/${regionId}`
+  );
+}
+updateCandidateInterview(payload: any) {
+  return this.http.post(
+    `${this.baseUrl}/Recruitment/UpdateCandidateInterview`,
+    payload
+  );
+}
+// 🔹 Appointment Screen
+getAppointments(interviewerId: number) {
+  return this.http.get<any[]>(
+    `${this.baseUrl}/Recruitment/GetAppointments/${interviewerId}`
+  );
+}
+getAppointmentCandidateDetails(candidateId: number) {
+  return this.http.get<any>(
+    `${this.baseUrl}/Recruitment/GetAppointmentCandidateDetails/${candidateId}`
+  );
+}
+
+updateAppointmentResult(payload: any) {
+  return this.http.post(
+    `${this.baseUrl}/Recruitment/UpdateCandidateInterview`,
+    payload
+  );
+}
+
+////////// Offer
+getOfferCandidatesTopTable(
+  userId: number,
+  department: string,
+  designation: string
+) {
+  return this.http.get<any[]>(
+    `${this.baseUrl}/Recruitment/GetOfferCandidatesTopTable`,
+    {
+      params: {
+        userId,
+        department,
+        designation
+      }
+    }
+  );
+}
+saveCandidateOffer(payload: any): Observable<any> {
+  return this.http.post(
+    `${this.baseUrl}/Recruitment/SaveCandidateOffer`,
+    payload
+  );
+}
+getOfferRecords(userId: number, companyId: number, regionId: number) {
+  return this.http.get<any[]>(
+    `${this.baseUrl}/Recruitment/GetOfferRecords/${userId}/${companyId}/${regionId}`
+  );
+}
+getHRUsers(companyId: number, regionId: number) {
+  return this.http.get<any[]>(
+    `${this.baseUrl}/Recruitment/GetHRUsers/${companyId}/${regionId}`
+  );
+}
+sendOfferLetter(offerId: number) {
+  return this.http.post(
+    `${this.baseUrl}/Recruitment/SendOfferLetter/${offerId}`,
+    {}
+  );
+}
+
+downloadOfferLetter(offerId: number) {
+  return this.http.get(
+    `${this.baseUrl}/Recruitment/DownloadOfferLetter/${offerId}`,
+    { responseType: 'blob' }
+  );
+}
+
+///////onboarding
+getonboardingCandidatesTopTable(
+  companyId: number,
+  regionId: number,
+  department: string,
+  designation: string
+) {
+  return this.http.get<any[]>(
+    `${this.baseUrl}/Recruitment/GetonboardingCandidatesTopTable`,
+    {
+      params: {
+        companyId,
+        regionId,
+        department,
+        designation
+      }
+    }
+  );
+}
+saveCandidateOnboarding(payload: any): Observable<any> {
+  return this.http.post(
+    `${this.baseUrl}/Recruitment/SaveCandidateOnboarding`,
+    payload
+  );
+}
+getOnboardedCandidates(companyId: number, regionId: number) {
+  return this.http.get<any[]>(
+    `${this.baseUrl}/Recruitment/GetOnboardedCandidates`,
+    { params: { companyId, regionId } }
+  );
+}
+getOfferCandidatesTable(
+  // companyId: number,
+  // regionId: number,
+  // department: string,
+  // designation: string
+  userId :number
+) {
+  return this.http.get<any[]>(
+    `${this.baseUrl}/Recruitment/GetonboardingCandidatesTopTable`,
+    {
+      params: {
+        // companyId,
+        // regionId,
+        // department,
+        // designation
+        userId
+      }
+    }
+  );
+}
+ 
+
+parseResume(formData: FormData): Observable<any> {
+  return this.http.post(
+    `${this.baseUrl}/Recruitment/ParseResumeCandidate`,
+    formData
+  );
+}
+
+submitApplication(payload: FormData): Observable<any> {
+  debugger;
+  return this.http.post(
+    `${this.baseUrl}/Recruitment/SubmitApplication`,
+    payload
+  );
+}
+getJobApplications(): Observable<any[]> {
+  return this.http.get<any[]>(
+    `${this.baseUrl}/Recruitment/job-applications`
+  );
+}
+getRecruitmentDepartments(companyId: number, regionId: number) {
+  return this.http.get<string[]>(
+    `${this.baseUrl}/Recruitment/recruitment-departments`,
+    {
+      params: {
+        companyId,
+        regionId
+      }
+    }
+  );
+}
+
+getRecruitmentDesignations(companyId: number, regionId: number) {
+  return this.http.get<string[]>(
+    `${this.baseUrl}/Recruitment/recruitment-designations`,
+    {
+      params: {
+        companyId,
+        regionId
+      }
+    }
+  );
+}
+getOfferById(offerId: number) {
+  debugger;
+  return this.http.get(
+    `${this.baseUrl}/Recruitment/GetOfferById/${offerId}`
+  );
+
+}
+
+uploadCandidateDocuments(formData: FormData) {
+  return this.http.post(
+    `${this.baseUrl}/Recruitment/UploadCandidateDocuments`,
+    formData
+  );
+}
+getAllCandidateDocuments(companyId: number, regionId: number): Observable<any> {
+  return this.http.get(
+    `${this.baseUrl}/Recruitment/GetAllCandidateDocuments?companyId=${companyId}&regionId=${regionId}`
+  );
+}
+updateChecklistStatus(offerId: number, companyId: number, regionId: number, status: string) {
+  return this.http.post(
+    `${this.baseUrl}/Recruitment/UpdateChecklistStatus`,
+    null,
+    {
+      params: {
+        offerId: offerId,
+        companyId: companyId,
+        regionId: regionId,
+        status: status
+      }
+    }
+  );
+}
+}

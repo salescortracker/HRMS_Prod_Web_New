@@ -1,0 +1,276 @@
+<form (ngSubmit)="onSubmit()" novalidate>
+  <div class="row mb-3">
+    <div class="col-md-4">
+      <label class="form-label">
+        Form / Document Type <span class="text-danger">*</span>
+      </label>
+      <select class="form-select" required [(ngModel)]="documentTypeId" name="documentTypeId">
+
+        <option value="">Select Document Type</option>
+        <option *ngFor="let doc of documentTypes" [value]="doc.id">
+          {{ doc.typeName }}
+        </option>
+
+      </select>
+
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">
+        Form / Document Name <span class="text-danger">*</span>
+      </label>
+      <input type="text" class="form-control" [(ngModel)]="documentName" name="documentName" required maxlength="150"
+        placeholder="Enter document name">
+      <div *ngIf="showValidation && !documentName" class="text-danger small mt-1">Document name is required.</div>
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">
+        Employee Name <span class="text-danger">*</span>
+      </label>
+     <div class="employee-dropdown-wrapper">
+      <div class="form-control" (click)="showEmpDropdown = !showEmpDropdown">
+        {{ getSelectedEmployeeNames() || 'Select Employees' }}
+      </div>
+
+      <div *ngIf="showEmpDropdown" class="border p-2 position-absolute w-100 bg-white">
+        <div *ngFor="let emp of employees">
+          <input type="checkbox" [checked]="isEmployeeSelected(emp)" (change)="onEmployeeToggle(emp, $event)">
+          {{ emp.employeeName }} 
+        </div>
+      </div>
+    </div>
+
+
+
+    </div>
+    <!-- <div class="col-md-4">
+      <label class="form-label">
+        Employee Code / ID <span class="text-danger">*</span>
+      </label>
+
+      <input type="text" class="form-control" [(ngModel)]="form.empCode" name="empCode" readonly>
+    </div> -->
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-md-4">
+      <label class="form-label">
+        Upload File <span class="text-danger">*</span>
+      </label>
+
+      <input type="file" class="form-control" multiple (change)="onFilesSelected($event)">
+
+      <!-- Selected + Existing Files -->
+      <div class="mt-2" *ngIf="selectedFiles.length > 0 || existingFiles.length > 0">
+
+        <!-- Existing Files (Edit Mode) -->
+        <div *ngFor="let file of existingFiles; let i = index"
+          class="d-flex justify-content-between align-items-center border p-2 mb-1">
+
+          <span>{{ file }}</span>
+
+          <div>
+            <button type="button" class="btn btn-sm btn-primary me-2" (click)="viewDocument(file)">
+              View
+            </button>
+
+            <button type="button" class="btn btn-sm btn-danger" (click)="removeExistingFile(i)">
+              ❌
+            </button>
+          </div>
+        </div>
+
+        <!-- New Selected Files -->
+        <div *ngFor="let file of selectedFiles; let i = index"
+          class="d-flex justify-content-between align-items-center border p-2 mb-1">
+
+          <span>{{ file.name }}</span>
+
+          <button type="button" class="btn btn-sm btn-danger" (click)="removeFile(i)">
+            ❌
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Validation -->
+      <div *ngIf="showValidation && selectedFiles.length === 0 && existingFiles.length === 0" class="text-danger">
+        File is required.
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">
+        Issued / Submitted Date <span class="text-danger">*</span>
+      </label>
+      <input type="date" class="form-control" [(ngModel)]="issuedDate" name="issuedDate" required
+        (change)="onDateChange()" placeholder="Select issued / submitted date">
+      <div *ngIf="showValidation && !issuedDate" class="text-danger small mt-1">Issued date is required.</div>
+      <div *ngIf="dateError" class="text-danger small mt-1">{{ dateError }}</div>
+    </div>
+
+
+
+    <div class="col-md-4">
+      <label class="form-label">Remarks / Notes</label>
+      <textarea class="form-control" [(ngModel)]="remarks" name="remarks" maxlength="500"
+        placeholder="Additional details..."></textarea>
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-md-4 d-flex align-items-center">
+      <div class="form-check mt-2">
+        <input class="form-check-input" type="checkbox" [(ngModel)]="confidential" name="confidential"
+          id="confidentialCheck">
+        <label class="form-check-label" for="confidentialCheck">Mark as Confidential</label>
+      </div>
+    </div>
+
+    <div class="col-md-8 text-end">
+      <button  *ngIf="(!isEdit && canAddForms) || (isEdit && canEditForms)" type="submit" class="btn btn-primary me-2">
+        {{ isEdit ? 'Update' : 'Save' }}
+      </button>
+      <button type="button" class="btn btn-secondary" (click)="onReset()">Reset</button>
+    </div>
+  </div>
+</form>
+
+<!-- Search + Table -->
+<div class="dashboard-tables full-row mt-4">
+
+  <div class="table-card">
+    <h3>Forms List</h3>
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>S.No</th>
+          <th (click)="sortBy('type')" style="cursor:pointer">Type
+            <span *ngIf="sortColumn==='type'">{{ sortDirection==='asc' ? '▲' : '▼' }}</span>
+          </th>
+          <th (click)="sortBy('name')" style="cursor:pointer">Name
+            <span *ngIf="sortColumn==='name'">{{ sortDirection==='asc' ? '▲' : '▼' }}</span>
+          </th>
+          <th (click)="sortBy('employee')" style="cursor:pointer">Employee Name and Code
+            <span *ngIf="sortColumn==='employee'">{{ sortDirection==='asc' ? '▲' : '▼' }}</span>
+          </th>
+          <th (click)="sortBy('date')" style="cursor:pointer">Date
+            <span *ngIf="sortColumn==='date'">{{ sortDirection==='asc' ? '▲' : '▼' }}</span>
+          </th>
+          <th>File</th>
+          <th>Employee Uploads</th>
+          <th *ngIf="canEditForms || canDeleteForms">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let f of pagedForms(); let i = index">
+          <td>{{ (currentPage - 1) * pageSize + i + 1 }}</td>
+          <td>{{ f.type }}</td>
+          <td>{{ f.name }}</td>
+          <td>{{ f.employee }}</td>
+          <td>{{ formatDate(f.date) }}</td>
+
+
+          <td>
+            <ng-container *ngIf="f.filePaths && f.filePaths.length > 0; else noFiles">
+
+              <div *ngFor="let path of f.filePaths">
+                <a (click)="viewDocument(path)" style="cursor:pointer; color:#0d6efd; font-weight:500;">
+                  View
+                </a>
+              </div>
+
+            </ng-container>
+
+            <ng-template #noFiles>
+              <span class="text-muted">No Files</span>
+            </ng-template>
+          </td>
+          <td>
+            <ng-container *ngIf="(f.employeeUploads?.length ?? 0) > 0; else noEmpFiles">
+
+              <div *ngFor="let emp of f.employeeUploads" class="border rounded p-2 mb-2">
+
+                <div class="fw-bold text-primary mb-1">
+                  {{ emp.employeeName }} ({{ emp.employeeCode }})
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between">
+
+                  <a (click)="viewDocument(emp.filePath)"
+                    style="cursor:pointer; color:#0d6efd; font-weight:500; text-decoration:underline;">
+
+                    View
+
+                  </a>
+
+                  <div>
+
+                    <span class="badge bg-secondary me-2">
+                      {{ emp.status || 'Pending' }}
+                    </span>
+
+                    <ng-container *ngIf="!emp.status || emp.status === 'Pending'">
+
+                      <i class="fa-solid fa-check text-success me-2" style="cursor:pointer" title="Approve"
+                        (click)="updateEmployeeFileStatus(emp.fileId,'Approved')">
+                      </i>
+
+                      <i class="fa-solid fa-xmark text-danger" style="cursor:pointer" title="Reject"
+                        (click)="updateEmployeeFileStatus(emp.fileId,'Rejected')">
+                      </i>
+
+                    </ng-container>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </ng-container>
+
+            <ng-template #noEmpFiles>
+              <span class="text-muted">No Uploads</span>
+            </ng-template>
+          </td>
+          <td *ngIf="canEditForms || canDeleteForms" class="action-icons">
+            <!-- <i class="fa-solid fa-eye me-2" style="color: green; cursor:pointer" (click)="viewDetails(f)"
+              title="View Details"></i> -->
+            <!-- <i   *ngIf="canEditForms" class="fa-solid fa-pen me-2" style="color: black;" (click)="editRecord(f)" title="Edit"></i> -->
+            <i *ngIf="canDeleteForms" class="fa-solid fa-trash" style="color: black;" (click)="deleteRecord(f.id)" title="Delete"></i>
+          </td>
+        </tr>
+
+        <tr *ngIf="pagedForms().length === 0">
+          <td colspan="7" class="text-center">No forms found.</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+</div>
+
+<!-- Pagination Footer -->
+<div class="d-flex justify-content-between align-items-center mt-3">
+  <div>
+    <label>Show:
+      <select class="form-select d-inline w-auto ms-2" [(ngModel)]="pageSize" (change)="changePageSize(pageSize)">
+        <option *ngFor="let size of pageSizeOptions" [ngValue]="size">{{ size }}</option>
+      </select>
+      entries
+    </label>
+  </div>
+
+  <div>
+    <button class="btn btn-outline-secondary btn-sm me-2" (click)="changePage(currentPage - 1)"
+      [disabled]="currentPage === 1">Previous</button>
+
+    <span>Page {{ currentPage }} of {{ totalPages }}</span>
+
+    <button class="btn btn-outline-secondary btn-sm ms-2" (click)="changePage(currentPage + 1)"
+      [disabled]="currentPage === totalPages">Next</button>
+  </div>
+</div>

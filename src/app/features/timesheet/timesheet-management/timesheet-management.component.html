@@ -1,0 +1,52 @@
+<app-header></app-header>
+<app-sidebar></app-sidebar>
+
+<div class="dashboard-header">
+  <h2 class="dashboard-title">Timesheet Management</h2>
+  <nav class="breadcrumb">
+    <a href="#">Home</a> &gt;
+    <a href="#">Timesheet</a> &gt;
+    <span>Timesheet Module</span>
+  </nav>
+</div>
+
+<div class="tab-container">
+
+  <div class="tab-header">
+
+    <button
+      *ngIf="canViewSubmitTimesheet"
+      type="button"
+      class="tab-label"
+      routerLink="/timesheet/submit-timesheet"
+      routerLinkActive="active">
+      Submit Timesheet
+    </button>
+
+    <button
+      *ngIf="canViewApproveTimesheet"
+      type="button"
+      class="tab-label"
+      routerLink="/timesheet/approve-timesheet"
+      routerLinkActive="active">
+      Approve Timesheet
+    </button>
+
+    <button
+      *ngIf="canViewTimesheetReport"
+      type="button"
+      class="tab-label"
+      routerLink="/timesheet/timesheet-report"
+      routerLinkActive="active">
+      Timesheet Report
+    </button>
+
+  </div>
+
+  <div class="tab-content">
+    <router-outlet></router-outlet>
+  </div>
+
+</div>
+
+<app-footer></app-footer>

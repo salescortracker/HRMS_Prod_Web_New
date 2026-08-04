@@ -1,0 +1,155 @@
+/* ===========================
+   PAGE HEADER
+=========================== */
+
+.dashboard-header {
+  background: #ffffff;
+  margin: 20px;
+  padding: 18px 25px;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dashboard-title {
+  margin: 0;
+  color: #922b21;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.breadcrumb {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+.breadcrumb a {
+  text-decoration: none;
+  color: #922b21;
+  font-weight: 500;
+}
+
+.breadcrumb a:hover {
+  text-decoration: none;
+}
+
+.breadcrumb span {
+  color: #333;
+  font-weight: 600;
+}
+
+/* ===========================
+   TAB CONTAINER
+=========================== */
+
+.tab-container {
+  margin: 20px;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* ===========================
+   TAB HEADER
+=========================== */
+
+.tab-header {
+  display: flex;
+  background: #110605;
+}
+
+/* ===========================
+   TAB BUTTONS
+=========================== */
+
+.tab-label {
+  flex: 1;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 15px 20px;
+
+  border: none;
+  outline: none;
+
+  background: transparent;
+  color: #ffffff;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: all 0.3s ease;
+}
+
+/* Divider Between Tabs */
+
+.tab-label:not(:last-child) {
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Hover */
+
+.tab-label:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Active Tab */
+
+.tab-label.active,
+.tab-label.router-link-active {
+  background: #ffffff !important;
+  color: #922b21 !important;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+/* Remove Any Line Above Active Tab */
+
+.tab-label.active::before,
+.tab-label.active::after,
+.tab-label.router-link-active::before,
+.tab-label.router-link-active::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* ===========================
+   CONTENT AREA
+=========================== */
+
+.tab-content {
+  background: #ffffff;
+  padding: 25px;
+  min-height: 500px;
+}
+
+/* ===========================
+   RESPONSIVE
+=========================== */
+
+@media (max-width: 768px) {
+
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .tab-header {
+    flex-direction: column;
+  }
+
+  .tab-label {
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+  }
+}
