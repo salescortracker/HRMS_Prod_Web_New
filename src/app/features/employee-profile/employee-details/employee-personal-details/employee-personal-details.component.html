@@ -1,7 +1,7 @@
 <div class="form-container">
   <div *ngIf="!canCreate" style="color:red;">
-  You don't have permission to add personal details
-</div>
+    You don't have permission to add personal details
+  </div>
 
   <form class="form-grid" [formGroup]="personalForm" (ngSubmit)="onSubmit()" enctype="multipart/form-data">
 
@@ -26,10 +26,10 @@
     <!-- Gender -->
     <div class="form-group">
       <label>Gender</label>
-    <select formControlName="genderId">
+      <select formControlName="genderId">
         <option value="">Select gender</option>
         <option *ngFor="let g of genderList" [value]="g.genderId">{{ g.genderName }}</option>
-       
+
       </select>
     </div>
 
@@ -65,17 +65,49 @@
 
     <!-- Aadhaar -->
     <div class="form-group">
-      <label>Aadhaar Number<span class="required">*</span></label>
-      <input type="text" formControlName="aadhaarNumber" placeholder="Enter Aadhaar number">
+      <label>Aadhaar Number <span class="required">*</span></label>
+
+      <input type="text" formControlName="aadhaarNumber" placeholder="Enter Aadhaar Number" maxlength="12"
+        inputmode="numeric" (keypress)="allowOnlyNumbers($event)" (input)="onAadhaarInput($event)">
+
+      <small class="text-danger" *ngIf="personalForm.get('aadhaarNumber')?.touched &&
+           personalForm.get('aadhaarNumber')?.invalid">
+
+        <span *ngIf="personalForm.get('aadhaarNumber')?.errors?.['required']">
+          Aadhaar Number is required.
+        </span>
+
+        <span *ngIf="personalForm.get('aadhaarNumber')?.errors?.['pattern']">
+          Aadhaar Number must be exactly 12 digits.
+        </span>
+
+      </small>
+
     </div>
 
     <!-- Profile Picture -->
     <div class="form-group">
-  <label>Profile Picture</label>
-  <button type="button" (click)="fileInput.click()">Choose File</button>
-  <input #fileInput type="file" (change)="onFileSelected($event)" accept=".jpg,.jpeg,.png" style="display:none;">
-  <span>{{ personalForm.get('ProfilePictureName')?.value }}</span>
-</div>
+
+      <label>Profile Picture</label>
+
+      <div class="profile-upload">
+
+        <button type="button" class="choose-btn" (click)="fileInput.click()">
+
+          Choose File
+
+        </button>
+
+        <input #fileInput type="file" accept=".jpg,.jpeg,.png" (change)="onFileSelected($event)" hidden>
+
+        <input class="form-control" type="text" readonly [value]="personalForm.get('ProfilePictureName')?.value"
+          placeholder="No file selected">
+
+        <img *ngIf="imagePreview" [src]="imagePreview" class="profile-preview">
+
+      </div>
+
+    </div>
 
     <!-- Passport -->
     <div class="form-group">
@@ -99,12 +131,11 @@
     <div class="form-group">
       <label>Blood Group</label>
       <select formControlName="bloodGroup">
-  <option value="">Select blood group</option>
-  <option *ngFor="let bg of bloodGroupList"
-          [value]="bg.bloodGroupID">
-    {{ bg.bloodGroupName }}
-  </option>
-</select>
+        <option value="">Select blood group</option>
+        <option *ngFor="let bg of bloodGroupList" [value]="bg.bloodGroupID">
+          {{ bg.bloodGroupName }}
+        </option>
+      </select>
     </div>
 
     <!-- Citizenship -->
@@ -129,19 +160,18 @@
     <div class="form-group">
       <label>Marital Status</label>
       <select formControlName="maritalStatusId">
-  <option value="">Select marital status</option>
-  <option *ngFor="let ms of maritalStatusList"
-          [value]="ms.maritalStatusId">
-    {{ ms.maritalStatusName }}
-  </option>
-</select>
+        <option value="">Select marital status</option>
+        <option *ngFor="let ms of maritalStatusList" [value]="ms.maritalStatusId">
+          {{ ms.maritalStatusName }}
+        </option>
+      </select>
     </div>
 
     <!-- Marriage Date -->
     <div class="form-group" *ngIf="showMarriageDate">
-  <label>Marriage Date</label>
-  <input type="date" formControlName="marriageDate">
-</div>
+      <label>Marriage Date</label>
+      <input type="date" formControlName="marriageDate">
+    </div>
 
     <!-- Work Phone -->
     <div class="form-group">
@@ -149,41 +179,38 @@
       <input type="tel" formControlName="workPhone" placeholder="Enter work phone number">
     </div>
 
-     <div class="form-group">
+    <div class="form-group">
       <label>Band/Grade</label>
       <select formControlName="brandGrade">
-    <option value="">Select Grade</option>
+        <option value="">Select Grade</option>
 
-    <option *ngFor="let grade of grades"
-            [value]="grade.gradeID">
-      {{ grade.gradeName }}
-    </option>
-  </select>
+        <option *ngFor="let grade of grades" [value]="grade.gradeID">
+          {{ grade.gradeName }}
+        </option>
+      </select>
     </div>
     <div class="form-group">
       <label>ESIC Number</label>
       <input type="text" formControlName="esicNumber" placeholder="Enter ESIC number">
     </div>
-     <div class="form-group">
+    <div class="form-group">
       <label>PF Number</label>
       <input type="text" formControlName="pfNumber" placeholder="Enter PF number">
     </div>
-     <div class="form-group">
+    <div class="form-group">
       <label>Employment Type</label>
       <!-- <input type="text" formControlName="employmentType" placeholder="Enter employment type">
         -->
       <select class="form-control" formControlName="employmentType">
         <option value="">-- Select Employment Type --</option>
 
-        <option 
-          *ngFor="let type of employmentTypes" 
-          [value]="type.employmenttypeID">
+        <option *ngFor="let type of employmentTypes" [value]="type.employmenttypeID">
           {{ type.employmenttypeName }}
         </option>
 
       </select>
     </div>
-      <div class="form-group">
+    <div class="form-group">
       <label>Date of Joining</label>
       <input type="date" formControlName="dateofJoining" placeholder="Enter date of joining">
     </div>
@@ -202,7 +229,7 @@
 
     <!-- Submit Button -->
     <div style="flex-basis: 100%;">
-      <button type="submit" class="submit-btn"  *ngIf="canCreate">
+      <button type="submit" class="submit-btn" *ngIf="canCreate">
         {{ editId == null ? 'Save Details' : 'Update Details' }}
       </button>
     </div>

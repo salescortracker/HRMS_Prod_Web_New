@@ -64,47 +64,98 @@
 
     <div class="col-md-6 col-lg-4" *ngFor="let p of filteredPoliciesList">
 
-      <div class="card policy-card shadow-sm h-100">
+<div class="card policy-card shadow-sm h-100 position-relative">
 
-        <div class="card-body">
+  <div class="card-body">
 
-          <!-- Category + Date -->
-          <div class="d-flex justify-content-between mb-2">
+    <!-- Category + Date -->
+    <div class="d-flex justify-content-between mb-2">
 
-            <span class="badge bg-primary">
+      <span class="badge bg-primary">
+        {{p.Category}}
+      </span>
+
+      <small class="text-muted">
+        {{p.EffectiveDate | date:'dd-MMM-yyyy'}}
+      </small>
+
+    </div>
+
+    <!-- Title -->
+    <h5 class="card-title">
+      {{p.Title}}
+    </h5>
+
+    <!-- Description -->
+    <p class="card-text text-muted">
+      {{ p.Description | slice:0:80 }}
+      <span *ngIf="p.Description && p.Description.length > 80">...</span>
+    </p>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="card-footer bg-white border-0 text-end">
+
+    <a
+      *ngIf="p.FileUrl"
+      [href]="p.FileUrl"
+      target="_blank"
+      class="btn btn-sm btn-success">
+
+      Download Policy
+
+    </a>
+
+  </div>
+
+  <!-- ========================= -->
+  <!-- Hover Popup -->
+  <!-- ========================= -->
+
+  <div class="policy-popup">
+
+      <div class="popup-header">
+
+          <span class="popup-badge">
               {{p.Category}}
-            </span>
+          </span>
 
-            <small class="text-muted">
+          <span class="popup-date">
               {{p.EffectiveDate | date:'dd-MMM-yyyy'}}
-            </small>
+          </span>
 
-          </div>
+      </div>
 
-          <!-- Title -->
-          <h5 class="card-title">
-            {{p.Title}}
-          </h5>
+      <h5 class="popup-title">
+          {{p.Title}}
+      </h5>
 
-          <!-- Description -->
-          <p class="card-text text-muted">
-            {{p.Description}}
-          </p>
+      <hr>
 
-        </div>
+      <div class="popup-description">
 
-        <!-- Footer -->
-        <div class="card-footer bg-white border-0 text-end">
+          {{p.Description}}
 
-          <a *ngIf="p.FileUrl" [href]="p.FileUrl" target="_blank" class="btn btn-sm btn-success">
+      </div>
 
-            Download Policy
+      <div class="popup-footer"
+           *ngIf="p.FileUrl">
+
+          <a
+              [href]="p.FileUrl"
+              target="_blank"
+              class="btn btn-success btn-sm">
+
+              📄 Download Policy
 
           </a>
 
-        </div>
-
       </div>
+
+  </div>
+
+</div>
 
     </div>
 

@@ -15,21 +15,21 @@ import { AdminService } from '../../../admin/servies/admin.service';
   styleUrl: './all-expenses.component.css'
 })
 export class AllExpensesComponent {
-filtersForm!: FormGroup;
-userId!: number;
+  filtersForm!: FormGroup;
+  userId!: number;
   expenses: any[] = [];
   categories: any[] = [];
   countries: string[] = [];
-    companyLogoBase64: string = '';
-    companyName: string = '';
-    companyAddress: string = '';
+  companyLogoBase64: string = '';
+  companyName: string = '';
+  companyAddress: string = '';
   statuses: string[] = ['Pending', 'Approved', 'Rejected', 'Reimbursed'];
-companyId!: number;
-regionId!: number;
+  companyId!: number;
+  regionId!: number;
   // UI
   projects: any[] = [];
   noRecordsFound = false;
-
+  employees: string[] = [];
   // Sorting
   sortColumn: string | null = null;
   sortDirection: 'asc' | 'desc' = 'asc';
@@ -42,18 +42,18 @@ regionId!: number;
 
   constructor(
     private fb: FormBuilder,
-    private expenseService: ExpensesService, 
+    private expenseService: ExpensesService,
     private adminService: AdminService
-  ) {}
+  ) { }
 
   // ============================================================
   // 🔹 INIT
   // ============================================================
   ngOnInit(): void {
-      this.userId = sessionStorage.getItem('UserId') ? Number(sessionStorage.getItem('UserId'))
+    this.userId = sessionStorage.getItem('UserId') ? Number(sessionStorage.getItem('UserId'))
       : 0;
-      this.companyId = sessionStorage.getItem('CompanyId') ? Number(sessionStorage.getItem('CompanyId')) : 0;
-      this.regionId = sessionStorage.getItem('RegionId') ? Number(sessionStorage.getItem('RegionId')) : 0;
+    this.companyId = sessionStorage.getItem('CompanyId') ? Number(sessionStorage.getItem('CompanyId')) : 0;
+    this.regionId = sessionStorage.getItem('RegionId') ? Number(sessionStorage.getItem('RegionId')) : 0;
     this.buildForm();
     //this.loadCategories();
     this.loadAllExpenses();
@@ -61,27 +61,27 @@ regionId!: number;
   }
   loadCompanyDetails() {
     const companyId = Number(sessionStorage.getItem('CompanyId'));
-  
+
     this.adminService.getCompanyById(companyId).subscribe({
       next: async (company: any) => {
-  
+
         this.companyName = company?.companyName || 'Company';
         this.companyAddress = company?.companyAddress || '';
-  
+
         const logo = company?.companyLogo;
-  
+
         if (logo && logo.trim() !== '') {
-  
+
           if (logo.startsWith('data:')) {
             this.companyLogoBase64 = logo;
           } else {
             const logoPath = logo.replace(/\\/g, '/');
             const fullUrl = `${environment.baseurl}/${logoPath}`;
-  
+
             this.companyLogoBase64 =
               await this.getBase64ImageFromURL(fullUrl);
           }
-  
+
         } else {
           this.setDefaultLogo();
         }
@@ -91,7 +91,7 @@ regionId!: number;
   }
   setDefaultLogo() {
     const defaultLogo = '/assets/images/cor-logo.png';
-  
+
     this.getBase64ImageFromURL(defaultLogo)
       .then(base64 => this.companyLogoBase64 = base64)
       .catch(() => this.companyLogoBase64 = '');
@@ -101,18 +101,18 @@ regionId!: number;
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.src = url;
-  
+
       img.onload = () => {
         const canvas = document.createElement('canvas');
         canvas.width = img.width;
         canvas.height = img.height;
-  
+
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0);
-  
+
         resolve(canvas.toDataURL('image/png'));
       };
-  
+
       img.onerror = err => reject(err);
     });
   }
@@ -120,45 +120,84 @@ regionId!: number;
   // ============================================================
   // 🔹 BUILD FILTER FORM
   // ============================================================
+  // buildForm(): void {
+  //   this.filtersForm = this.fb.group({
+  //     projectName: [''],
+  //     categoryId: [''],
+  //     country: [''],
+  //     status: ['']
+  //   });
+  // }
   buildForm(): void {
+
     this.filtersForm = this.fb.group({
+
+      employee: [''],
+
       projectName: [''],
+
       categoryId: [''],
+
       country: [''],
+
       status: ['']
+
     });
+
   }
 
   // ============================================================
   // 🔹 LOAD ALL EXPENSES (ONLY API CHANGE)
   // ============================================================
   loadAllExpenses(): void {
-        debugger;
+    debugger;
 
-  const companyId = this.companyId;
-  const regionId = this.regionId;
+    const companyId = this.companyId;
+    const regionId = this.regionId;
 
     this.expenseService.getAllExpenses(companyId, regionId).subscribe(res => {
-          debugger;
+      debugger;
 
       if (res.success) {
         this.expenses = res.data.map((e: any) => ({
+
           ...e,
+
           visible: true,
+
           expenseCategoryId: Number(e.expenseCategoryId),
+
+          employeeNorm: e.employeeName?.toLowerCase().trim() || '',
+
           projectNorm: e.projectName?.toLowerCase().trim() || '',
+
           countryNorm: e.country?.toLowerCase().trim() || ''
+
         }));
 
 
-          this.projects = [
-            ...new Map(
-              this.expenses.map(x => [
-                x.projectName,
-                { projectName: x.projectName }
-              ])
-            ).values()
-          ];
+        this.projects = [
+          ...new Map(
+            this.expenses.map(x => [
+              x.projectName,
+              { projectName: x.projectName }
+            ])
+          ).values()
+        ];
+
+        this.employees = [
+
+          ...new Set(
+
+            this.expenses
+
+              .map(x => x.employeeName)
+
+              .filter(x => x)
+
+          )
+
+        ];
 
         this.countries = [
           ...new Set(this.expenses.map(x => x.countryNorm))
@@ -169,65 +208,65 @@ regionId!: number;
       }
     });
   }
-//   loadCompanyDetails() {
-//   const companyId = Number(sessionStorage.getItem('CompanyId'));
+  //   loadCompanyDetails() {
+  //   const companyId = Number(sessionStorage.getItem('CompanyId'));
 
-//   this.adminService.getCompanyById(companyId).subscribe({
-//     next: async (company: any) => {
+  //   this.adminService.getCompanyById(companyId).subscribe({
+  //     next: async (company: any) => {
 
-//       this.companyName = company?.companyName || 'Company';
-//       this.companyAddress = company?.companyAddress || 'Hyderabad';
+  //       this.companyName = company?.companyName || 'Company';
+  //       this.companyAddress = company?.companyAddress || 'Hyderabad';
 
-//       const logo = company?.companyLogo;
+  //       const logo = company?.companyLogo;
 
-//       if (logo && logo.trim() !== '') {
+  //       if (logo && logo.trim() !== '') {
 
-//         if (logo.startsWith('data:')) {
-//           this.companyLogoBase64 = logo;
-//         } else {
-//           const logoPath = logo.replace(/\\/g, '/');
-//           const fullUrl = `${environment.baseurl}/${logoPath}`;
+  //         if (logo.startsWith('data:')) {
+  //           this.companyLogoBase64 = logo;
+  //         } else {
+  //           const logoPath = logo.replace(/\\/g, '/');
+  //           const fullUrl = `${environment.baseurl}/${logoPath}`;
 
-//           this.companyLogoBase64 =
-//             await this.getBase64ImageFromURL(fullUrl);
-//         }
+  //           this.companyLogoBase64 =
+  //             await this.getBase64ImageFromURL(fullUrl);
+  //         }
 
-//       } else {
-//         this.setDefaultLogo();
-//       }
-//     },
-//     error: () => this.setDefaultLogo()
-//   });
-// }
+  //       } else {
+  //         this.setDefaultLogo();
+  //       }
+  //     },
+  //     error: () => this.setDefaultLogo()
+  //   });
+  // }
 
-// setDefaultLogo() {
-//   const defaultLogo = 'assets/images/default-logo.png';
+  // setDefaultLogo() {
+  //   const defaultLogo = 'assets/images/default-logo.png';
 
-//   this.getBase64ImageFromURL(defaultLogo)
-//     .then(base64 => this.companyLogoBase64 = base64)
-//     .catch(() => this.companyLogoBase64 = '');
-// }
+  //   this.getBase64ImageFromURL(defaultLogo)
+  //     .then(base64 => this.companyLogoBase64 = base64)
+  //     .catch(() => this.companyLogoBase64 = '');
+  // }
 
-// getBase64ImageFromURL(url: string): Promise<string> {
-//   return new Promise((resolve, reject) => {
-//     const img = new Image();
-//     img.crossOrigin = 'anonymous';
-//     img.src = url;
+  // getBase64ImageFromURL(url: string): Promise<string> {
+  //   return new Promise((resolve, reject) => {
+  //     const img = new Image();
+  //     img.crossOrigin = 'anonymous';
+  //     img.src = url;
 
-//     img.onload = () => {
-//       const canvas = document.createElement('canvas');
-//       canvas.width = img.width;
-//       canvas.height = img.height;
+  //     img.onload = () => {
+  //       const canvas = document.createElement('canvas');
+  //       canvas.width = img.width;
+  //       canvas.height = img.height;
 
-//       const ctx = canvas.getContext('2d');
-//       ctx?.drawImage(img, 0, 0);
+  //       const ctx = canvas.getContext('2d');
+  //       ctx?.drawImage(img, 0, 0);
 
-//       resolve(canvas.toDataURL('image/png'));
-//     };
+  //       resolve(canvas.toDataURL('image/png'));
+  //     };
 
-//     img.onerror = err => reject(err);
-//   });
-// }
+  //     img.onerror = err => reject(err);
+  //   });
+  // }
 
   // ============================================================
   // 🔹 LOAD CATEGORIES
@@ -323,196 +362,199 @@ regionId!: number;
     this.currentPage = 1;
   }
 
- downloadPDF(): void {
+  downloadPDF(): void {
 
-  const doc = new jsPDF('p', 'mm', 'a4');
+    const doc = new jsPDF('p', 'mm', 'a4');
 
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-
-
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
 
 
-  // 🔥 TABLE DATA
-  const data = this.expenses.filter(e => e.visible);
 
-  /* ================= BORDER ================= */
 
-  doc.setDrawColor(200, 0, 0);
-  doc.setLineWidth(1);
-  doc.rect(5, 5, pageWidth - 10, pageHeight - 10);
+    // 🔥 TABLE DATA
+    const data = this.expenses.filter(e => e.visible);
 
-  let y = 15;
+    /* ================= BORDER ================= */
 
-  /* ================= COMPANY LOGO ================= */
+    doc.setDrawColor(200, 0, 0);
+    doc.setLineWidth(1);
+    doc.rect(5, 5, pageWidth - 10, pageHeight - 10);
 
-  if (this.companyLogoBase64) {
-    doc.addImage(
-      this.companyLogoBase64,
-      'PNG',
-      pageWidth / 2 - 20,
-      8,
-      40,
-      15
-    );
-  }
+    let y = 15;
 
-  /* ================= COMPANY NAME ================= */
+    /* ================= COMPANY LOGO ================= */
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(16);
-  doc.setTextColor(200, 0, 0);
-
-  doc.text(
-    this.companyName?.toUpperCase() || 'COMPANY',
-    20,
-    y
-  );
-
-  /* ================= ADDRESS ================= */
-
-  doc.setFontSize(9);
-  doc.setTextColor(100);
-
-  let addressY = y + 6;
-
-  if (this.companyAddress) {
-
-    const lines = this.companyAddress.split(',');
-
-    lines.forEach((line: string) => {
-      doc.text(line.trim(), 20, addressY);
-      addressY += 4;
-    });
-  }
-
-  /* ================= RIGHT SIDE INFO ================= */
-
-  doc.setTextColor(0);
-  doc.setFontSize(10);
-
-  doc.text(
-    `Print Date: ${new Date().toLocaleDateString()}`,
-    pageWidth - 20,
-    y,
-    { align: 'right' }
-  );
-
-  doc.text(
-    `Expenses Report`,
-    pageWidth - 20,
-    y + 5,
-    { align: 'right' }
-  );
-
-  /* ================= RED LINE ================= */
-
-  const lineY = addressY + 4;
-
-  doc.setDrawColor(200, 0, 0);
-  doc.setLineWidth(0.5);
-
-  doc.line(20, lineY, pageWidth - 20, lineY);
-
-  /* ================= TABLE ================= */
-
-  const rows = data.map((e: any) => [
-    e.projectName,
-    e.expenseCategoryName,
-    e.country,
-    e.amount,
-    e.expenseDate
-      ? new Date(e.expenseDate).toLocaleDateString()
-      : '',
-    e.status
-  ]);
-
-  autoTable(doc, {
-    startY: lineY + 8,
-
-    head: [[
-      'Project',
-      'Category',
-      'Country',
-      'Amount',
-      'Date',
-      'Status'
-    ]],
-
-    body: rows,
-
-    styles: {
-      fontSize: 8
-    },
-
-    headStyles: {
-      fillColor: [200, 0, 0]
+    if (this.companyLogoBase64) {
+      doc.addImage(
+        this.companyLogoBase64,
+        'PNG',
+        pageWidth / 2 - 20,
+        8,
+        40,
+        15
+      );
     }
-    // startY: 50,
-    // head: [['Project', 'Category', 'Country', 'Amount', 'Date', 'Status']],
-    // body: rows
-  });
 
-  /* ================= FOOTER ================= */
+    /* ================= COMPANY NAME ================= */
 
-  const finalY = (doc as any).lastAutoTable.finalY + 10;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(200, 0, 0);
 
-  doc.setFontSize(8);
-  doc.setTextColor(120);
+    doc.text(
+      this.companyName?.toUpperCase() || 'COMPANY',
+      20,
+      y
+    );
 
-  doc.text(
-    `© ${this.companyName} — System Generated Expenses Report`,
-    pageWidth / 2,
-    finalY,
-    { align: 'center' }
-  );
+    /* ================= ADDRESS ================= */
 
-  doc.save('Expenses_Report.pdf');
-}
+    doc.setFontSize(9);
+    doc.setTextColor(100);
 
-exportToExcel(): void {
-  // 👉 Take only filtered data (same as table)
-  const exportData = this.expenses
-    .filter(e => e.visible)
-    .map(e => ({
-      Project: e.projectName,
-      Category: e.expenseCategoryName,
-      Country: e.country,
-      Amount: e.amount,
-      Currency: e.currencyCode,
-      // Date: this.formatDate(e.expenseDate),
-      Status: e.status
-    }));
+    let addressY = y + 6;
 
-  if (exportData.length === 0) {
-    alert('No data to export');
-    return;
+    if (this.companyAddress) {
+
+      const lines = this.companyAddress.split(',');
+
+      lines.forEach((line: string) => {
+        doc.text(line.trim(), 20, addressY);
+        addressY += 4;
+      });
+    }
+
+    /* ================= RIGHT SIDE INFO ================= */
+
+    doc.setTextColor(0);
+    doc.setFontSize(10);
+
+    doc.text(
+      `Print Date: ${new Date().toLocaleDateString()}`,
+      pageWidth - 20,
+      y,
+      { align: 'right' }
+    );
+
+    doc.text(
+      `Expenses Report`,
+      pageWidth - 20,
+      y + 5,
+      { align: 'right' }
+    );
+
+    /* ================= RED LINE ================= */
+
+    const lineY = addressY + 4;
+
+    doc.setDrawColor(200, 0, 0);
+    doc.setLineWidth(0.5);
+
+    doc.line(20, lineY, pageWidth - 20, lineY);
+
+    /* ================= TABLE ================= */
+
+    const rows = data.map((e: any) => [
+       e.employeeName,
+      e.projectName,
+      e.expenseCategoryName,
+      e.country,
+      e.amount,
+      e.expenseDate
+        ? new Date(e.expenseDate).toLocaleDateString()
+        : '',
+      e.status
+    ]);
+
+    autoTable(doc, {
+      startY: lineY + 8,
+
+      head: [[
+        'Employee',
+        'Project',
+        'Category',
+        'Country',
+        'Amount',
+        'Date',
+        'Status'
+      ]],
+
+      body: rows,
+
+      styles: {
+        fontSize: 8
+      },
+
+      headStyles: {
+        fillColor: [200, 0, 0]
+      }
+      // startY: 50,
+      // head: [['Project', 'Category', 'Country', 'Amount', 'Date', 'Status']],
+      // body: rows
+    });
+
+    /* ================= FOOTER ================= */
+
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+
+    doc.setFontSize(8);
+    doc.setTextColor(120);
+
+    doc.text(
+      `© ${this.companyName} — System Generated Expenses Report`,
+      pageWidth / 2,
+      finalY,
+      { align: 'center' }
+    );
+
+    doc.save('Expenses_Report.pdf');
   }
 
-  // 👉 Convert to worksheet
-  const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(exportData);
+  exportToExcel(): void {
+    // 👉 Take only filtered data (same as table)
+    const exportData = this.expenses
+      .filter(e => e.visible)
+      .map(e => ({
+        Employee: e.employeeName,
+        Project: e.projectName,
+        Category: e.expenseCategoryName,
+        Country: e.country,
+        Amount: e.amount,
+        Currency: e.currencyCode,
+        // Date: this.formatDate(e.expenseDate),
+        Status: e.status
+      }));
 
-  // 👉 Create workbook
-  const workbook: XLSX.WorkBook = {
-    Sheets: { 'Expenses': worksheet },
-    SheetNames: ['Expenses']
-  };
+    if (exportData.length === 0) {
+      alert('No data to export');
+      return;
+    }
 
-  // 👉 Generate Excel file
-  const excelBuffer = XLSX.write(workbook, {
-    bookType: 'xlsx',
-    type: 'array'
-  });
+    // 👉 Convert to worksheet
+    const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(exportData);
 
-  this.saveExcelFile(excelBuffer, 'All_Expenses');
-}
+    // 👉 Create workbook
+    const workbook: XLSX.WorkBook = {
+      Sheets: { 'Expenses': worksheet },
+      SheetNames: ['Expenses']
+    };
 
-saveExcelFile(buffer: any, fileName: string): void {
-  const data = new Blob([buffer], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  });
+    // 👉 Generate Excel file
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: 'xlsx',
+      type: 'array'
+    });
 
-  saveAs(data, fileName + '_' + new Date().getTime() + '.xlsx');
-}
+    this.saveExcelFile(excelBuffer, 'All_Expenses');
+  }
+
+  saveExcelFile(buffer: any, fileName: string): void {
+    const data = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+
+    saveAs(data, fileName + '_' + new Date().getTime() + '.xlsx');
+  }
 
 }

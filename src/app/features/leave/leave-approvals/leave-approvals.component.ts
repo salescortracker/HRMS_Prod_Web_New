@@ -58,8 +58,11 @@ pageSizeOptions = [5, 10, 20, 50];
           days: x.totalDays,
           reason: x.reason,
           status: x.status,
-          selected: false
+          selected: false,
+          documentName: x.fileName,
+documentPath: x.filePath
         }));
+        console.log('leave applied employees', data)
       }
     });
   }
