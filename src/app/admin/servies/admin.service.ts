@@ -3199,7 +3199,7 @@ updateGeoLocation(id: number, data: any) {
 
 // DELETE
 deleteGeoLocation(id: number) {
-  return this.http.post(
+  return this.http.post<{ message: string }>(
     `${this.baseUrl}/UserManagement/DeleteGeoLocation/${id}`,
     {}
   );
