@@ -186,11 +186,51 @@ onSubmit() {
     );
   }
 
-  delete(g: GeoLocation) {
-    this.service.deleteGeoLocation(g.geoLocationId).subscribe(() => {
-      this.loadLocations();
-    });
-  }
+ delete(g: GeoLocation) {
+
+  Swal.fire({
+    title: 'Are you sure?',
+    text: 'Do you want to delete this Geo Location?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, Delete',
+    cancelButtonText: 'Cancel'
+  }).then((result) => {
+
+    if (result.isConfirmed) {
+
+      this.service.deleteGeoLocation(g.geoLocationId)
+        .subscribe({
+
+          next: (res) => {
+
+            Swal.fire({
+              title: 'Deleted!',
+              text: res.message,
+              icon: 'success',
+              confirmButtonText: 'OK'
+            });
+
+            this.loadLocations();
+          },
+
+          error: (err) => {
+
+            Swal.fire({
+              title: 'Cannot Delete',
+              text: err.error.message,
+              icon: 'error',
+              confirmButtonText: 'OK'
+            });
+
+          }
+
+        });
+
+    }
+
+  });
+}
 
   resetForm() {
     this.location = this.getEmpty();
