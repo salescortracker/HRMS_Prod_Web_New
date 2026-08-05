@@ -183,6 +183,21 @@ certificateFileInput!: ElementRef<HTMLInputElement>;
       this.educationForm.setErrors({ dateRange: true });
       return;
     }
+    const duplicate = this.educationList.some(e =>
+  e.educationId !== (this.editId ?? 0) &&
+  e.qualification.trim().toLowerCase() === this.educationForm.value.qualification.trim().toLowerCase() &&
+  e.specialization.trim().toLowerCase() === this.educationForm.value.specialization.trim().toLowerCase() &&
+  e.institution.trim().toLowerCase() === this.educationForm.value.institution.trim().toLowerCase()
+);
+
+if (duplicate) {
+  Swal.fire(
+    'Warning',
+    'Education record already exists.',
+    'warning'
+  );
+  return;
+}
 
     const payload: any = {
       EducationId: this.editId ?? 0,

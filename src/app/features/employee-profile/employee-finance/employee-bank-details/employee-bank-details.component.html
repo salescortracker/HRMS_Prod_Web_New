@@ -6,7 +6,7 @@
     <!-- Row 1 -->
     <div class="row mb-3">
       <div class="col-md-4">
-        <label class="form-label">Bank Name</label>
+        <label class="form-label">Bank Name<span class="required">*</span></label>
         <input type="text" class="form-control" placeholder="Enter your bank name" formControlName="bankName" />
         <div *ngIf="bankForm.get('bankName')?.touched && bankForm.get('bankName')?.invalid" class="text-danger">
           Bank Name is required (max 100 chars)
@@ -14,7 +14,7 @@
       </div>
 
       <div class="col-md-4">
-        <label class="form-label">Branch Name</label>
+        <label class="form-label">Branch Name<span class="required">*</span></label>
         <input type="text" class="form-control" placeholder="Enter branch name" formControlName="branchName" />
         <div *ngIf="bankForm.get('branchName')?.touched && bankForm.get('branchName')?.invalid" class="text-danger">
           Branch Name is required (max 100 chars)
@@ -22,7 +22,7 @@
       </div>
 
       <div class="col-md-4">
-        <label class="form-label">Account Holder Name</label>
+        <label class="form-label">Account Holder Name<span class="required">*</span></label>
         <input type="text" class="form-control" placeholder="Enter account holder name"
           formControlName="accountHolderName" />
         <div *ngIf="bankForm.get('accountHolderName')?.touched && bankForm.get('accountHolderName')?.invalid"
@@ -35,7 +35,7 @@
     <!-- Row 2 -->
     <div class="row mb-3">
       <div class="col-md-4">
-        <label class="form-label">Account Number</label>
+        <label class="form-label">Account Number<span class="required">*</span></label>
         <input type="text" class="form-control" placeholder="Enter account number" formControlName="accountNumber" />
         <div *ngIf="bankForm.get('accountNumber')?.touched && bankForm.get('accountNumber')?.invalid"
           class="text-danger">
@@ -44,7 +44,7 @@
       </div>
 
       <div class="col-md-4">
-        <label class="form-label">Account Type</label>
+        <label class="form-label">Account Type<span class="required">*</span></label>
         <select class="form-select" formControlName="accountTypeId">
           <option value="">Select account type</option>
           <option *ngFor="let type of accountTypes" [value]="type.id">{{ type.name }}</option>
@@ -56,7 +56,7 @@
       </div>
 
       <div class="col-md-4">
-        <label class="form-label">IFSC Code</label>
+        <label class="form-label">IFSC Code<span class="required">*</span></label>
         <input type="text" class="form-control" placeholder="Enter IFSC code" formControlName="ifsccode" />
         <div *ngIf="bankForm.get('ifsccode')?.touched && bankForm.get('ifsccode')?.invalid" class="text-danger">
           IFSC Code required (format: 4 letters + 0 + 6 digits)
