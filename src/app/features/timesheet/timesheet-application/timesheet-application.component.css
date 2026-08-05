@@ -1349,3 +1349,20 @@ button:hover {
 #tab3:checked ~ #content3 {
   display: block;
 }
+.project-list{
+    display:flex;
+    flex-direction:column;
+}
+
+.project-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:90px;
+    border-bottom:1px solid #dee2e6;
+    padding:8px;
+}
+
+.project-row:last-child{
+    border-bottom:none;
+}

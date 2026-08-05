@@ -87,7 +87,7 @@
                 <th>Company</th>
                 <th>Region</th>
                 <th>Status</th>
-                <th>Actions</th>
+                <th class="text-center">Actions</th>
               </tr>
             </thead>
 
@@ -102,10 +102,25 @@
                     {{ m.isActive ? 'Active' : 'Inactive' }}
                   </span>
                 </td>
-                <td>
+                <!-- <td>
                   <button class="btn btn-sm btn-primary" (click)="edit(m)">Edit</button>
                   <button class="btn btn-sm btn-danger" (click)="delete(m)">Delete</button>
-                </td>
+                </td> -->
+                <td class="text-center">
+  <button
+    class="btn btn-sm btn-outline-primary me-2"
+    (click)="edit(m)"
+    title="Edit">
+    <i class="fa-solid fa-pen-to-square"></i>
+  </button>
+
+  <button
+    class="btn btn-sm btn-outline-danger"
+    (click)="delete(m)"
+    title="Delete">
+    <i class="fa-solid fa-trash"></i>
+  </button>
+</td>
               </tr>
 
               <tr *ngIf="modes.length === 0">

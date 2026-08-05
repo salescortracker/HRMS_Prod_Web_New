@@ -149,27 +149,51 @@
             <td>{{ row.employeeCode }}</td>
             <td>{{ row.timesheetDate | date:'dd-MMM-yyyy' }}</td>
             <td>
-              <ul class="list-group list-group-flush">
-                <li class="list-group-item py-1" *ngFor="let p of row.projects; let pi = index">
-                  Task {{ pi + 1 }}: {{ p.projectName }}
-                  <br>
-                  <small class="text-muted">{{ p.description }}</small>
-                </li>
-              </ul>
+
+              <div class="project-list">
+
+                <div class="project-row" *ngFor="let p of row.projects; let pi=index">
+
+                  <div>
+
+                    <b>Task {{pi+1}} : {{p.projectName}}</b>
+
+                    <br>
+
+                    <small>{{p.description}}</small>
+
+                  </div>
+
+                </div>
+
+              </div>
+
             </td>
             <td>
-              <ul class="list-group list-group-flush">
-                <li class="list-group-item py-1" *ngFor="let p of row.projects">
-                  {{ p.totalHoursText }}
-                </li>
-              </ul>
+
+              <div class="project-list">
+
+                <div class="project-row" *ngFor="let p of row.projects">
+
+                  {{p.totalHoursText}}
+
+                </div>
+
+              </div>
+
             </td>
             <td>
-              <ul class="list-group list-group-flush">
-                <li class="list-group-item py-1" *ngFor="let p of row.projects">
-                  {{ p.otHoursText || '0 Hours' }}
-                </li>
-              </ul>
+
+              <div class="project-list">
+
+                <div class="project-row" *ngFor="let p of row.projects">
+
+                  {{p.otHoursText}}
+
+                </div>
+
+              </div>
+
             </td>
             <td>
               <span class="badge" [ngClass]="{
@@ -192,7 +216,8 @@
               </a>
 
               <!-- Edit -->
-              <a href="javascript:void(0)" *ngIf="row.status === 'Pending' && canEditTimesheet" (click)="editTimesheet(row)">
+              <a href="javascript:void(0)" *ngIf="row.status === 'Pending' && canEditTimesheet"
+                (click)="editTimesheet(row)">
                 <i class="fa-solid fa-pen-to-square text-success fs-5"></i>
               </a>
 

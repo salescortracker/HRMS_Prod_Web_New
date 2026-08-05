@@ -134,15 +134,32 @@
            [disabled]="!isGradeSelected(g.gradeID)" />
   </div>
 </div>
-            <div class="col-md-12 mt-3">
-              <button
-                type="submit"
-                class="btn btn-dark px-4"
-                [disabled]="!leaveTypeForm.valid">
-                <i class="fa-solid fa-save me-2"></i>
-                {{ isEditMode ? 'Update Leave Type' : 'Save Leave Type' }}
-              </button>
-            </div>
+            <!-- Buttons -->
+<div class="col-md-6 d-flex align-items-end gap-2 mt-3">
+
+  <!-- Cancel Button -->
+  <button
+    type="button"
+    class="btn btn-danger w-100"
+    (click)="onCancel()">
+
+    <i class="fa-solid fa-xmark me-2"></i>
+    Cancel
+
+  </button>
+
+  <!-- Save / Update Button -->
+  <button
+    type="submit"
+    class="btn btn-dark w-100"
+    [disabled]="!leaveTypeForm.valid">
+
+    <i class="fa-solid fa-save me-2"></i>
+    {{ isEditMode ? 'Update Leave Type' : 'Save Leave Type' }}
+
+  </button>
+
+</div>
 
           </div>
         </form>

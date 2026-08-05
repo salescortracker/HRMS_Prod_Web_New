@@ -279,7 +279,10 @@ getRegionName(regionId: number): string {
 
   resetForm(): void {
     this.category = this.getEmptyCategory();
-    this.isEditMode = false;
+
+  this.filteredRegions = [];
+
+  this.isEditMode = false;
   }
 
   /** Filtering + Sorting + Pagination */
@@ -365,4 +368,8 @@ getRegionName(regionId: number): string {
       error: () => Swal.fire('Error', 'Failed to upload data.', 'error')
     });
   }
+  onCancel(): void {
+  this.resetForm();
+}
+
 }
