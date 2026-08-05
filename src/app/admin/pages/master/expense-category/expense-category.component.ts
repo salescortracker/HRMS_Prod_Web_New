@@ -192,15 +192,17 @@ onRegionChange(): void {
   });
 }
   resetForm(): void {
-    this.expense = this.getEmptyExpenseCategory();
-    
-  // ✅ reset dropdowns
+   this.expense = this.getEmptyExpenseCategory();
+
+  // Reset dropdowns
   this.companyId = 0;
   this.regionId = 0;
 
-  // ✅ clear regions list
+  // Clear filtered regions
   this.filteredRegions = [];
-    this.isEditMode = false;
+
+  // Exit edit mode
+  this.isEditMode = false;
   }
 
   /* ------------------ Filtering / Paging ------------------ */
@@ -327,4 +329,7 @@ sortTable(column: string): void {
       }
     });
   }
+  onCancel(): void {
+  this.resetForm();
+}
 }

@@ -292,8 +292,20 @@ getGradeDays(gradeId: number): number {
   //   this.isEditMode = false;
   // }
   resetForm(): void {
-  this.leave = this.getEmptyLeaveType();
+    this.leave = this.getEmptyLeaveType();
+
+  // Reset Company & Region
+  this.companyId = 0;
+  this.regionId = 0;
+
+  // Clear Region dropdown
+  this.filteredRegions = [];
+
+  // Exit Edit Mode
   this.isEditMode = false;
+}
+onCancel(): void {
+  this.resetForm();
 }
 
   // ================= FILTER + SORT + PAGE =================

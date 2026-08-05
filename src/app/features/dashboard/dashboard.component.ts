@@ -175,7 +175,8 @@ calculateTotalWorkedMinutes(records: any[]): number {
 
     this.statCards = [
       { label: 'Total Employees', value: data.length, icon: 'fas fa-users' },
-      { label: 'Present', value: `${totalPresent} (F:${fullPresent}, H:${halfPresent})`, icon: 'fas fa-user-check' },
+      { label: 'Present', value: `${totalPresent} `
+      , icon: 'fas fa-user-check' },
       { label: 'Absent', value: absent, icon: 'fas fa-user-times' },
       { label: 'Today Hours', value: '0h 0m',  icon: 'fas fa-clock' }
     ];

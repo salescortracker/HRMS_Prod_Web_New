@@ -102,7 +102,7 @@
             <th>Company</th>
             <th>Region</th>
             <th>Status</th>
-            <th>Actions</th>
+            <th class="text-center">Actions</th>
           </tr>
         </thead>
 
@@ -117,10 +117,19 @@
                 {{ p.isActive ? 'Active' : 'Inactive' }}
               </span>
             </td>
-            <td>
+            <!-- <td>
               <button class="btn btn-sm btn-primary me-2" (click)="editProject(p)">Edit</button>
 
               <button class="btn btn-sm btn-danger" (click)="deleteProject(p)">Delete</button>
+            </td> -->
+            <td class="text-center">
+              <button class="btn btn-sm btn-outline-primary me-2" (click)="editProject(p)" title="Edit">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
+
+              <button class="btn btn-sm btn-outline-danger" (click)="deleteProject(p)" title="Delete">
+                <i class="fa-solid fa-trash"></i>
+              </button>
             </td>
           </tr>
         </tbody>

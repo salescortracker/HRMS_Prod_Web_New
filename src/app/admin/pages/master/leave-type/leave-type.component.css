@@ -12,3 +12,12 @@
   border-color: #198754;
   color: #fff;
 }
+.btn-danger,
+.btn-dark {
+  transition: all 0.2s ease;
+}
+
+.btn-danger:hover,
+.btn-dark:hover {
+  transform: translateY(-1px);
+}
