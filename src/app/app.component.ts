@@ -37,7 +37,7 @@ export class AppComponent {
     '/login',
     '/Welcomedemo',
     '/job-application',
-    '/offer-documents'
+    '/candidate-documents'
   ];
 
   const isPublic = publicRoutes.some(route =>
