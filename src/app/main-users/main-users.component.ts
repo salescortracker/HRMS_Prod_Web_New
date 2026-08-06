@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import Swal from 'sweetalert2';
 import { AdminService,User, Company, Region, RoleMaster } from '../admin/servies/admin.service';
 @Component({
@@ -7,9 +7,11 @@ import { AdminService,User, Company, Region, RoleMaster } from '../admin/servies
   templateUrl: './main-users.component.html',
   styleUrl: './main-users.component.css'
 })
-export class MainUsersComponent implements OnInit {
+export class MainUsersComponent implements OnInit, OnChanges  {
+  @Input() onboardingMode: boolean = false;
   @Input() candidateName: string = '';
   @Input() joiningDate: string = '';
+  @Output() employeeCreated = new EventEmitter<number>();
  users: User[] = [];
   companies: Company[] = [];
   regions: Region[] = [];
@@ -47,6 +49,17 @@ filteredDesignations: any[] = [];
     this.loadDepartments();
     this.loadDesignations();
   }
+  ngOnChanges(changes: SimpleChanges): void {
+
+  if (changes['candidateName'] && this.candidateName) {
+    this.user.fullName = this.candidateName;
+  }
+
+  if (changes['joiningDate'] && this.joiningDate) {
+    this.user.joiningDate = this.joiningDate;
+  }
+
+}
 loadDepartments(): void {
 
   this.userService.getDepartments(this.userId).subscribe({
@@ -102,7 +115,11 @@ onDepartmentChange(departmentId: number): void {
     userId: 0,
     companyId: 0,
     regionId: 0,
+
+    userEmployeeCode: 'EMP',
     employeeCode: '',
+    generatedEmployeeCode: '',
+
     fullName: '',
     email: '',
     roleId: 0,
@@ -113,9 +130,11 @@ onDepartmentChange(departmentId: number): void {
     joiningDate: '',
     password: '',
     status: 'Active',
+
     userCompanyId: sessionStorage.getItem('UserId')
       ? Number(sessionStorage.getItem('UserId'))
       : 0,
+
     loginType: ''
   };
 }
@@ -177,21 +196,38 @@ onStatusChange(event: Event): void {
     return;
   }
 
+
   this.userService
     .getUsersByCompanyRegion(this.user.companyId, regionId)
     .subscribe({
       next: (res: any[]) => {
 
-        this.users = res; // 🔥 Employee Code generation kosam
 
+        // Map API response correctly
+        this.users = res.map(u => ({
+          ...u,
+          companyId: Number(u.companyID ?? u.companyId),
+          regionId: Number(u.regionID ?? u.regionId),
+          employeeCode: u.employeeCode
+        }));
+
+
+        // Generate next running number
         this.generateNextEmployeeCode();
 
-        this.reportingToUsers = res;
+
+        this.reportingToUsers = this.users;
+
       }
     });
 
+
   this.filterDepartments();
-  this.loadHrUsers(this.user.companyId, regionId);
+
+  this.loadHrUsers(
+    this.user.companyId,
+    regionId
+  );
 
   this.filteredDesignations = [];
 }
@@ -247,32 +283,78 @@ filterDepartments(): void {
 
  generateNextEmployeeCode(): void {
 
-  if (!this.users || this.users.length === 0) {
-    this.user.employeeCode = 'EMP0001';
+
+  if (!this.user.companyId || !this.user.regionId) {
+    this.user.employeeCode = '';
+    this.user.generatedEmployeeCode = '';
     return;
   }
 
-  const numericCodes = this.users
-    .map(u => {
-      const match = u.employeeCode?.match(/^EMP(\d+)$/i);
 
-      return match ? parseInt(match[1], 10) : 0;
-    })
-    .filter(x => x > 0);
+  const companyUsers = this.users.filter(u =>
+    Number(u.companyId) === Number(this.user.companyId) &&
+    Number(u.regionId) === Number(this.user.regionId)
+  );
 
-  const maxCode = numericCodes.length
-    ? Math.max(...numericCodes)
-    : 0;
 
-  const nextCode = maxCode + 1;
+  const numbers = companyUsers.map(u => {
 
+    const match = u.employeeCode?.match(/\d+$/);
+
+    return match ? Number(match[0]) : 0;
+
+  });
+
+
+  const maxNumber = numbers.length
+      ? Math.max(...numbers)
+      : 0;
+
+
+  const nextNumber = maxNumber + 1;
+
+
+  // Running Number
   this.user.employeeCode =
-    `EMP${nextCode.toString().padStart(4, '0')}`;
+      nextNumber.toString().padStart(4,'0');
 
-  console.log('Generated Code:', this.user.employeeCode);
+
+  // Final Employee ID
+  this.generateEmployeeId();
+
+}
+generateEmployeeId(): void {
+
+
+  const prefix =
+      this.user.userEmployeeCode || 'EMP';
+
+
+  const running =
+      this.user.employeeCode || '0001';
+
+
+  this.user.generatedEmployeeCode =
+      `${prefix}${running}`;
+
+}
+updateGeneratedEmployeeId(): void {
+
+  const prefix =
+    this.user.userEmployeeCode || 'EMP';
+
+
+  const runningNumber =
+    this.user.employeeCode || '0001';
+
+
+  this.user.generatedEmployeeCode =
+    prefix + runningNumber;
+
 }
 
   onSubmit(): void {
+    
     if (this.isEditMode) {
       this.userService.updateUser(this.user).subscribe({
         next: () => {
