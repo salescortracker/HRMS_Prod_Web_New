@@ -83,27 +83,29 @@
   </div>
 
   <!-- QUICK ACTIONS -->
-  <div class="card span-2">
-    <h3>Quick Actions</h3>
+<div class="card span-2">
+  <h3>Quick Actions</h3>
 
-    <div class="actions">
-      <a (click)="openModule('/leave-management')">
-  <i class="fas fa-calendar"></i> Leave
-</a>
+  <div class="actions">
 
-<a (click)="openModule('/clockin-out')">
-  <i class="fas fa-clock"></i> Attendance
-</a>
+    <a routerLink="/leave-management">
+      <i class="fas fa-calendar"></i> Leave
+    </a>
 
-<a (click)="openModule('/timesheet')">
-  <i class="fas fa-file-alt"></i> Timesheet
-</a>
+    <a routerLink="/clockin-out">
+      <i class="fas fa-clock"></i> Attendance
+    </a>
 
-<a (click)="openModule('/help-desk')">
-  <i class="fas fa-headset"></i> Helpdesk
-</a>
-    </div>
+    <a routerLink="/timesheet">
+      <i class="fas fa-file-alt"></i> Timesheet
+    </a>
+
+    <a routerLink="/help-desk">
+      <i class="fas fa-headset"></i> Helpdesk
+    </a>
+
   </div>
+</div>
 
   <!-- NOTIFICATIONS -->
   <div class="card span-2">
