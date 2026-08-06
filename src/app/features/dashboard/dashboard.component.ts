@@ -175,8 +175,7 @@ calculateTotalWorkedMinutes(records: any[]): number {
 
     this.statCards = [
       { label: 'Total Employees', value: data.length, icon: 'fas fa-users' },
-      { label: 'Present', value: `${totalPresent} `
-      , icon: 'fas fa-user-check' },
+      { label: 'Present', value: `${totalPresent}`, icon: 'fas fa-user-check' },
       { label: 'Absent', value: absent, icon: 'fas fa-user-times' },
       { label: 'Today Hours', value: '0h 0m',  icon: 'fas fa-clock' }
     ];
@@ -617,26 +616,4 @@ get ticketPages(): number[] {
 goToTicketPage(page: number): void {
   this.helpdeskPage = Math.min(Math.max(page, 1), this.totalTicketPages);
 }
-openModule(route: string): void {
-
-  const allowedModules = JSON.parse(
-    sessionStorage.getItem('allowedModules') || '[]'
-  );
-
-  const isAllowed = allowedModules.some((m: any) =>
-    m.route?.toLowerCase() === route.toLowerCase()
-  );
-
-  if (isAllowed) {
-    this.router.navigate([route]);
-  } else {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Access Denied',
-      text: 'You do not have permission to access this module.'
-    });
-  }
-
-}
-
 }
