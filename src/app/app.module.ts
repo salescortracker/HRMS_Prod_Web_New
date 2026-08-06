@@ -148,6 +148,7 @@ import { SubscriptionComponent } from './admin/subscription/subscription.compone
 import { SuperAdminMenumasterComponent } from './superAdmin/super-admin-menumaster/super-admin-menumaster.component';
 import { SuperAdminRolesPermissionsComponent } from './superAdmin/super-admin-roles-permissions/super-admin-roles-permissions.component';
 import { EmployeeAllDetailsComponent } from './features/employee-profile/employee-all-details/employee-all-details.component';
+import { EmployeeOfferLetterComponent } from './features/employee-profile/employee-offer-letter/employee-offer-letter.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -286,6 +287,7 @@ import { EmployeeAllDetailsComponent } from './features/employee-profile/employe
           SuperAdminMenumasterComponent,
           SuperAdminRolesPermissionsComponent,
           EmployeeAllDetailsComponent,
+          EmployeeOfferLetterComponent,
           
           
           

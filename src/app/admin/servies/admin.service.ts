@@ -3352,4 +3352,23 @@ logout(userId: number): Observable<any> {
     catchError(this.handleError)
   );
 }
+
+saveEmployeeOfferLetter(dto: any) {
+
+  return this.http.post<any>(
+    `${this.baseUrl}/Recruitment/SaveEmployeeOfferLetter`,
+    dto
+  );
+
+}
+
+
+sendEmployeeOfferLetter(id: number) {
+
+  return this.http.post<any>(
+    `${this.baseUrl}/Recruitment/SendEmployeeOfferLetter/${id}`,
+    {}
+  );
+
+}
 }
