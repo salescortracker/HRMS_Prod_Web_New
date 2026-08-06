@@ -51,3 +51,31 @@
   75% { box-shadow: 0px -.2em 0 0 currentcolor; }
   87% { box-shadow: .2em -.2em 0 0 currentcolor; }
 }
+.loader-container {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.loader-text {
+  position: absolute;
+  z-index: 2;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 2px;
+
+  background: linear-gradient(
+    180deg,
+    #ff0000 50%,
+    #ffffff 50%
+  );
+
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  text-shadow: 
+    0 0 5px rgba(255,255,255,0.8);
+}

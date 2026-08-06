@@ -91,33 +91,37 @@ loadData() {
 }
 updateStatus(row: any) {
 
+  const companyId = Number(sessionStorage.getItem('CompanyId'));
+  const regionId = Number(sessionStorage.getItem('RegionId'));
+
   this.recruitmentService.updateChecklistStatus(
     row.offerId,
-    this.companyId,
-    this.regionId,
+    companyId,
+    regionId,
     row.status
-  ).subscribe({
-    next: () => {
+  )
+  .subscribe({
+    next: (res: string) => {
 
-      Swal.fire({
-        icon: 'success',
-        title: 'Success',
-        text: 'Status Updated Successfully',
-        timer: 2000,
-        showConfirmButton: false
-      });
+      console.log("Response:", res);
 
-      this.loadData();
+      Swal.fire(
+        'Success',
+        res,
+        'success'
+      );
+
     },
     error: (err) => {
 
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Status update failed'
-      });
+      console.error("Error:", err);
 
-      console.error(err);
+      Swal.fire(
+        'Error',
+        'Status update failed',
+        'error'
+      );
+
     }
   });
 }

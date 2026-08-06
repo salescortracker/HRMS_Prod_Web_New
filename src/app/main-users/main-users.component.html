@@ -5,7 +5,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
      <h4 class="fw-semibold mb-0 text-dark">
   <i class="fa-solid fa-user-gear me-2 text-danger"></i>
-  User Management
+  Create Employee
 </h4>
       <!-- <button class="btn btn-danger" (click)="resetForm()">
         <i class="fa-solid fa-plus me-2"></i> Add New User
@@ -39,11 +39,51 @@
             </div>
 
             <!-- Employee Code -->
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Employee Code <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" name="EmployeeCode"
-                     [(ngModel)]="user.employeeCode" required placeholder="Enter employee code" disabled />
-            </div>
+            <!-- Employee Code Prefix -->
+<!-- Employee Prefix -->
+<div class="col-md-3">
+  <label class="form-label fw-semibold">
+    Employee Prefix <span class="text-danger">*</span>
+  </label>
+
+  <input
+ type="text"
+ class="form-control"
+ name="userEmployeeCode"
+ [(ngModel)]="user.userEmployeeCode"
+ (ngModelChange)="generateEmployeeId()"
+ placeholder="EMP">
+</div>
+
+
+<!-- Running Number -->
+<div class="col-md-3">
+  <label class="form-label fw-semibold">
+    Running Number
+  </label>
+
+  <input
+ type="text"
+ class="form-control"
+ name="employeeCode"
+ [(ngModel)]="user.employeeCode"
+ readonly>
+</div>
+
+
+<!-- Final Employee ID -->
+<div class="col-md-6">
+  <label class="form-label fw-semibold">
+    Generated Employee ID
+  </label>
+
+  <input
+ type="text"
+ class="form-control"
+ name="generatedEmployeeCode"
+ [(ngModel)]="user.generatedEmployeeCode"
+ readonly>
+</div>
 
             <!-- Full Name -->
             <div class="col-md-6">

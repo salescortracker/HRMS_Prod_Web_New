@@ -383,7 +383,8 @@ updateChecklistStatus(offerId: number, companyId: number, regionId: number, stat
         companyId: companyId,
         regionId: regionId,
         status: status
-      }
+      },
+      responseType: 'text'
     }
   );
 }
