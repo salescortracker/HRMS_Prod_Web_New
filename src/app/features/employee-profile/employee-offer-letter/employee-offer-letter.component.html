@@ -1,0 +1,191 @@
+<app-header></app-header>
+<app-sidebar></app-sidebar>
+<div class="dashboard-header">
+    <h2 class="dashboard-title">Employee Offer Letter</h2>
+
+    <nav class="breadcrumb">
+        <a routerLink="/dashboard">Home</a> &gt;
+        <span>Employee Offer Letter</span>
+    </nav>
+</div>
+
+<div class="tab-container t-4">
+
+
+    <!-- FORM -->
+
+    <div class="card p-4 shadow-sm">
+
+        <h5 class="mb-3">
+            Create Offer Letter
+        </h5>
+
+
+        <form [formGroup]="offerForm" (ngSubmit)="saveOfferLetter()">
+
+
+
+            <div class="row mb-3">
+
+
+                <!-- Employee -->
+
+                <div class="col-md-4">
+
+                    <label class="form-label">
+                        Employee Name
+                        <span class="text-danger">*</span>
+                    </label>
+
+
+                    <select class="form-select" formControlName="userId" (change)="onEmployeeChange($event)">
+
+
+                        <option value="">
+                            Select Employee
+                        </option>
+
+
+                        <option *ngFor="let emp of employees" [value]="emp.userId">
+
+                            {{emp.fullName}}
+                            <!-- ({{emp.employeeCode}}) -->
+
+                        </option>
+
+
+                    </select>
+
+
+                </div>
+
+
+
+                <!-- Employee Code -->
+
+
+                <div class="col-md-4">
+
+
+                    <label class="form-label">
+                        Employee Code
+                    </label>
+
+
+                    <input type="text" class="form-control" formControlName="employeeCode">
+
+
+                </div>
+
+
+
+
+                <!-- Package -->
+
+
+                <div class="col-md-4">
+
+
+                    <label class="form-label">
+                        Package
+                        <span class="text-danger">*</span>
+                    </label>
+
+
+                    <input type="number" class="form-control" placeholder="Enter Package" formControlName="package">
+
+
+                </div>
+
+
+
+            </div>
+
+
+
+
+
+            <div class="row mb-3">
+
+
+                <!-- Designation -->
+
+
+                <div class="col-md-4">
+
+
+                    <label class="form-label">
+                        Designation
+                    </label>
+
+
+                    <input type="text" class="form-control" formControlName="designation">
+
+
+                </div>
+
+
+
+
+
+                <!-- Department -->
+
+
+                <div class="col-md-4">
+
+
+                    <label class="form-label">
+                        Department
+                    </label>
+
+
+                    <input type="text" class="form-control" formControlName="department">
+
+
+                </div>
+
+
+
+
+
+                <!-- Joining Date -->
+
+
+                <div class="col-md-4">
+
+
+                    <label class="form-label">
+                        Joining Date
+                        <span class="text-danger">*</span>
+                    </label>
+
+
+                    <input type="date" class="form-control" formControlName="joiningDate">
+
+
+                </div>
+
+
+            </div>
+
+
+
+
+
+            <button class="btn btn-primary">
+
+                Generate Offer Letter
+
+            </button>
+
+
+
+        </form>
+
+
+    </div>
+
+
+</div>
+
+<app-footer></app-footer>

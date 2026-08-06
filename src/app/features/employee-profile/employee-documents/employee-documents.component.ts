@@ -35,7 +35,7 @@ export class EmployeeDocumentsComponent implements OnInit {
     );
 
     const myLetters = menus.find(
-      (m: any) => m.menuName?.trim().toLowerCase() === 'my letters/forms'
+      (m: any) => m.menuName?.trim().toLowerCase() === 'my letters'
     );
 
     const myForms = menus.find(

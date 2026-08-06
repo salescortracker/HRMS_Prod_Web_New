@@ -108,6 +108,7 @@ import { SuperAdminMenumasterComponent } from './superAdmin/super-admin-menumast
 import { SuperAdminRolesPermissionsComponent } from './superAdmin/super-admin-roles-permissions/super-admin-roles-permissions.component';
 import { EmployeeAllDetailsComponent } from './features/employee-profile/employee-all-details/employee-all-details.component';
 import { CandidateDocumentsComponent } from './features/recruitment/candidate-documents/candidate-documents.component';
+import { EmployeeOfferLetterComponent } from './features/employee-profile/employee-offer-letter/employee-offer-letter.component';
 const routes: Routes = [
   { path: '', component: LoginComponent },
    { path: 'forgot-password', component: ForgotPasswordComponent },
@@ -252,6 +253,9 @@ const routes: Routes = [
 { path: 'early-logout-request', component: EarlyLogoutRequestComponent },
  { path: 'offer-documents/:offerId/:candidateId/:companyId/:regionId',
     component: CandidateDocumentsComponent
+  },
+  {
+    path: 'employee-offer-letter' , component:EmployeeOfferLetterComponent
   },
 // { path: 'leave-management', component: LeaveManagementComponent },
 {
