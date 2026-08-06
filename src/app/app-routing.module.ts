@@ -250,7 +250,7 @@ const routes: Routes = [
 { path: 'wfh-remote-request', component: WfoRemoteRequestComponent },
 { path: 'missed-punch-request', component: MissedPunchRequestComponent },
 { path: 'early-logout-request', component: EarlyLogoutRequestComponent },
- { path: 'offer-documents/:offerId/:candidateId/:companyId/:regionId',
+ { path: 'candidate-documents/:offerId/:candidateId/:companyId/:regionId',
     component: CandidateDocumentsComponent
   },
 // { path: 'leave-management', component: LeaveManagementComponent },

@@ -300,6 +300,7 @@ getOrganizationCount(): number {
           appliedDate: c.appliedDate,
           fileName: c.filePath,
           stageName: c.stageName,
+          stageId: c.stageId,
           progressPercent: c.progress ?? 0,
 
           experiences:

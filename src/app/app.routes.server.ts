@@ -2,7 +2,7 @@ import { RenderMode, ServerRoute } from '@angular/ssr';
 
 export const serverRoutes: ServerRoute[] = [
     {
-    path: 'offer-documents/:companyId/:branchId/:employeeId/:offerId',
+    path: 'candidate-documents/:offerId/:candidateId/:companyId/:regionId',
     renderMode: RenderMode.Server
   },
   {
