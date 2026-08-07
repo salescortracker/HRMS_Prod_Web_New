@@ -81,6 +81,7 @@ export class EmployeeMyformsComponent {
             name: x.documentName,
             issuedDate: x.issueDate,
             remarks: x.remarks,
+            status: x.status,
             // filePaths: latestPath
             filePaths: x.filePaths || x.FilePaths || []   
           };
@@ -89,6 +90,41 @@ export class EmployeeMyformsComponent {
       error: (err) => console.error(err)
     });
   }
+  downloadDocument(path: string) {
+
+  if (!path || path.trim() === '') {
+    Swal.fire('Error', 'File path not found', 'error');
+    return;
+  }
+
+  const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+  const url = `${environment.fileBaseUrl}${cleanPath}`;
+
+  fetch(url)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+      return response.blob();
+    })
+    .then(blob => {
+
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = cleanPath.split('/').pop() || 'download';
+
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      window.URL.revokeObjectURL(blobUrl);
+    })
+    .catch(() => {
+      Swal.fire('Error', 'Unable to download file', 'error');
+    });
+}
 
   uploadFiles(formId: number, fileInput: HTMLInputElement) {
 

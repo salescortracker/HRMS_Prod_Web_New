@@ -79,6 +79,7 @@ employeeDropdownContainer!: ElementRef;
     // this.loadEmployeeForms();
       this.loadEmployees();
  }
+ 
  toggleEmpDropdown(event: MouseEvent) {
   event.stopPropagation();
   this.showEmpDropdown = true;
@@ -431,6 +432,7 @@ formData.append("EmployeeName", names);
 this.selectedFiles.forEach(file => {
   formData.append("DocumentFiles", file);
 });
+formData.append("Status", "Pending");
   
 
 
@@ -469,6 +471,18 @@ isEmployeeSelected(emp: any): boolean {
   return this.selectedEmployees.some(
     x => x.employeeCode === emp.employeeCode
   );
+}
+isAllSelected(): boolean {
+  return this.employees.length > 0 &&
+         this.selectedEmployees.length === this.employees.length;
+}
+toggleSelectAll(event: any): void {
+  if(event.target.checked){
+    this.selectedEmployees = [...this.employees];
+  }
+  else{
+    this.selectedEmployees = [];
+  }
 }
 
 // ✅ Remove selected file

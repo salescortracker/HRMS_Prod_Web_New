@@ -46,6 +46,12 @@
     style="max-height:180px;overflow-y:auto;z-index:100;"
     (click)="$event.stopPropagation()"
     #employeeDropdownContainer>
+    <div class="mb-2 border-bottom pb-2">
+    <input type="checkbox"
+           [checked]="isAllSelected()"
+           (change)="toggleSelectAll($event)">
+    <strong>Select All</strong>
+  </div>
 
     <div *ngFor="let emp of employees">
 

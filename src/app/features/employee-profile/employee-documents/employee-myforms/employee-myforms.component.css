@@ -1348,3 +1348,29 @@ button:hover {
 #tab4:checked ~ #content4 {
   display: block;
 }
+.badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-pending {
+  background: #ffc107;
+  color: #000;
+}
+
+.status-approved {
+  background: #198754;
+  color: #fff;
+}
+
+.status-rejected {
+  background: #dc3545;
+  color: #fff;
+}
+
+.status-assigned {
+  background: #fd7e14;
+  color: #fff;
+}
