@@ -1350,3 +1350,29 @@ button:hover {
 #tab3:checked ~ #content3 {
   display: block;
 }
+.status-pending {
+  background-color: #ffc107;
+  color: #000;
+}
+
+.status-assigned {
+  background-color: #ff9800;   /* Orange */
+  color: #fff;
+}
+
+.status-approved {
+  background-color: #28a745;
+  color: #fff;
+}
+
+.status-rejected {
+  background-color: #dc3545;
+  color: #fff;
+}
+
+.badge {
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+}

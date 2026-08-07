@@ -103,10 +103,11 @@
           <!-- STATUS -->
           <td>
             <span class="badge" [ngClass]="{
-            'bg-warning': r.approvalStatus === 'Pending',
-            'bg-success': r.approvalStatus === 'Approved',
-            'bg-danger': r.approvalStatus === 'Rejected'
-          }">
+              'status-pending': r.approvalStatus === 'Pending',
+              'status-assigned': r.approvalStatus === 'Assigned',
+              'status-approved': r.approvalStatus === 'Approved',
+              'status-rejected': r.approvalStatus === 'Rejected'
+            }">
               {{ r.approvalStatus }}
             </span>
           </td>
