@@ -164,10 +164,10 @@ export class PayslipTemplateComponent {
   }
 
   processPayroll() {
-    if (this.isPayrollAlreadyProcessed()) {
-      Swal.fire('Info', 'Payroll already processed for selected month and year', 'info');
-      return;
-    }
+    // if (this.isPayrollAlreadyProcessed()) {
+    //   Swal.fire('Info', 'Payroll already processed for selected month and year', 'info');
+    //   return;
+    // }
     if (!this.validateInputs()) return;
 
     this.isLoading = true;
