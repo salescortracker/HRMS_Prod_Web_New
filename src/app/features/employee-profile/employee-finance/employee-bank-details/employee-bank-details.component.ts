@@ -168,7 +168,7 @@ export class EmployeeBankDetailsComponent {
       userId: this.userId
     };
 
-  //  const id = Number(this.bankForm.get("bankDetailsId")?.value);
+    //  const id = Number(this.bankForm.get("bankDetailsId")?.value);
 
     if (id > 0) {
       // UPDATE
@@ -198,7 +198,15 @@ export class EmployeeBankDetailsComponent {
           this.resetForm();
           Swal.fire('Saved', 'Bank details saved successfully', 'success');
         },
-        error: (err) => Swal.fire('Error', 'Failed to save bank details', 'error')
+        error: (err) => {
+          Swal.fire(
+            'Error',
+            err?.error?.message ||
+            err?.error ||
+            'Failed to save bank details',
+            'error'
+          );
+        }
       });
     }
   }

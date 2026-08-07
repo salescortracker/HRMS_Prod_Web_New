@@ -11,290 +11,346 @@ import { AdminService } from '../../../../admin/servies/admin.service';
   styleUrl: './employee-personal-details.component.css'
 })
 export class EmployeePersonalDetailsComponent {
-personalForm!: FormGroup;
+  personalForm!: FormGroup;
+  imagePreview: string | ArrayBuffer | null = null;
   selectedFile: File | null = null;
   employmentTypes: any;
   canCreate: boolean = true;
-canEdit: boolean = false;
-canDelete: boolean = false;
-userId = Number(sessionStorage.getItem('UserId') ?? 0);
- companyId=Number(sessionStorage.getItem("CompanyId"));
-  regionId=Number(sessionStorage.getItem("RegionId"));
-personalEmail: any=sessionStorage.getItem('Email');
-username: any=sessionStorage.getItem('Name');
+  canEdit: boolean = false;
+  canDelete: boolean = false;
+  userId = Number(sessionStorage.getItem('UserId') ?? 0);
+  companyId = Number(sessionStorage.getItem("CompanyId"));
+  regionId = Number(sessionStorage.getItem("RegionId"));
+  personalEmail: any = sessionStorage.getItem('Email');
+  username: any = sessionStorage.getItem('Name');
   existingRecordId: number | null = null; // if set => update mode only
   personals: any[] = [];      // for list
   editId: number | null = null; // store id for update
   bloodGroupList: any[] = [];
-maritalStatusList: any[] = [];
-showMarriageDate: boolean = false;
-marriedStatusId: number | null = null;
-grades: any[] = [];
-   constructor(
+  maritalStatusList: any[] = [];
+  showMarriageDate: boolean = false;
+  marriedStatusId: number | null = null;
+  grades: any[] = [];
+  constructor(
     private fb: FormBuilder,
     private service: EmployeeResignationService
     , route: Router, private adminService: AdminService
-    
+
   ) {
-    
+
   }
-   ngOnInit(): void {
-      this.loadPermission();  // 🔥 ADD THIS
+  ngOnInit(): void {
+    this.loadPermission();  // 🔥 ADD THIS
 
     this.loadBloodGroups();      // 👈 add this
- this.loadMaritalStatuses();  // 👈 add this
+    this.loadMaritalStatuses();  // 👈 add this
     this.createForm();
     this.personalForm.get('maritalStatusId')?.valueChanges.subscribe(value => {
-    const selectedValue = Number(value);
+      const selectedValue = Number(value);
 
-   if (selectedValue === this.marriedStatusId) {
-  this.showMarriageDate = true;
-} else {
-  this.showMarriageDate = false;
-  this.personalForm.get('marriageDate')?.setValue(null); // 👈 use null, not ''
-  this.personalForm.get('firstName')?.setValue(sessionStorage.getItem('Name') || '');
-}
+      if (selectedValue === this.marriedStatusId) {
+        this.showMarriageDate = true;
+      } else {
+        this.showMarriageDate = false;
+        this.personalForm.get('marriageDate')?.setValue(null); // 👈 use null, not ''
+        this.personalForm.get('firstName')?.setValue(sessionStorage.getItem('Name') || '');
+      }
 
-  });
+    });
     this.loadAll();
     this.loadgender();
     this.loadGradesMaster();
-     if (this.userId > 0) {
+    if (this.userId > 0) {
       this.loadByUserId();
       this.loadEmploymentTypes();
     }
-     
+
   }
   loadGradesMaster() {
-  this.adminService
-    .getGradesByCompanyRegion(this.companyId, this.regionId)
-    .subscribe({
+    this.adminService
+      .getGradesByCompanyRegion(this.companyId, this.regionId)
+      .subscribe({
+        next: (res: any[]) => {
+          this.grades = res;
+        },
+        error: () => {
+          Swal.fire('Error', 'Failed to load grades', 'error');
+        }
+      });
+  }
+  genderList: any[] = [];
+  genderMap: { [key: number]: string } = {};
+
+  loadgender() {
+    this.service.Getempgender(this.userId, this.companyId, this.regionId).subscribe({
       next: (res: any[]) => {
-        this.grades = res;
-      },
-      error: () => {
-        Swal.fire('Error', 'Failed to load grades', 'error');
-      }
-    });
-}
-genderList: any[] = [];
-genderMap: { [key: number]: string } = {};
 
-loadgender() {
-  this.service.Getempgender(this.userId, this.companyId, this.regionId).subscribe({
-    next: (res: any[]) => {
+        console.log('All Genders 👉', res);
 
-      console.log('All Genders 👉', res);
+        // ✅ Filter Active = true
+        this.genderList = (res || []).filter((g: any) => g.isActive === true);
 
-      // ✅ Filter Active = true
-      this.genderList = (res || []).filter((g: any) => g.isActive === true);
-
-      // ✅ Build Map (optional but useful)
-      this.genderMap = {};
-      this.genderList.forEach((g: any) => {
-        this.genderMap[g.genderId] = g.genderName;
-      });
-
-      console.log('Active Genders 👉', this.genderList);
-      console.log('Gender Map 👉', this.genderMap);
-    },
-    error: () => console.error('Failed to load genders')
-  });
-}
-   // load existing record (if any) and patch the form
-  private loadByUserId() {
-  this.service.GetByUserIdempProfile(this.userId).subscribe({
-    next: (res: any) => {
-      if (res) {
-        this.existingRecordId = res.id ?? null;
-        this.editId = res.id;
-
-        // Patch the form manually to map server field to form control
-        this.personalForm.patchValue({
-          firstName: res.firstName,
-          lastName: res.lastName,
-          dateOfBirth: res.dateOfBirth,
-          genderId: res.genderId,
-          mobileNumber: res.mobileNumber,
-          personalEmail: res.personalEmail,
-          permanentAddress: res.permanentAddress,
-          presentAddress: res.presentAddress,
-          panNumber: res.panNumber,
-          aadhaarNumber: res.aadhaarNumber,
-          passportNumber: res.passportNumber,
-          placeOfBirth: res.placeOfBirth,
-          uan: res.uan,
-          bloodGroup: res.bloodGroup,
-          citizenship: res.citizenship,
-          religion: res.religion,
-          drivingLicence: res.drivingLicence,
-          maritalStatusId: res.maritalStatusId,
-          marriageDate: res.marriageDate,
-          workPhone: res.workPhone,
-          linkedInProfile: res.linkedInProfile,
-          previousExperience: res.previousExperience,
-         ProfilePictureName: res.firstName + '_' + res.lastName,
-          ProfilePicturePath: res.profilePicturePath,
-          brandGrade: res.brandGrade,
-          esicNumber: res.esicNumber,
-          pfNumber: res.pfNumber,
-          employmentType: res.employmentType,
-          dateofJoining: res.dateofJoining
-  ? res.dateofJoining.split('T')[0]
-  : ''
+        // ✅ Build Map (optional but useful)
+        this.genderMap = {};
+        this.genderList.forEach((g: any) => {
+          this.genderMap[g.genderId] = g.genderName;
         });
-      }
-    },
-    error: (err) => console.error(err)
-  });
-  this.adminService.getUserById(this.userId).subscribe(user => {
 
-  this.personalForm.patchValue({
-    dateofJoining: user.joiningDate?.split('T')[0] || ''
-  });
+        console.log('Active Genders 👉', this.genderList);
+        console.log('Gender Map 👉', this.genderMap);
+      },
+      error: () => console.error('Failed to load genders')
+    });
+  }
+  // load existing record (if any) and patch the form
+  private loadByUserId() {
+    this.service.GetByUserIdempProfile(this.userId).subscribe({
+      next: (res: any) => {
+        if (res) {
+          this.existingRecordId = res.id ?? null;
+          this.editId = res.id;
 
-});
-}
-  
-  createForm() {
-  this.personalForm = this.fb.group({
-    firstName: ['', Validators.required],
-    lastName: [''],
-    employeeName:[''],
+          // Patch the form manually to map server field to form control
+          this.personalForm.patchValue({
+            firstName: res.firstName,
+            lastName: res.lastName,
+            dateOfBirth: res.dateOfBirth,
+            genderId: res.genderId,
+            mobileNumber: res.mobileNumber,
+            personalEmail: res.personalEmail,
+            permanentAddress: res.permanentAddress,
+            presentAddress: res.presentAddress,
+            panNumber: res.panNumber,
+            aadhaarNumber: res.aadhaarNumber,
+            passportNumber: res.passportNumber,
+            placeOfBirth: res.placeOfBirth,
+            uan: res.uan,
+            bloodGroup: res.bloodGroup,
+            citizenship: res.citizenship,
+            religion: res.religion,
+            drivingLicence: res.drivingLicence,
+            maritalStatusId: res.maritalStatusId,
+            marriageDate: res.marriageDate,
+            workPhone: res.workPhone,
+            linkedInProfile: res.linkedInProfile,
+            previousExperience: res.previousExperience,
+            //  ProfilePictureName: res.firstName + '_' + res.lastName,
+            ProfilePictureName: res.profilePictureName,
+            ProfilePicturePath: res.profilePicturePath,
+            brandGrade: res.brandGrade,
+            esicNumber: res.esicNumber,
+            pfNumber: res.pfNumber,
+            employmentType: res.employmentType,
+            dateofJoining: res.dateofJoining
+              ? res.dateofJoining.split('T')[0]
+              : ''
+          });
+        }
+      },
+      error: (err) => console.error(err)
+    });
+    this.adminService.getUserById(this.userId).subscribe(user => {
 
-    dateOfBirth: ['', Validators.required],
-
-    genderId: [''],
-    mobileNumber: [''],
-    personalEmail: [''],
-    permanentAddress: [''],
-    presentAddress: [''],
-
-    panNumber: ['', Validators.required],
-
-    aadhaarNumber: ['', Validators.required],
-
-    passportNumber: [''],
-    placeOfBirth: [''],
-    uan: [''],
-    bloodGroup: [''],
-    citizenship: [''],
-    religion: [''],
-    drivingLicence: [''],
-    maritalStatusId: [''],
-    marriageDate: [''],
-    workPhone: [''],
-    linkedInProfile: [''],
-    previousExperience: [''],
-    ProfilePicturePath: [''],
-    ProfilePictureName: [''],
-    brandGrade: [''],
-    esicNumber: [''],
-    pfNumber: [''],
-    employmentType: [''],
-    dateofJoining: [{ value: '', disabled: true }],
-
-    companyId: sessionStorage.getItem('CompanyId') || 1,
-    regionId: sessionStorage.getItem('RegionId') || 1,
-    userId: sessionStorage.getItem('UserId') || 1
-  });
-}
-
-  onFileSelected(event: any) {
-
-  this.selectedFile = event.target.files[0];
-
-  if(this.selectedFile){
-
-    const firstName = this.personalForm.get('firstName')?.value || '';
-    const lastName = this.personalForm.get('lastName')?.value || '';
-
-    const employeeName = 
-       (firstName + '_' + lastName)
-       .replace(/\s+/g,'_');
-
-
-    this.personalForm.patchValue({
-
-      employeeName:
-      this.personalForm.get('firstName')?.value +
-      "_" +
-      this.personalForm.get('lastName')?.value
-
+      this.personalForm.patchValue({
+        dateofJoining: user.joiningDate?.split('T')[0] || ''
       });
+
+    });
+  }
+
+  createForm() {
+    this.personalForm = this.fb.group({
+      firstName: ['', Validators.required],
+      lastName: [''],
+      employeeName: [''],
+
+      dateOfBirth: ['', Validators.required],
+
+      genderId: [''],
+      mobileNumber: [''],
+      personalEmail: [''],
+      permanentAddress: [''],
+      presentAddress: [''],
+
+      panNumber: ['', Validators.required],
+
+      aadhaarNumber: [
+        '',
+        [
+          Validators.required,
+          Validators.pattern(/^\d{12}$/)
+        ]
+      ],
+
+      passportNumber: [''],
+      placeOfBirth: [''],
+      uan: [''],
+      bloodGroup: [''],
+      citizenship: [''],
+      religion: [''],
+      drivingLicence: [''],
+      maritalStatusId: [''],
+      marriageDate: [''],
+      workPhone: [''],
+      linkedInProfile: [''],
+      previousExperience: [''],
+      ProfilePicturePath: [''],
+      ProfilePictureName: [''],
+      brandGrade: [''],
+      esicNumber: [''],
+      pfNumber: [''],
+      employmentType: [''],
+      dateofJoining: [{ value: '', disabled: true }],
+
+      companyId: sessionStorage.getItem('CompanyId') || 1,
+      regionId: sessionStorage.getItem('RegionId') || 1,
+      userId: sessionStorage.getItem('UserId') || 1
+    });
+  }
+
+  //   onFileSelected(event: any) {
+
+  //   this.selectedFile = event.target.files[0];
+
+  //   if(this.selectedFile){
+
+  //     const firstName = this.personalForm.get('firstName')?.value || '';
+  //     const lastName = this.personalForm.get('lastName')?.value || '';
+
+  //     const employeeName = 
+  //        (firstName + '_' + lastName)
+  //        .replace(/\s+/g,'_');
+
+
+  //     this.personalForm.patchValue({
+
+  //       employeeName:
+  //       this.personalForm.get('firstName')?.value +
+  //       "_" +
+  //       this.personalForm.get('lastName')?.value
+
+  //       });
+
+  //   }
+
+  // }
+
+  onFileSelected(event: any): void {
+
+    const file = event.target.files[0];
+
+    if (!file) {
+      return;
+    }
+
+    this.selectedFile = file;
+
+    // Show file name
+    this.personalForm.patchValue({
+      ProfilePictureName: file.name
+    });
+
+    // Image Preview
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      this.imagePreview = reader.result;
+    };
+
+    reader.readAsDataURL(file);
+  }
+
+  allowOnlyNumbers(event: KeyboardEvent): void {
+
+    const charCode = event.which ? event.which : event.keyCode;
+
+    if (charCode < 48 || charCode > 57) {
+      event.preventDefault();
+    }
 
   }
 
-}
+  onAadhaarInput(event: any): void {
+
+    const value = event.target.value.replace(/\D/g, '');
+
+    this.personalForm.get('aadhaarNumber')?.setValue(
+      value,
+      {
+        emitEvent: false
+      }
+    );
+
+  }
 
   // CREATE OR UPDATE
   onSubmit() {
-    
-     if (this.personalForm.invalid) {
-    this.personalForm.markAllAsTouched();
 
-    Swal.fire(
-      'Validation Error',
-      'Please fill all mandatory fields',
-      'warning'
-    );
-    return;
-  }
+    if (this.personalForm.invalid) {
+      this.personalForm.markAllAsTouched();
+
+      Swal.fire(
+        'Validation Error',
+        'Please fill all mandatory fields',
+        'warning'
+      );
+      return;
+    }
     const formData = new FormData();
     Object.keys(this.personalForm.controls).forEach(key => {
-  let value = this.personalForm.get(key)?.value;
+      let value = this.personalForm.get(key)?.value;
 
-  if (value === null || value === '' || value === undefined) {
-    formData.append(key, ''); // 👈 send empty instead of "null"
-  } else {
-    formData.append(key, value);
-  }
-});
+      if (value === null || value === '' || value === undefined) {
+        formData.append(key, ''); // 👈 send empty instead of "null"
+      } else {
+        formData.append(key, value);
+      }
+    });
 
     if (this.selectedFile) {
 
-        formData.append(
-          "profilePicture",
-          this.selectedFile
-        );
+      formData.append(
+        "profilePicture",
+        this.selectedFile
+      );
 
 
-        formData.append(
-          "ProfilePictureName",
-          this.personalForm.get('ProfilePictureName')?.value
-        );
+      formData.append(
+        "ProfilePictureName",
+        this.personalForm.get('ProfilePictureName')?.value
+      );
 
-        }
- 
+    }
+
 
     if (this.editId == null) {
       // CALL CREATE
-     this.service.createempProfile(formData).subscribe({
-  next: () => {
-    Swal.fire("Created successfully!", '', 'success');
-    this.loadByUserId();
-    // this.personalForm.reset();
-  },
-  error: (err) => {
-   Swal.fire("Error", JSON.stringify(err.error.errors), "error");
+      this.service.createempProfile(formData).subscribe({
+        next: () => {
+          Swal.fire("Created successfully!", '', 'success');
+          this.loadByUserId();
+          // this.personalForm.reset();
+        },
+        error: (err) => {
+          Swal.fire("Error", JSON.stringify(err.error.errors), "error");
 
-  }
-});
+        }
+      });
 
     } else {
       formData.append("id", this.editId.toString());
-       // CALL UPDATE
-     this.service.updateempProfile(formData).subscribe({
-  next: () => {
-    Swal.fire("Updated successfully!", '', 'success');
-    this.loadByUserId();
-    this.editId = null;
-    // this.personalForm.reset();
-  },
-  error: (err) => {
-    Swal.fire("Error", JSON.stringify(err.error.errors), "error");
-  }
-});
+      // CALL UPDATE
+      this.service.updateempProfile(formData).subscribe({
+        next: () => {
+          Swal.fire("Updated successfully!", '', 'success');
+          this.loadByUserId();
+          this.editId = null;
+          // this.personalForm.reset();
+        },
+        error: (err) => {
+          Swal.fire("Error", JSON.stringify(err.error.errors), "error");
+        }
+      });
     }
   }
 
@@ -312,101 +368,101 @@ loadgender() {
   }
 
   // DELETE
- delete(id: number) {
-  if (!this.canDelete) {
-    Swal.fire("You don't have permission to delete", "", "warning");
-    return;
-  }
+  delete(id: number) {
+    if (!this.canDelete) {
+      Swal.fire("You don't have permission to delete", "", "warning");
+      return;
+    }
 
-  if (confirm("Are you sure?")) {
-    this.service.deleteempProfile(id).subscribe(() => {
-      Swal.fire("Deleted successfully!", '', 'success');
-      this.loadAll();
-    });
+    if (confirm("Are you sure?")) {
+      this.service.deleteempProfile(id).subscribe(() => {
+        Swal.fire("Deleted successfully!", '', 'success');
+        this.loadAll();
+      });
+    }
   }
-}
-bloodGroupMap: { [key: number]: string } = {};
+  bloodGroupMap: { [key: number]: string } = {};
 
-loadBloodGroups() {
-  this.adminService
-    .GetAlluserIdAsync(Number(sessionStorage.getItem("userCompanyId")))
-    .subscribe({
+  loadBloodGroups() {
+    this.adminService
+      .GetAlluserIdAsync(Number(sessionStorage.getItem("userCompanyId")))
+      .subscribe({
+        next: (res: any[]) => {
+
+          console.log('All Blood Groups 👉', res);
+
+          // ✅ Filter Active = true
+          this.bloodGroupList = (res || []).filter((b: any) => b.isActive === true);
+
+          // ✅ Build Map
+          this.bloodGroupMap = {};
+          this.bloodGroupList.forEach((b: any) => {
+            this.bloodGroupMap[b.bloodGroupId] = b.bloodGroupName;
+          });
+
+          console.log('Active Blood Groups 👉', this.bloodGroupList);
+          console.log('Blood Group Map 👉', this.bloodGroupMap);
+        },
+        error: (err) => {
+          console.error(err);
+        }
+      });
+  }
+  loadMaritalStatuses() {
+    this.adminService.getMaritalStatusesbycmp(this.companyId, this.regionId).subscribe({
       next: (res: any[]) => {
+        this.maritalStatusList = res.filter((m: any) =>
+          m.companyId == this.companyId &&
+          m.regionId == this.regionId &&
+          m.isActive === true
+        );
+        const marriedObj = this.maritalStatusList.find(
+          (m: any) => m.maritalStatusName.toLowerCase() === 'married'
+        );
 
-        console.log('All Blood Groups 👉', res);
-
-        // ✅ Filter Active = true
-        this.bloodGroupList = (res || []).filter((b: any) => b.isActive === true);
-
-        // ✅ Build Map
-        this.bloodGroupMap = {};
-        this.bloodGroupList.forEach((b: any) => {
-          this.bloodGroupMap[b.bloodGroupId] = b.bloodGroupName;
-        });
-
-        console.log('Active Blood Groups 👉', this.bloodGroupList);
-        console.log('Blood Group Map 👉', this.bloodGroupMap);
+        this.marriedStatusId = marriedObj?.maritalStatusId || null;
       },
-      error: (err) => {
-        console.error(err);
-      }
+      error: (err) => console.error(err)
     });
-}
-loadMaritalStatuses() {
-  this.adminService.getMaritalStatusesbycmp(this.companyId,this.regionId).subscribe({
-    next: (res: any[]) => {
-      this.maritalStatusList = res.filter((m: any) =>
-        m.companyId == this.companyId &&
-        m.regionId == this.regionId &&
-        m.isActive === true
-      );
-      const marriedObj = this.maritalStatusList.find(
-        (m: any) => m.maritalStatusName.toLowerCase() === 'married'
-      );
+  }
+  loadEmploymentTypes() {
+    this.adminService
+      .getEmploymentTypesByFilter(this.companyId, this.regionId)
+      .subscribe({
+        next: (res: any) => {
+          this.employmentTypes = res.data || [];
+        },
+        error: () => {
+          Swal.fire('Error', 'Failed to load Employment Types', 'error');
+        }
+      });
+  }
+  loadPermission() {
+    if (!this.canCreate) {
+      this.personalForm.disable();
+    }
+    const userId = Number(sessionStorage.getItem("UserId"));
+    const menus = JSON.parse(sessionStorage.getItem("Menus") || "[]");
 
-      this.marriedStatusId = marriedObj?.maritalStatusId || null;
-    },
-    error: (err) => console.error(err)
-  });
-}
-loadEmploymentTypes() {
-  this.adminService
-    .getEmploymentTypesByFilter(this.companyId, this.regionId)
-    .subscribe({
-      next: (res: any) => {
-        this.employmentTypes = res.data || [];
+    const personalMenu = menus.find(
+      (m: any) => m.menuName === "Personal Details"
+    );
+
+    const menuId = personalMenu ? personalMenu.menuId : 0;
+
+    if (personalMenu) {
+      this.canCreate = personalMenu.canAdd;
+      this.canEdit = personalMenu.canEdit;
+      this.canDelete = personalMenu.canDelete;
+    }
+
+    this.adminService.getPermission(userId, menuId, 'create').subscribe({
+      next: (res: boolean) => {
+        this.canCreate = res;
       },
       error: () => {
-        Swal.fire('Error', 'Failed to load Employment Types', 'error');
+        this.canCreate = false;
       }
     });
-}
-loadPermission() {
-  if (!this.canCreate) {
-  this.personalForm.disable();
-}
-  const userId = Number(sessionStorage.getItem("UserId"));
-  const menus = JSON.parse(sessionStorage.getItem("Menus") || "[]");
-
-  const personalMenu = menus.find(
-    (m: any) => m.menuName === "Personal Details"
-  );
-
-  const menuId = personalMenu ? personalMenu.menuId : 0;
-
-  if (personalMenu) {
-    this.canCreate = personalMenu.canAdd;
-    this.canEdit = personalMenu.canEdit;
-    this.canDelete = personalMenu.canDelete;
   }
-
-  this.adminService.getPermission(userId, menuId, 'create').subscribe({
-    next: (res: boolean) => {
-      this.canCreate = res;
-    },
-    error: () => {
-      this.canCreate = false;
-    }
-  });
-}
 }
