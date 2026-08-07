@@ -32,6 +32,7 @@
           <th>Files</th>
 
           <th>Upload</th>
+          <th>Status</th>
 
         </tr>
       </thead>
@@ -45,11 +46,23 @@
 
           <td>
             <span *ngIf="f.filePaths?.length > 0">
-              <div *ngFor="let path of f.filePaths">
-                <a style="cursor:pointer;color:blue" (click)="viewDocument(path)">
-                  View / Download
-                </a>
-              </div>
+              <div *ngFor="let path of f.filePaths" class="d-flex gap-2">
+
+              <a class="text-primary"
+                style="cursor:pointer"
+                (click)="viewDocument(path)">
+                View
+              </a>
+
+              |
+
+              <a class="text-success"
+                style="cursor:pointer"
+                (click)="downloadDocument(path)">
+                Download
+              </a>
+
+            </div>
             </span>
 
             <span *ngIf="!f.filePaths || f.filePaths.length === 0">
@@ -63,7 +76,17 @@
               Upload
             </button>
           </td>
-
+          <td>
+          <span class="badge"
+                [ngClass]="{
+                  'status-pending': f.status === 'Pending',
+                  'status-approved': f.status === 'Approved',
+                  'status-rejected': f.status === 'Rejected',
+                  'status-assigned': f.status === 'Assigned'
+                }">
+            {{ f.status }}
+          </span>
+         </td>
         </tr>
       </tbody>
     </table>
