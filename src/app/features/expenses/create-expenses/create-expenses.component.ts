@@ -333,32 +333,33 @@ this.loadPermissions();
     this.calculatePages();
   }
 
+// viewReceipt(path: string): void {
 
-  viewReceipt(filePath: string | undefined): void {
-    if (!filePath) {
-      alert('No file path available.');
-      return;
-    }
+//   if (!path) {
+//     Swal.fire('Error', 'Receipt not found', 'error');
+//     return;
+//   }
 
-    const fullPath = environment.apiUrl + filePath;
-    const encodedUrl = encodeURI(fullPath);
-    window.open(encodedUrl, '_blank');
-  
-  // if (!path) {
-  //   Swal.fire('Error', 'No receipt found', 'error');
-  //   return;
-  // }
+//   const baseUrl = environment.baseurl;   
 
-  // const baseUrl = environment.apiUrl.replace('/api', '');
+//   const url = `${baseUrl}/${path.replace(/\\/g, '/')}`;
 
-  // // FIX SLASH ISSUE
-  // const cleanPath = path.replace(/\\/g, '/');
+//   console.log(url);
 
-  // const url = `${baseUrl}/${cleanPath}`;
+//   window.open(url, '_blank');
+// }
+viewReceipt(path: string): void {
 
-  // console.log(url);
-
-  // window.open(url, '_blank');
+  if (!path) {
+    Swal.fire('Error', 'Receipt not found', 'error');
+    return;
   }
+
+  const url = `${environment.baseurl}/${path.replace(/\\/g, '/')}`;
+
+  console.log(url);
+
+  window.open(url, '_blank');
+}
 }
 
