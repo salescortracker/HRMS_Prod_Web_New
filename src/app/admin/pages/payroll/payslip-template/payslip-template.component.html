@@ -45,11 +45,11 @@
           Preview Payrolls
         </button>
 
-        <span [title]="isPayrollAlreadyProcessed() ? 'Payroll already processed for selected month and year' : ''"
-          style="display:block; width:100%">
+        <span >
 
           <button class="btn btn-success w-100" (click)="processPayroll()"
-            [disabled]="!isPreviewDone || isProcessed || isLoading || isPayrollAlreadyProcessed()">
+            
+            >
 
             Process Payrolls
 

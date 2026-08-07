@@ -10,7 +10,7 @@ import Swal from 'sweetalert2';
   styleUrl: './employee-immigration.component.css'
 })
 export class EmployeeImmigrationComponent {
- today: string = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  today: string = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
   immigrationList: EmployeeImmigration[] = [];
   formModel: EmployeeImmigration = {} as EmployeeImmigration;
   isEditMode = false;
@@ -18,13 +18,13 @@ export class EmployeeImmigrationComponent {
   workStatuses: any[] = [];
   companyId = Number(sessionStorage.getItem("CompanyId"));
   regionId = Number(sessionStorage.getItem("RegionId"));
-  Name= sessionStorage.getItem('Name');         
-  empcode=sessionStorage.getItem('EmployeeCode') ;
+  Name = sessionStorage.getItem('Name');
+  empcode = sessionStorage.getItem('EmployeeCode');
   userId!: number;
 
-pageSize = 5;
-currentPage = 1;
-pageSizeOptions = [5, 10, 20, 50];
+  pageSize = 5;
+  currentPage = 1;
+  pageSizeOptions = [5, 10, 20, 50];
   // File state & errors
   passportFile: File | null = null;
   visaFile: File | null = null;
@@ -36,22 +36,22 @@ pageSizeOptions = [5, 10, 20, 50];
 
   isSubmitting = false;
 
-  constructor(private adminService: AdminService) {}
-changePage(page: number): void {
-  if (page >= 1 && page <= this.totalPages) {
-    this.currentPage = page;
+  constructor(private adminService: AdminService) { }
+  changePage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
   }
-}
-// Page Count
-get totalPages(): number {
-  return Math.ceil(this.immigrationList.length / this.pageSize);
-}
-changePageSize(size: number): void {
-  this.pageSize = size;
-  this.currentPage = 1;
-}
+  // Page Count
+  get totalPages(): number {
+    return Math.ceil(this.immigrationList.length / this.pageSize);
+  }
+  changePageSize(size: number): void {
+    this.pageSize = size;
+    this.currentPage = 1;
+  }
   ngOnInit(): void {
-      this.loadPermission();   // ✅ ADD THIS LINE
+    this.loadPermission();   // ✅ ADD THIS LINE
 
     this.userId = Number(sessionStorage.getItem("UserId"));
     if (!this.userId) {
@@ -60,8 +60,8 @@ changePageSize(size: number): void {
     this.loadImmigrations();
     this.loadVisaTypes();
     this.loadStatuses();
-    this.formModel.fullName=this.Name||'';
-    this.formModel.employeeId=this.empcode||'';
+    this.formModel.fullName = this.Name || '';
+    this.formModel.employeeId = this.empcode || '';
   }
 
   loadVisaTypes(): void {
@@ -78,21 +78,21 @@ changePageSize(size: number): void {
     this.adminService.getStatuses(this.companyId, this.regionId).subscribe({
       next: (data) => {
         this.workStatuses = data;
-        console.log("Statuses Loaded:", data);
+        console.log(" work Statuses Loaded:", data);
       },
       error: (err) => console.error("Failed to load statuses", err)
     });
   }
-filteredImmigrations(): EmployeeImmigration[] {
-  const startIndex = (this.currentPage - 1) * this.pageSize;
-  return this.immigrationList.slice(startIndex, startIndex + this.pageSize);
-}
+  filteredImmigrations(): EmployeeImmigration[] {
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    return this.immigrationList.slice(startIndex, startIndex + this.pageSize);
+  }
   loadImmigrations(): void {
     this.adminService.getAllEmployeeImmigrations().subscribe({
       next: (data) => {
         console.log('Loaded immigration data:', data);
         this.immigrationList = data; // <-- this binds data to your HTML table
-        
+
       },
       error: (err) => console.error('Error loading immigration data', err)
     });
@@ -201,15 +201,15 @@ filteredImmigrations(): EmployeeImmigration[] {
     console.log("🔥 saveImmigration() CALLED");
     console.log("Form Data:", form.value);
     console.log("Model:", this.formModel);
-    this.formModel.regionId=parseInt(sessionStorage.getItem('RegionId')?.toString()||'0');
-    this.formModel.companyId=parseInt(sessionStorage.getItem('CompanyId')?.toString()||'0');
-    this.formModel.userId=parseInt(sessionStorage.getItem('UserId')?.toString()||'0');
+    this.formModel.regionId = parseInt(sessionStorage.getItem('RegionId')?.toString() || '0');
+    this.formModel.companyId = parseInt(sessionStorage.getItem('CompanyId')?.toString() || '0');
+    this.formModel.userId = parseInt(sessionStorage.getItem('UserId')?.toString() || '0');
     // Prevent double submit
     if (this.isSubmitting) return;
 
     // check template-driven form validity
     if (form.invalid) {
-      
+
       Swal.fire('Error', 'Please fix the form errors before submitting.', 'error');
       return;
     }
@@ -220,46 +220,46 @@ filteredImmigrations(): EmployeeImmigration[] {
       Swal.fire('Validation error', check.message || 'Please check the form.', 'error');
       return;
     }
-const fd = new FormData();
+    const fd = new FormData();
 
-const add = (k: string, v: any) => {
-  if (v !== null && v !== undefined && v !== '') {
-    fd.append(k, v);
-  }
-};
+    const add = (k: string, v: any) => {
+      if (v !== null && v !== undefined && v !== '') {
+        fd.append(k, v);
+      }
+    };
 
-// REQUIRED
-fd.append("EmployeeId", String(this.formModel.employeeId));
-fd.append("CompanyId", String(this.companyId));
-fd.append("RegionId", String(this.regionId));
-fd.append("UserId", String(this.userId));
+    // REQUIRED
+    fd.append("EmployeeId", String(this.formModel.employeeId));
+    fd.append("CompanyId", String(this.companyId));
+    fd.append("RegionId", String(this.regionId));
+    fd.append("UserId", String(this.userId));
 
-// STRINGS
-add("FullName", this.formModel.fullName);
-add("Nationality", this.formModel.nationality);
-add("PassportNumber", this.formModel.passportNumber);
-add("VisaNumber", this.formModel.visaNumber);
-add("VisaIssuingCountry", this.formModel.visaIssuingCountry);
-add("EmployerName", this.formModel.employerName);
-add("EmployerAddress", this.formModel.employerAddress);
-add("EmployerContact", this.formModel.employerContact);
-add("ContactPerson", this.formModel.contactPerson);
-add("Remarks", this.formModel.remarks);
+    // STRINGS
+    add("FullName", this.formModel.fullName);
+    add("Nationality", this.formModel.nationality);
+    add("PassportNumber", this.formModel.passportNumber);
+    add("VisaNumber", this.formModel.visaNumber);
+    add("VisaIssuingCountry", this.formModel.visaIssuingCountry);
+    add("EmployerName", this.formModel.employerName);
+    add("EmployerAddress", this.formModel.employerAddress);
+    add("EmployerContact", this.formModel.employerContact);
+    add("ContactPerson", this.formModel.contactPerson);
+    add("Remarks", this.formModel.remarks);
 
-// DATES (yyyy-MM-dd)
-add("DateOfBirth", this.formModel.dateOfBirth);
-add("PassportExpiryDate", this.formModel.passportExpiryDate);
-add("VisaIssueDate", this.formModel.visaIssueDate);
-add("VisaExpiryDate", this.formModel.visaExpiryDate);
+    // DATES (yyyy-MM-dd)
+    add("DateOfBirth", this.formModel.dateOfBirth);
+    add("PassportExpiryDate", this.formModel.passportExpiryDate);
+    add("VisaIssueDate", this.formModel.visaIssueDate);
+    add("VisaExpiryDate", this.formModel.visaExpiryDate);
 
-// INTS
-fd.append("VisaTypeId", String(this.formModel.visaTypeId || 0));
-fd.append("StatusId", String(this.formModel.statusId || 0));
+    // INTS
+    fd.append("VisaTypeId", String(this.formModel.visaTypeId || 0));
+    fd.append("StatusId", String(this.formModel.statusId || 0));
 
-// FILES
-if (this.passportFile) fd.append("passportCopy", this.passportFile);
-if (this.visaFile) fd.append("visaCopy", this.visaFile);
-if (this.otherFile) fd.append("otherDocs", this.otherFile);
+    // FILES
+    if (this.passportFile) fd.append("passportCopy", this.passportFile);
+    if (this.visaFile) fd.append("visaCopy", this.visaFile);
+    if (this.otherFile) fd.append("otherDocs", this.otherFile);
     // Prepare FormData
     // Mark submitting
     this.isSubmitting = true;
@@ -283,23 +283,23 @@ if (this.otherFile) fd.append("otherDocs", this.otherFile);
         });
     }
     // CREATE MODE
-   else {
-  this.adminService
-    .CreateEmployeeImmigration(fd)   // ✅ FIXED
-    .subscribe({
-      next: () => {
-        Swal.fire('Success', 'Created successfully!', 'success');
-        this.resetForm(form);
-        this.loadImmigrations();
-        this.isSubmitting = false;
-      },
-      error: (err) => {
-        console.error(err);
-        Swal.fire('Error', 'Create failed. Please try again.', 'error');
-        this.isSubmitting = false;
-      }
-    });
-}
+    else {
+      this.adminService
+        .CreateEmployeeImmigration(fd)   // ✅ FIXED
+        .subscribe({
+          next: () => {
+            Swal.fire('Success', 'Created successfully!', 'success');
+            this.resetForm(form);
+            this.loadImmigrations();
+            this.isSubmitting = false;
+          },
+          error: (err) => {
+            console.error(err);
+            Swal.fire('Error', 'Create failed. Please try again.', 'error');
+            this.isSubmitting = false;
+          }
+        });
+    }
   }
 
   // Utility to extract backend validation messages (if present)
@@ -436,28 +436,28 @@ if (this.otherFile) fd.append("otherDocs", this.otherFile);
   }
 
   // Add this method to your component class
-private markFormGroupTouched(form: NgForm) {
-  Object.keys(form.controls).forEach(key => {
-    const control = form.controls[key];
-    control.markAsTouched();
-  });
-}
- canCreate: boolean = false;
-   canEdit: boolean = false;
+  private markFormGroupTouched(form: NgForm) {
+    Object.keys(form.controls).forEach(key => {
+      const control = form.controls[key];
+      control.markAsTouched();
+    });
+  }
+  canCreate: boolean = false;
+  canEdit: boolean = false;
   canDelete: boolean = false;
   loadPermission() {
-  const menus = JSON.parse(sessionStorage.getItem("Menus") || "[]");
+    const menus = JSON.parse(sessionStorage.getItem("Menus") || "[]");
 
-  const immigrationMenu = menus.find(
-    (m: any) => m.menuName?.trim().toLowerCase() === "immigration"
-  );
+    const immigrationMenu = menus.find(
+      (m: any) => m.menuName?.trim().toLowerCase() === "immigration"
+    );
 
-  if (immigrationMenu) {
-    this.canCreate = immigrationMenu.canAdd;
-    this.canEdit   = immigrationMenu.canEdit;
-    this.canDelete = immigrationMenu.canDelete;
+    if (immigrationMenu) {
+      this.canCreate = immigrationMenu.canAdd;
+      this.canEdit = immigrationMenu.canEdit;
+      this.canDelete = immigrationMenu.canDelete;
+    }
+
+    console.log("Immigration Permissions 👉", immigrationMenu);
   }
-
-  console.log("Immigration Permissions 👉", immigrationMenu);
-}
 }

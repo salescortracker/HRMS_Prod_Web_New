@@ -12,10 +12,10 @@ import { NgxSpinnerService } from 'ngx-spinner';
   styleUrl: './attachment-type.component.css'
 })
 export class AttachmentTypeComponent {
-   
+
   companyId = sessionStorage.getItem('CompanyId') ? +sessionStorage.getItem('CompanyId')! : 0;
   regionId = sessionStorage.getItem('RegionId') ? +sessionStorage.getItem('RegionId')! : 0;
-userId = sessionStorage.getItem('UserId') ? +sessionStorage.getItem('UserId')! : 0;
+  userId = sessionStorage.getItem('UserId') ? +sessionStorage.getItem('UserId')! : 0;
   attachment: AttachmentType = this.getEmptyAttachment();
   attachments: AttachmentType[] = [];
   attachmentsModel: any = {};
@@ -31,26 +31,39 @@ userId = sessionStorage.getItem('UserId') ? +sessionStorage.getItem('UserId')! :
 
   showUploadPopup = false;
   companies: Company[] = [];
-regions: Region[] = [];
-allRegions: Region[] = [];
+  regions: Region[] = [];
+  allRegions: Region[] = [];
 
-companyMap: Record<number, string> = {};
-regionMap: Record<number, string> = {};
+  companyMap: Record<number, string> = {};
+  regionMap: Record<number, string> = {};
 
   constructor(
     private adminService: AdminService,
     private spinner: NgxSpinnerService
-  ) {}
+  ) { }
 
+  // ngOnInit(): void {
+  //   this.loadAttachments();
+  //   this.loadCompanies();
+  //   this.loadRegions();
+  //   setTimeout(() => {
+  //     this.loadAttachments();
+  //   }, 200);
+
+  // }
   ngOnInit(): void {
-    this.loadAttachments();
-    this.loadCompanies();
+
+  this.loadCompanies();
   this.loadRegions();
+  this.loadAttachments();
+
   setTimeout(() => {
-    this.loadAttachments();
+    this.regions = this.allRegions.filter(
+      r => r.companyID == this.companyId
+    );
   }, 200);
 
-  }
+}
 
   getEmptyAttachment(): AttachmentType {
     return {
@@ -60,48 +73,48 @@ regionMap: Record<number, string> = {};
       isActive: true,
       companyId: this.companyId,
       regionId: this.regionId,
-      userId : this.userId
+      userId: this.userId
     };
   }
   loadCompanies() {
-  this.adminService.getCompanies(null, this.userId).subscribe((res: any) => {
-    const data = res.data || res;
+    this.adminService.getCompanies(null, this.userId).subscribe((res: any) => {
+      const data = res.data || res;
 
-    this.companies = data.filter((x: any) => x.isActive);
+      this.companies = data.filter((x: any) => x.isActive);
 
-    this.companyMap = {};
-    this.companies.forEach((c: any) => {
-      this.companyMap[c.companyId] = c.companyName;
+      this.companyMap = {};
+      this.companies.forEach((c: any) => {
+        this.companyMap[c.companyId] = c.companyName;
+      });
     });
-  });
-}
-loadRegions() {
-  this.adminService.getRegions(null, this.userId).subscribe((res: any) => {
-    const data = res.data || res;
+  }
+  loadRegions() {
+    this.adminService.getRegions(null, this.userId).subscribe((res: any) => {
+      const data = res.data || res;
 
-    this.allRegions = data.filter((x: any) => x.isActive);
+      this.allRegions = data.filter((x: any) => x.isActive);
 
-    this.regionMap = {};
-    this.allRegions.forEach((r: any) => {
-      this.regionMap[r.regionID] = r.regionName;
+      this.regionMap = {};
+      this.allRegions.forEach((r: any) => {
+        this.regionMap[r.regionID] = r.regionName;
+      });
+
+      this.regions = [];
     });
+  }
+  onCompanyChange() {
+    this.attachment.regionId = 0;
 
-    this.regions = [];
-  });
-}
-onCompanyChange() {
-  this.attachment.regionId = 0;
-
-  this.regions = this.allRegions.filter(
-    r => r.companyID == this.attachment.companyId
-  );
-}
+    this.regions = this.allRegions.filter(
+      r => r.companyID == this.attachment.companyId
+    );
+  }
 
   loadAttachments(): void {
     this.spinner.show();
     this.adminService.getAttachmentTypes(this.companyId, this.regionId).subscribe({
       next: res => {
-         console.log("API Response:", res); 
+        console.log("API Response:", res);
         this.attachments = res.data?.data || res;
         this.spinner.hide();
       },
@@ -140,11 +153,11 @@ onCompanyChange() {
           console.log("Create Response:", res);
           this.spinner.hide();
           // Check if response indicates success
-         
-            Swal.fire('Created', `${this.attachment.attachmentTypeName} added successfully!`, 'success');
-            this.loadAttachments();
-            this.resetForm();
-         
+
+          Swal.fire('Created', `${this.attachment.attachmentTypeName} added successfully!`, 'success');
+          this.loadAttachments();
+          this.resetForm();
+
         },
         error: () => {
           this.spinner.hide();
@@ -155,12 +168,13 @@ onCompanyChange() {
   }
 
   editAttachment(a: AttachmentType): void {
-    this.attachment = { ...a,
+    this.attachment = {
+      ...a,
       userId: this.userId
-     };
+    };
     this.regions = this.allRegions.filter(
-    r => r.companyID == a.companyId
-  );
+      r => r.companyID == a.companyId
+    );
     this.isEditMode = true;
   }
 
@@ -191,9 +205,37 @@ onCompanyChange() {
     });
   }
 
+  // resetForm(): void {
+  //   this.attachment = this.getEmptyAttachment();
+  //   this.isEditMode = false;
+  // }
   resetForm(): void {
-    this.attachment = this.getEmptyAttachment();
+
+    this.attachment = {
+      attachmentTypeId: 0,
+      attachmentCategory: '',
+      attachmentTypeName: '',
+      isActive: true,
+      companyId: this.companyId,
+      regionId: this.regionId,
+      userId: this.userId
+    };
+
     this.isEditMode = false;
+
+    // Load regions for logged-in company
+    this.regions = this.allRegions.filter(
+      r => r.companyID == this.attachment.companyId
+    );
+  }
+
+  cancelEdit(): void {
+    this.resetForm();
+
+    // Reset Region dropdown based on logged-in company
+    this.regions = this.allRegions.filter(
+      r => r.companyID == this.companyId
+    );
   }
 
   /** ======================

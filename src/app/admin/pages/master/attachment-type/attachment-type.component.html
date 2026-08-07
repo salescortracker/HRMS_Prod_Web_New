@@ -92,13 +92,29 @@
             </div>
 
             <!-- Save Button -->
-            <div class="col-md-12 mt-3">
+            <!-- <div class="col-md-12 mt-3">
               <button type="submit" class="btn btn-dark px-4" [disabled]="!attachmentForm.valid">
                 <i class="fa-solid fa-save me-2"></i>
                 {{ isEditMode ? 'Update Attachment' : 'Save Attachment' }}
               </button>
-            </div>
+            </div> -->
 
+            <!-- Save / Cancel Buttons -->
+            <div class="col-md-12 mt-3">
+              <button type="submit" class="btn btn-dark px-4 me-2" [disabled]="!attachmentForm.valid">
+
+                <i class="fa-solid fa-save me-2"></i>
+                {{ isEditMode ? 'Update Attachment' : 'Save Attachment' }}
+              </button>
+
+              <!-- Cancel Button -->
+              <button *ngIf="isEditMode" type="button" class="btn btn-outline-secondary px-4" (click)="cancelEdit()">
+
+                <i class="fa-solid fa-times me-2"></i>
+                Cancel
+              </button>
+            </div>
+            
           </div>
         </form>
       </div>

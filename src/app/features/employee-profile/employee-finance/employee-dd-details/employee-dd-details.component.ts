@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { AdminService, EmployeeDdlist } from '../../../../admin/servies/admin.service';
 import Swal from 'sweetalert2';
 import { lastValueFrom } from 'rxjs';
@@ -11,7 +11,7 @@ import { environment } from '../../../../../environments/environment';
   styleUrl: './employee-dd-details.component.css'
 })
 export class EmployeeDdDetailsComponent {
-ddForm!: FormGroup;
+  ddForm!: FormGroup;
   ddList: EmployeeDdlist[] = [];
   searchText: string = '';
   sortColumn: string = '';
@@ -32,63 +32,126 @@ ddForm!: FormGroup;
   employeeId = 123; // Replace with actual employee ID
   baseUrl = 'https://localhost:44370/DDCopies/'; // Folder serving files
   canView = false;
-canAdd = false;
-canEdit = false;
-canDelete = false;
+  canAdd = false;
+  canEdit = false;
+  canDelete = false;
 
-  constructor(private fb: FormBuilder, private adminService: AdminService) {}
+  constructor(private fb: FormBuilder, private adminService: AdminService) { }
 
   ngOnInit() {
-      this.loadPermissions();
+    this.loadPermissions();
     this.userId = Number(sessionStorage.getItem("UserId"));
     this.initializeForm();
-      if (this.canView) {
-    this.loadDDList();
-  }
+    if (this.canView) {
+      this.loadDDList();
+    }
 
-  if (!this.canAdd && !this.canEdit) {
-    this.ddForm.disable();
-  }
+    if (!this.canAdd && !this.canEdit) {
+      this.ddForm.disable();
+    }
     this.loadDDList();
   }
   loadPermissions() {
 
-  const menus = JSON.parse(
-    sessionStorage.getItem('Menus') || '[]'
-  );
+    const menus = JSON.parse(
+      sessionStorage.getItem('Menus') || '[]'
+    );
 
-  const permission = menus.find(
-    (x: any) =>
-      x.menuName?.trim().toLowerCase() === 'dd'
-  );
+    const permission = menus.find(
+      (x: any) =>
+        x.menuName?.trim().toLowerCase() === 'dd'
+    );
 
-  if (permission) {
+    if (permission) {
 
-    this.canView = permission.canView;
+      this.canView = permission.canView;
 
-    this.canAdd = permission.canAdd;
+      this.canAdd = permission.canAdd;
 
-    this.canEdit = permission.canEdit;
+      this.canEdit = permission.canEdit;
 
-    this.canDelete = permission.canDelete;
+      this.canDelete = permission.canDelete;
+    }
   }
-}
 
   /** Initialize Form */
   private initializeForm() {
+    // this.ddForm = this.fb.group({
+    //   ddlistId: [0],
+    //   ddnumber: ['', [Validators.required, Validators.maxLength(20)]],
+    //   dddate: ['', [Validators.required, this.noFutureDateValidator]],
+    //   bankName: ['', Validators.required],
+    //   branchName: ['', Validators.required],
+    //   amount: [0, [Validators.required, Validators.min(1)]],
+    //   payeeName: ['', Validators.required],
+    //   ddcopyFilePath: [''],
+    //   companyId: [this.companyId],
+    //   regionId: [this.regionId],
+    //   employeeId: [this.employeeId],
+    //   userId: [this.userId]
+    // });
     this.ddForm = this.fb.group({
+
       ddlistId: [0],
-      ddnumber: ['', [Validators.required, Validators.maxLength(20)]],
-      dddate: ['', [Validators.required, this.noFutureDateValidator]],
-      bankName: ['', Validators.required],
-      branchName: ['', Validators.required],
-      amount: [0, [Validators.required, Validators.min(1)]],
-      payeeName: ['', Validators.required],
-      ddcopyFilePath: [''],
-      companyId: [this.companyId],
-      regionId: [this.regionId],
-      employeeId: [this.employeeId],
-      userId: [this.userId]
+
+      ddnumber: [
+        '',
+        [
+          Validators.required,
+          Validators.maxLength(20),
+          Validators.pattern(/^[A-Za-z0-9\-\/]+$/)
+        ]
+      ],
+
+      dddate: [
+        '',
+        [
+          Validators.required,
+          this.futureDateValidator()
+        ]
+      ],
+
+      bankName: [
+        '',
+        [
+          Validators.required,
+          Validators.maxLength(100),
+          Validators.pattern(/^[A-Za-z .&]+$/)
+        ]
+      ],
+
+      branchName: [
+        '',
+        [
+          Validators.required,
+          Validators.maxLength(100),
+          Validators.pattern(/^[A-Za-z0-9 .,&()-]+$/)
+        ]
+      ],
+
+      amount: [
+        '',
+        [
+          Validators.required,
+          Validators.min(1),
+          Validators.max(999999999)
+        ]
+      ],
+
+      payeeName: [
+        '',
+        [
+          Validators.required,
+          Validators.maxLength(100),
+          Validators.pattern(/^[A-Za-z .]+$/)
+        ]
+      ],
+
+      ddcopyFilePath: [
+        '',
+        Validators.required
+      ]
+
     });
   }
 
@@ -117,147 +180,383 @@ canDelete = false;
   }
 
   /** File selection */
-  onFileSelected(event: any) {
-    this.fileError = '';
-    const file = event.target.files[0];
-    if (file) {
-      const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg'];
-      if (!allowedTypes.includes(file.type)) {
-        this.fileError = 'Invalid file type. Only PDF, JPG, PNG allowed.';
-        this.selectedFile = null;
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        this.fileError = 'File size exceeds 5 MB.';
-        this.selectedFile = null;
-        return;
-      }
-      this.selectedFile = file;
-    }
+  // onFileSelected(event: any) {
+  //   this.fileError = '';
+  //   const file = event.target.files[0];
+  //   if (file) {
+  //     const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg'];
+  //     if (!allowedTypes.includes(file.type)) {
+  //       this.fileError = 'Invalid file type. Only PDF, JPG, PNG allowed.';
+  //       this.selectedFile = null;
+  //       return;
+  //     }
+  //     if (file.size > 5 * 1024 * 1024) {
+  //       this.fileError = 'File size exceeds 5 MB.';
+  //       this.selectedFile = null;
+  //       return;
+  //     }
+  //     this.selectedFile = file;
+  //   }
+  // }
+
+  // /** Save or Update DD */
+  // async saveDD() {
+  //   const ddId = Number(
+  //     this.ddForm.get('ddlistId')?.value
+  //   );
+
+  //   // Edit Permission
+  //   if (ddId > 0 && !this.canEdit) {
+
+  //     Swal.fire(
+  //       'Access Denied',
+  //       'Edit permission required',
+  //       'error'
+  //     );
+
+  //     return;
+  //   }
+
+  //   // Create Permission
+  //   if (ddId === 0 && !this.canAdd) {
+
+  //     Swal.fire(
+  //       'Access Denied',
+  //       'Create permission required',
+  //       'error'
+  //     );
+
+  //     return;
+  //   }
+  //   if (this.ddForm.invalid || this.fileError) {
+  //     this.ddForm.markAllAsTouched();
+  //     Swal.fire('Invalid', 'Please fill all required fields correctly', 'warning');
+  //     return;
+  //   }
+
+  //   this.loading = true;
+  //   let fileName = this.ddForm.value.ddcopyFilePath;
+
+  //   if (this.selectedFile) {
+  //     const formData = new FormData();
+  //     formData.append('file', this.selectedFile, this.selectedFile.name);
+
+  //     try {
+  //       const uploadResult: any = await lastValueFrom(this.adminService.uploadDDCopy(formData));
+  //       fileName = uploadResult.fileName;
+  //     } catch {
+  //       this.loading = false;
+  //       Swal.fire('Error', 'Failed to upload DD copy', 'error');
+  //       return;
+  //     }
+  //   }
+
+  //   const payload: EmployeeDdlist = {
+  //     ...this.ddForm.value,
+  //     ddcopyFilePath: fileName,
+  //     userId: this.userId,
+  //     companyId: this.companyId,
+  //     regionId: this.regionId
+  //   };
+
+  //   const id = Number(this.ddForm.get("ddlistId")?.value);
+  //   if (id > 0) {
+  //     this.adminService.updateDdlist(payload).subscribe({
+  //       next: () => {
+  //         this.loadDDList();
+  //         this.resetForm();
+  //         this.loading = false;
+  //         Swal.fire('Updated', 'DD details updated successfully', 'success');
+  //       },
+  //       error: () => {
+  //         this.loading = false;
+  //         Swal.fire('Error', 'Failed to update DD details', 'error');
+  //       }
+  //     });
+  //   } else {
+  //     this.adminService.createDdlist(payload).subscribe({
+  //       next: () => {
+  //         this.loadDDList();
+  //         this.resetForm();
+  //         this.loading = false;
+  //         Swal.fire('Saved', 'DD details saved successfully', 'success');
+  //       },
+  //       error: () => {
+  //         this.loading = false;
+  //         Swal.fire('Error', 'Failed to save DD details', 'error');
+  //       }
+  //     });
+  //   }
+  // }
+  onFileSelected(event: any): void {
+
+  this.fileError = '';
+
+  const file = event.target.files[0];
+
+  if (!file) {
+
+    this.selectedFile = null;
+
+    return;
+
   }
+
+  const allowedTypes = [
+
+    'application/pdf',
+
+    'image/jpeg',
+
+    'image/png'
+
+  ];
+
+  if (!allowedTypes.includes(file.type)) {
+
+    this.fileError = 'Only PDF, JPG and PNG files are allowed.';
+
+    this.selectedFile = null;
+
+    return;
+
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+
+    this.fileError = 'Maximum file size is 5 MB.';
+
+    this.selectedFile = null;
+
+    return;
+
+  }
+
+  this.selectedFile = file;
+
+}
 
   /** Save or Update DD */
   async saveDD() {
-      const ddId = Number(
-    this.ddForm.get('ddlistId')?.value
+if (this.ddForm.invalid || this.fileError) {
+
+  this.ddForm.markAllAsTouched();
+
+  Swal.fire(
+    'Validation',
+    'Please fill all mandatory fields correctly.',
+    'warning'
   );
 
-  // Edit Permission
-  if (ddId > 0 && !this.canEdit) {
+  return;
 
-    Swal.fire(
-      'Access Denied',
-      'Edit permission required',
-      'error'
-    );
+}
+    const ddId = Number(this.ddForm.get('ddlistId')?.value);
 
-    return;
-  }
+    // Edit Permission
+    if (ddId > 0 && !this.canEdit) {
+      Swal.fire(
+        'Access Denied',
+        'Edit permission required',
+        'error'
+      );
+      return;
+    }
 
-  // Create Permission
-  if (ddId === 0 && !this.canAdd) {
+    // Create Permission
+    if (ddId === 0 && !this.canAdd) {
+      Swal.fire(
+        'Access Denied',
+        'Create permission required',
+        'error'
+      );
+      return;
+    }
 
-    Swal.fire(
-      'Access Denied',
-      'Create permission required',
-      'error'
-    );
-
-    return;
-  }
+    // Form Validation
     if (this.ddForm.invalid || this.fileError) {
       this.ddForm.markAllAsTouched();
-      Swal.fire('Invalid', 'Please fill all required fields correctly', 'warning');
+
+      Swal.fire(
+        'Validation',
+        'Please fill all mandatory fields correctly.',
+        'warning'
+      );
+      return;
+    }
+
+    // Duplicate Validation
+    const duplicate = this.ddList.some((x: any) =>
+      x.ddlistId !== ddId &&
+      x.ddnumber?.trim().toLowerCase() ===
+      this.ddForm.value.ddnumber?.trim().toLowerCase()
+    );
+
+    if (duplicate) {
+      Swal.fire(
+        'Duplicate Record',
+        'DD Number already exists.',
+        'warning'
+      );
       return;
     }
 
     this.loading = true;
+
     let fileName = this.ddForm.value.ddcopyFilePath;
 
+    // Upload File
     if (this.selectedFile) {
+
       const formData = new FormData();
-      formData.append('file', this.selectedFile, this.selectedFile.name);
+
+      formData.append(
+        'file',
+        this.selectedFile,
+        this.selectedFile.name
+      );
 
       try {
-        const uploadResult: any = await lastValueFrom(this.adminService.uploadDDCopy(formData));
+
+        const uploadResult: any =
+          await lastValueFrom(
+            this.adminService.uploadDDCopy(formData)
+          );
+
         fileName = uploadResult.fileName;
+
       } catch {
+
         this.loading = false;
-        Swal.fire('Error', 'Failed to upload DD copy', 'error');
+
+        Swal.fire(
+          'Error',
+          'Failed to upload DD Copy.',
+          'error'
+        );
+
         return;
       }
     }
 
     const payload: EmployeeDdlist = {
+
       ...this.ddForm.value,
+
       ddcopyFilePath: fileName,
+
       userId: this.userId,
+
       companyId: this.companyId,
+
       regionId: this.regionId
+
     };
 
-    const id = Number(this.ddForm.get("ddlistId")?.value);
-    if (id > 0) {
+    if (ddId > 0) {
+
       this.adminService.updateDdlist(payload).subscribe({
+
         next: () => {
+
           this.loadDDList();
+
           this.resetForm();
+
           this.loading = false;
-          Swal.fire('Updated', 'DD details updated successfully', 'success');
+
+          Swal.fire(
+            'Updated',
+            'DD Details updated successfully.',
+            'success'
+          );
+
         },
+
         error: () => {
+
           this.loading = false;
-          Swal.fire('Error', 'Failed to update DD details', 'error');
+
+          Swal.fire(
+            'Error',
+            'Failed to update DD Details.',
+            'error'
+          );
+
         }
+
       });
+
     } else {
+
       this.adminService.createDdlist(payload).subscribe({
+
         next: () => {
+
           this.loadDDList();
+
           this.resetForm();
+
           this.loading = false;
-          Swal.fire('Saved', 'DD details saved successfully', 'success');
+
+          Swal.fire(
+            'Saved',
+            'DD Details saved successfully.',
+            'success'
+          );
+
         },
+
         error: () => {
+
           this.loading = false;
-          Swal.fire('Error', 'Failed to save DD details', 'error');
+
+          Swal.fire(
+            'Error',
+            'Failed to save DD Details.',
+            'error'
+          );
+
         }
+
       });
+
     }
+
   }
 
   /** Edit DD */
   editDD(dd: EmployeeDdlist) {
-      if (!this.canEdit) {
+    if (!this.canEdit) {
 
-    Swal.fire(
-      'Access Denied',
-      'Edit permission required',
-      'error'
-    );
+      Swal.fire(
+        'Access Denied',
+        'Edit permission required',
+        'error'
+      );
 
-    return;
-  }
+      return;
+    }
     const dddateStr = dd.dddate ? new Date(dd.dddate).toISOString().split('T')[0] : '';
     this.ddForm.patchValue({ ...dd, dddate: dddateStr });
     this.selectedFile = null;
     this.fileError = '';
     const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]');
-    if(fileInput) fileInput.value = '';
+    if (fileInput) fileInput.value = '';
   }
 
   /** Delete DD */
   deleteDD(dd: EmployeeDdlist, index: number) {
     if (!this.canDelete) {
 
-  Swal.fire(
-    'Access Denied',
-    'Delete permission required',
-    'error'
-  );
+      Swal.fire(
+        'Access Denied',
+        'Delete permission required',
+        'error'
+      );
 
-  return;
-}
+      return;
+    }
     Swal.fire({
       title: 'Are you sure?',
       text: `Do you want to delete DD: ${dd.ddnumber}?`,
@@ -298,7 +597,7 @@ canDelete = false;
     this.fileError = '';
     this.selectedFile = null;
     const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]');
-    if(fileInput) fileInput.value = '';
+    if (fileInput) fileInput.value = '';
   }
 
   /** View document */
@@ -377,5 +676,26 @@ canDelete = false;
   updatePagination() {
     this.totalPages = Math.ceil(this.ddList.length / this.pageSize);
     if (this.currentPage > this.totalPages) this.currentPage = this.totalPages || 1;
+  }
+
+  futureDateValidator(): ValidatorFn {
+
+    return (control: AbstractControl): ValidationErrors | null => {
+
+      if (!control.value)
+        return null;
+
+      const selected = new Date(control.value);
+
+      const today = new Date();
+
+      today.setHours(0, 0, 0, 0);
+
+      return selected > today
+        ? { futureDate: true }
+        : null;
+
+    };
+
   }
 }
