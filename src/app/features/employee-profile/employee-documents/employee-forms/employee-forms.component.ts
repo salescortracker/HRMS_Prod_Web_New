@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ElementRef, HostListener, ViewChild } from '@angular/core';
 import { EmployeeForm } from '../../../../admin/layout/models/employee-forms.model';
 import Swal from 'sweetalert2';
 import { AdminService, AttachmentTypeDto } from '../../../../admin/servies/admin.service';
@@ -65,6 +65,11 @@ showEmpDropdown = false;
 existingFiles: string[] = [];
 //removeExistingFile: string[] = [];
   constructor(private adminService: AdminService) {}
+  @ViewChild('employeeDropdownToggle', { read: ElementRef })
+employeeDropdownToggle!: ElementRef;
+
+@ViewChild('employeeDropdownContainer', { read: ElementRef })
+employeeDropdownContainer!: ElementRef;
  ngOnInit() {
      this.loadPermissions();
    this.userId = Number(sessionStorage.getItem("UserId"));
@@ -74,6 +79,30 @@ existingFiles: string[] = [];
     // this.loadEmployeeForms();
       this.loadEmployees();
  }
+ toggleEmpDropdown(event: MouseEvent) {
+  event.stopPropagation();
+  this.showEmpDropdown = true;
+}
+@HostListener('document:mousedown', ['$event'])
+handleOutsideClick(event: MouseEvent) {
+
+  if (!this.showEmpDropdown) {
+    return;
+  }
+
+  const target = event.target as Node;
+
+  const clickedOnToggle =
+    this.employeeDropdownToggle?.nativeElement.contains(target);
+
+  const clickedOnDropdown =
+    this.employeeDropdownContainer?.nativeElement.contains(target);
+
+  if (!clickedOnToggle && !clickedOnDropdown) {
+    this.showEmpDropdown = false;
+  }
+
+}
 
  removeExistingFile(index: number) {
   this.existingFiles.splice(index, 1);
