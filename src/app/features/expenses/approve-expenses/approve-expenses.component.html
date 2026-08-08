@@ -7,25 +7,21 @@
       formControlName="project"
       placeholder="Project"
       class="form-control" /> -->
-      <select formControlName="project" class="form-select">
-  <option value="">All Projects</option>
+    <select formControlName="project" class="form-select">
+      <option value="">All Projects</option>
 
-  <option
-    *ngFor="let p of projects"
-    [value]="p.projectName">
+      <option *ngFor="let p of projects" [value]="p.projectName">
 
-    {{ p.projectName }}
+        {{ p.projectName }}
 
-  </option>
-</select>
+      </option>
+    </select>
   </div>
 
   <div class="col-md-3">
     <select formControlName="categoryId" class="form-select">
       <option value="">All Categories</option>
-      <option
-        *ngFor="let cat of categories"
-        [value]="cat.expenseCategoryID">
+      <option *ngFor="let cat of categories" [value]="cat.expenseCategoryID">
         {{ cat.expenseCategoryName }}
       </option>
     </select>
@@ -48,19 +44,13 @@
       </option>
     </select>
   </div>
-<div class="col-md-1">
-  <button
-    type="button"
-    class="btn btn-warning w-100"
-    (click)="resetFilters()">
-    Reset
-  </button>
-</div>
   <div class="col-md-1">
-    <button
-      type="button"
-      class="btn btn-secondary w-100"
-      (click)="applyFilters()">
+    <button type="button" class="btn btn-warning w-100" (click)="resetFilters()">
+      Reset
+    </button>
+  </div>
+  <div class="col-md-1">
+    <button type="button" class="btn btn-secondary w-100" (click)="applyFilters()">
       Filter
     </button>
   </div>
@@ -116,61 +106,63 @@
             {{ sortDirection === 'asc' ? '▲' : '▼' }}
           </span>
         </th>
+        <th>File</th>
 
         <th>Status</th>
       </tr>
     </thead>
-<tbody>
-  <!-- DATA ROWS -->
-  <tr *ngFor="let e of pagedExpenses; let i = index">
-    <td>
-      <input
-        *ngIf="e.status === 'Pending'"
-        type="checkbox"
-        [(ngModel)]="e.checked" />
-    </td>
+    <tbody>
+      <!-- DATA ROWS -->
+      <tr *ngFor="let e of pagedExpenses; let i = index">
+        <td>
+          <input *ngIf="e.status === 'Pending'" type="checkbox" [(ngModel)]="e.checked" />
+        </td>
 
-    <td>{{ e.projectName }}</td>
-    <td>{{ e.expenseCategoryName }}</td>
-    <td>{{ e.country }}</td>
-    <td>{{ e.amount | number:'1.2-2' }}</td>
-    <td>{{ e.expenseDate | date:'yyyy-MM-dd' }}</td>
-    <td>{{ e.userFullName }}</td>
+        <td>{{ e.projectName }}</td>
+        <td>{{ e.expenseCategoryName }}</td>
+        <td>{{ e.country }}</td>
+        <td>{{ e.amount | number:'1.2-2' }}</td>
+        <td>{{ e.expenseDate | date:'yyyy-MM-dd' }}</td>
+        <td>{{ e.userFullName }}</td>
 
-    <td>
-      <span
-        class="badge"
-        [ngClass]="{
+        <td>
+          <a *ngIf="e.receiptPath" (click)="viewReceipt(e.receiptPath)"
+            style="cursor:pointer;color:#0d6efd;text-decoration:underline">
+            View
+          </a>
+
+          <span *ngIf="!e.receiptPath">
+            -
+          </span>
+        </td>
+        <td>
+          <span class="badge" [ngClass]="{
           'bg-warning text-dark': e.status === 'Pending',
           'bg-success': e.status === 'Approved',
           'bg-danger': e.status === 'Rejected'
         }">
-        {{ e.status }}
-      </span>
-    </td>
-  </tr>
+            {{ e.status }}
+          </span>
+        </td>
+      </tr>
 
-  <!-- NO RECORDS -->
-  <tr *ngIf="noRecordsFound">
-    <td colspan="8" class="text-center text-muted">
-      No expense requests found
-    </td>
-  </tr>
-</tbody>
+      <!-- NO RECORDS -->
+      <tr *ngIf="noRecordsFound">
+        <td colspan="8" class="text-center text-muted">
+          No expense requests found
+        </td>
+      </tr>
+    </tbody>
 
   </table>
 </div>
 <!-- ================= ACTION BUTTONS ================= -->
 <div class="mt-3 text-end">
-  <button
-    class="btn btn-success btn-sm me-2"
-    (click)="approveRejectExpenses('Approved')">
+  <button class="btn btn-success btn-sm me-2" (click)="approveRejectExpenses('Approved')">
     Approve Selected
   </button>
 
-  <button
-    class="btn btn-danger btn-sm"
-    (click)="approveRejectExpenses('Rejected')">
+  <button class="btn btn-danger btn-sm" (click)="approveRejectExpenses('Rejected')">
     Reject Selected
   </button>
 </div>
@@ -180,10 +172,7 @@
   <div>
     <label>
       Show
-      <select
-        class="form-select d-inline w-auto ms-2"
-        [(ngModel)]="pageSize"
-        (change)="changePageSize(pageSize)">
+      <select class="form-select d-inline w-auto ms-2" [(ngModel)]="pageSize" (change)="changePageSize(pageSize)">
         <option *ngFor="let size of pageSizeOptions" [ngValue]="size">
           {{ size }}
         </option>
@@ -193,18 +182,14 @@
   </div>
 
   <div>
-    <button
-      class="btn btn-outline-secondary btn-sm me-2"
-      (click)="changePage(currentPage - 1)"
+    <button class="btn btn-outline-secondary btn-sm me-2" (click)="changePage(currentPage - 1)"
       [disabled]="currentPage === 1">
       Previous
     </button>
 
     <span>Page {{ currentPage }} of {{ totalPages }}</span>
 
-    <button
-      class="btn btn-outline-secondary btn-sm ms-2"
-      (click)="changePage(currentPage + 1)"
+    <button class="btn btn-outline-secondary btn-sm ms-2" (click)="changePage(currentPage + 1)"
       [disabled]="currentPage === totalPages">
       Next
     </button>

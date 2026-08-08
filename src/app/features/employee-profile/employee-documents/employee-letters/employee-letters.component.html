@@ -65,48 +65,35 @@
 
     <div class="col-md-4 position-relative">
 
-  <label class="form-label">
-    Employee Name <span class="text-danger">*</span>
-  </label>
+      <label class="form-label">
+        Employee Name <span class="text-danger">*</span>
+      </label>
 
-  <div
-    class="form-control"
-    style="cursor:pointer"
-    (click)="toggleEmpDropdown($event)"
-    #employeeDropdownToggle>
+      <div class="form-control" style="cursor:pointer" (click)="toggleEmpDropdown($event)" #employeeDropdownToggle>
 
-    {{ getSelectedEmployeeNames() || 'Select Employees' }}
+        {{ getSelectedEmployeeNames() || 'Select Employees' }}
 
-  </div>
+      </div>
 
-  <div
-    *ngIf="showEmpDropdown"
-    class="border p-2 position-absolute w-100 bg-white"
-    style="max-height:180px;overflow-y:auto;z-index:100;"
-    (click)="$event.stopPropagation()"
-    #employeeDropdownContainer>
+      <div *ngIf="showEmpDropdown" class="border p-2 position-absolute w-100 bg-white"
+        style="max-height:180px;overflow-y:auto;z-index:100;" (click)="$event.stopPropagation()"
+        #employeeDropdownContainer>
 
-    <!-- Select All -->
-    <div class="mb-2 border-bottom pb-2">
-      <input
-        type="checkbox"
-        [checked]="isAllSelected()"
-        (change)="toggleSelectAll($event)">
-      <strong>Select All</strong>
+        <!-- Select All -->
+        <div class="mb-2 border-bottom pb-2">
+          <input type="checkbox" [checked]="isAllSelected()" (change)="toggleSelectAll($event)">
+          <strong>Select All</strong>
+        </div>
+
+        <!-- Employee List -->
+        <div *ngFor="let emp of employees">
+          <input type="checkbox" [checked]="isEmployeeSelected(emp)" (change)="onEmployeeToggle(emp,$event)">
+          {{ emp.employeeName }}
+        </div>
+
+      </div>
+
     </div>
-
-    <!-- Employee List -->
-    <div *ngFor="let emp of employees">
-      <input
-        type="checkbox"
-        [checked]="isEmployeeSelected(emp)"
-        (change)="onEmployeeToggle(emp,$event)">
-      {{ emp.employeeName }} 
-    </div>
-
-  </div>
-
-</div>
 
   </div>
 
@@ -213,7 +200,7 @@
   <!-- Buttons -->
   <div class="mt-2">
 
-    <button  *ngIf="(!isEdit && canAddLetter) || (isEdit && canEditLetter)" type="submit" class="btn btn-primary me-2">
+    <button *ngIf="(!isEdit && canAddLetter) || (isEdit && canEditLetter)" type="submit" class="btn btn-primary me-2">
       {{ isEdit ? 'Update Letter' : 'Save Letter' }}
     </button>
 
@@ -294,11 +281,24 @@
     <a (click)="viewDocument(f)">{{ f }}</a><br>
   </span>
 </span> -->
-            <span *ngIf="l.fileName">
+            <!-- <span *ngIf="l.fileName">
               <a style="cursor:pointer; color:#0d6efd; font-weight:500;" (click)="viewDocument(l.fileName, true)">
                 View
               </a>
-            </span>
+            </span> -->
+            <ng-container *ngIf="l.fileName">
+
+              <div *ngFor="let file of l.fileName.split(',')">
+
+                <a style="cursor:pointer;color:#0d6efd;font-weight:500;" (click)="viewDocument(file.trim())">
+
+                  {{ getDisplayFileName(file.trim()) }}
+
+                </a>
+
+              </div>
+
+            </ng-container>
           </td>
 
           <!-- <td *ngIf="canEditLetter || canDeleteLetter" class="action-icons">

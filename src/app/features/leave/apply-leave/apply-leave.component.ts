@@ -298,7 +298,8 @@ canCreate: boolean = false;
       return;
     }
 
-    const fullPath = `${environment.apiUrl}${environment.leaveDocumentPath}${filePath}`;
+    const fullPath =
+`${environment.baseurl}${environment.leaveDocumentPath}${filePath}`;
     window.open(fullPath, '_blank');
   }
 private normalizeDay(day: string): string {

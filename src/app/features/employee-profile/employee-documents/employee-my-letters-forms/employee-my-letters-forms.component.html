@@ -22,13 +22,30 @@
           <td>{{ l.issuedDate | date:'dd/MM/yyyy' }}</td>
           <td>{{ l.validityDate | date:'dd/MM/yyyy' : '-' }}</td>
 
-          <td>
+          <!-- <td>
             <span *ngIf="l.fileName">
               <a style="cursor:pointer;color:blue"
                  (click)="viewDocument(l.fileName)">
                 View / Download
               </a>
             </span>
+          </td> -->
+          <td>
+
+            <ng-container *ngIf="l.fileName">
+
+              <div *ngFor="let file of l.fileName.split(',')">
+
+                <a style="cursor:pointer;color:blue" (click)="viewDocument(file.trim())">
+
+                  {{ getDisplayFileName(file.trim()) }}
+
+                </a>
+
+              </div>
+
+            </ng-container>
+
           </td>
         </tr>
       </tbody>

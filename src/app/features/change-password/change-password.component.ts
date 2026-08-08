@@ -1,4 +1,4 @@
-import { Component} from '@angular/core';
+import { Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AdminService } from '../../admin/servies/admin.service';
 import Swal from 'sweetalert2';
@@ -10,7 +10,7 @@ import Swal from 'sweetalert2';
   styleUrl: './change-password.component.css'
 })
 export class ChangePasswordComponent {
-userId!: number;
+  userId!: number;
 
   oldPassword = '';
   newPassword = '';
@@ -23,39 +23,71 @@ userId!: number;
     private route: ActivatedRoute,
     private router: Router,
     private adminService: AdminService
-  ) {}
+  ) { }
 
+changePassword() {
+
+  this.errorMessage = '';
+
+  // Required validation
+  if (!this.oldPassword || !this.newPassword || !this.confirmPassword) {
+    this.errorMessage = 'All fields are required.';
+    return;
+  }
+
+  // New password should not be same as old password
+  if (this.oldPassword === this.newPassword) {
+    this.errorMessage = 'New Password must not be the same as the Old Password.';
+    return;
+  }
+
+  // Confirm password should match new password
+  if (this.newPassword !== this.confirmPassword) {
+    this.errorMessage = 'Confirm Password must match the New Password.';
+    return;
+  }
+
+  this.loading = true;
+
+  this.adminService.changePassword({
+    UserID: sessionStorage.getItem('UserId')
+      ? +sessionStorage.getItem('UserId')!
+      : 0,
+    oldPassword: this.oldPassword,
+    newPassword: this.newPassword
+  }).subscribe({
+    next: () => {
+      this.loading = false;
+
+      Swal.fire(
+        'Success',
+        'Password changed successfully',
+        'success'
+      );
+
+      this.router.navigate(['/']);
+    },
+    error: err => {
+      this.loading = false;
+      this.errorMessage =
+        err.error?.message || 'Something went wrong';
+    }
+  });
+}
  
-  changePassword() {
-    console.log('SUBMIT CALLED'); // ✅ DEBUG CHECK
+  showOldPassword = false;
+  showNewPassword = false;
+  showConfirmPassword = false;
 
-    this.errorMessage = '';
+  toggleOldPassword() {
+    this.showOldPassword = !this.showOldPassword;
+  }
 
-    if (!this.oldPassword || !this.newPassword || !this.confirmPassword) {
-      this.errorMessage = 'All fields are required';
-      return;
-    }
+  toggleNewPassword() {
+    this.showNewPassword = !this.showNewPassword;
+  }
 
-    if (this.newPassword !== this.confirmPassword) {
-      this.errorMessage = 'Passwords do not match';
-      return;
-    }
-
-    this.loading = true;
-
-    this.adminService.changePassword({
-      UserID: sessionStorage.getItem('UserId') ? +sessionStorage.getItem('UserId')! : 0,
-      oldPassword: this.oldPassword,
-      newPassword: this.newPassword
-    }).subscribe({
-      next: () => {
-        Swal.fire('Success', 'Password changed successfully', 'success');
-        this.router.navigate(['/']);
-      },
-      error: err => {
-        this.loading = false;
-        this.errorMessage = err.error?.message || 'Something went wrong';
-      }
-    });
+  toggleConfirmPassword() {
+    this.showConfirmPassword = !this.showConfirmPassword;
   }
 }
