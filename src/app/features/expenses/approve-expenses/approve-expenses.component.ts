@@ -3,6 +3,7 @@ import { Expense, ExpenseApprovalDto, ExpensesService } from '../expenses.servic
 import { FormBuilder, FormGroup } from '@angular/forms';
 import Swal from 'sweetalert2';
 import { AdminService } from '../../../admin/servies/admin.service';
+import { environment } from '../../../../environments/environment';
 @Component({
   selector: 'app-approve-expenses',
   standalone: false,
@@ -331,4 +332,16 @@ resetFilters(): void {
   get noVisibleExpenses(): boolean {
     return this.expenses.length > 0 && this.expenses.every(e => !e.visible);
   }
+  viewReceipt(filePath: string): void {
+
+  if (!filePath) {
+    Swal.fire('Error', 'Receipt not found', 'error');
+    return;
+  }
+
+  // const fullPath = environment.apiUrl + filePath;
+  const fullPath = environment.baseurl + '/' + filePath;
+
+  window.open(encodeURI(fullPath), '_blank');
+}
 }

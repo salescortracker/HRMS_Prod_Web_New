@@ -1,5 +1,5 @@
 
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { AdminService, Company } from '../../servies/admin.service';
 import Swal from 'sweetalert2';
@@ -16,13 +16,15 @@ import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
   styleUrl: './company.component.css'
 })
 export class CompanyComponent {
-   showUploadPopup = false;
+  @ViewChild('logoInput')
+  logoInput!: ElementRef<HTMLInputElement>;
+  showUploadPopup = false;
   companies: any[] = []; // Replace with real model
-// ADD THESE VARIABLES
-sortColumn: string = 'companyId';
-sortDirection: 'asc' | 'desc' = 'desc'; // default: latest first
+  // ADD THESE VARIABLES
+  sortColumn: string = 'companyId';
+  sortDirection: 'asc' | 'desc' = 'desc'; // default: latest first
 
- // Model for form
+  // Model for form
   company: Company = this.getEmptyCompany();
 
   // List of companies
@@ -35,7 +37,7 @@ sortDirection: 'asc' | 'desc' = 'desc'; // default: latest first
   selectedLogoFile!: File;
   logoPreview: string | ArrayBuffer | null = null;
 
-  constructor(private adminservice: AdminService,private spinner: NgxSpinnerService) {}
+  constructor(private adminservice: AdminService, private spinner: NgxSpinnerService) { }
 
   // ------------------------------------------------------------
   // 🔹 OnInit - Load Companies
@@ -44,17 +46,17 @@ sortDirection: 'asc' | 'desc' = 'desc'; // default: latest first
 
     this.loadCompanies();
   }
-onBulkUploadComplete(message: any) {
-  Swal.fire({
-    icon: 'success',
-    title: 'Upload Complete',
-    text: message,
-    confirmButtonColor: '#007bff'
-  });
+  onBulkUploadComplete(message: any) {
+    Swal.fire({
+      icon: 'success',
+      title: 'Upload Complete',
+      text: message,
+      confirmButtonColor: '#007bff'
+    });
 
-  this.loadCompanies(); // reload list after upload
-}
-showUpload = false;
+    this.loadCompanies(); // reload list after upload
+  }
+  showUpload = false;
 
   openBulkUpload(): void {
     this.showUpload = true;
@@ -62,7 +64,7 @@ showUpload = false;
 
   closeBulkUpload(): void {
     this.showUpload = false;
-     this.showUploadPopup = false;
+    this.showUploadPopup = false;
   }
 
   handleFileUpload(file: File): void {
@@ -72,10 +74,10 @@ showUpload = false;
   }
 
 
-closeUploadPopup() {
-  this.showUploadPopup = false;
-     this.showUpload = false;
-}
+  closeUploadPopup() {
+    this.showUploadPopup = false;
+    this.showUpload = false;
+  }
   // ------------------------------------------------------------
   // 🔹 Create empty company model
   // ------------------------------------------------------------
@@ -113,31 +115,52 @@ closeUploadPopup() {
   // ------------------------------------------------------------
   // 🔹 Load all companies
   // ------------------------------------------------------------
+  // loadCompanies(): void {
+  //   this.spinner.show();
+  //   this.adminservice.getCompanies(null, this.company.userId).subscribe({
+  //     next: (res: Company[]) => {
+  //       this.companies = res;
+  //       this.spinner.hide();
+  //       console.log('Loaded companies:', this.companies);
+  //     },
+  //     error: (err) => {
+  //       console.error('Error loading companies:', err);
+  //     }
+  //   });
+  // }
   loadCompanies(): void {
-     this.spinner.show();
-    this.adminservice.getCompanies(null,this.company.userId).subscribe({
-      next: (res:Company[]) => {
-        this.companies = res;
-         this.spinner.hide();
-         console.log('Loaded companies:', this.companies);
-      },
-      error: (err) => {
-        console.error('Error loading companies:', err);
-      }
-    });
-  }
- onLogoSelected(event: any) {
-  const file = event.target.files[0];
-  if (file) {
-    this.selectedLogoFile = file;
-    const reader = new FileReader();
-    reader.onload = () => {
-      this.logoPreview = reader.result;
-      this.company.CompanyLogo = reader.result as string;
-    };
-    reader.readAsDataURL(file);
-  }
+  this.spinner.show();
+
+  this.adminservice.getCompanies(null, this.company.userId).subscribe({
+    next: (res: any[]) => {
+
+      this.companies = res.map((x: any) => ({
+        ...x,
+        CompanyLogo: x.companyLogo
+      }));
+
+      this.spinner.hide();
+
+      console.log('Loaded companies:', this.companies);
+    },
+    error: (err) => {
+      this.spinner.hide();
+      console.error(err);
+    }
+  });
 }
+  onLogoSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.selectedLogoFile = file;
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.logoPreview = reader.result;
+        this.company.CompanyLogo = reader.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
 
   // ------------------------------------------------------------
   // 🔹 Submit form - Add or Update
@@ -197,51 +220,66 @@ closeUploadPopup() {
   // ------------------------------------------------------------
   // 🔹 Edit Company
   // ------------------------------------------------------------
-  editCompany(c: Company): void {
-    this.company = { ...c };
-    console.log(this.company);
-    this.isEditMode = true;
+editCompany(c: Company): void {
+
+  this.company = { ...c };
+
+  this.isEditMode = true;
+
+  this.selectedLogoFile = undefined as any;
+
+  if (this.company.CompanyLogo) {
+    this.logoPreview = this.company.CompanyLogo as string;
+  } else {
+    this.logoPreview = null;
   }
+
+  if (this.logoInput) {
+    this.logoInput.nativeElement.value = '';
+  }
+
+  console.log(this.company);
+}
 
   // ------------------------------------------------------------
   // 🔹 Delete Company
   // ------------------------------------------------------------
   deleteCompany(c: Company): void {
     Swal.fire({
-  title: `Are you sure you want to delete ${c.companyName}?`,
-  showDenyButton: true,
-  showCancelButton: true,
-  confirmButtonText: "Confirm",
-  
-}).then((result) => {
-  /* Read more about isConfirmed, isDenied below */
-  if (result.isConfirmed) {
-    this.spinner.show();
-      this.adminservice.deleteCompany(c.companyId).subscribe({
-        next: (res:any) => {
-          this.spinner.hide();
-           Swal.fire({
-          icon: 'success',
-          title: 'Deleted Successfully!',
-          text: `${c.companyName} has been Deleted.`,
-         
-          showConfirmButton: false
-          ,showCloseButton: true,
+      title: `Are you sure you want to delete ${c.companyName}?`,
+      showDenyButton: true,
+      showCancelButton: true,
+      confirmButtonText: "Confirm",
+
+    }).then((result) => {
+      /* Read more about isConfirmed, isDenied below */
+      if (result.isConfirmed) {
+        this.spinner.show();
+        this.adminservice.deleteCompany(c.companyId).subscribe({
+          next: (res: any) => {
+            this.spinner.hide();
+            Swal.fire({
+              icon: 'success',
+              title: 'Deleted Successfully!',
+              text: `${c.companyName} has been Deleted.`,
+
+              showConfirmButton: false
+              , showCloseButton: true,
+            });
+            this.loadCompanies();
+          },
+          error: (err) => {
+            this.spinner.hide();
+            Swal.fire('Warning', 'Cannot delete due to referenced other module', 'warning');
+          }
+
         });
-          this.loadCompanies();
-        },
-        error: (err) =>{
-          this.spinner.hide();
-           Swal.fire('Warning', 'Cannot delete due to referenced other module', 'warning');
-        }
-          
-      });
-  } else if (result.isDenied) {
-    Swal.fire('Error', 'Delete failed! Please contact IT Administrator.', 'error');
-      
-  }
-});
-  
+      } else if (result.isDenied) {
+        Swal.fire('Error', 'Delete failed! Please contact IT Administrator.', 'error');
+
+      }
+    });
+
   }
 
   // ------------------------------------------------------------
@@ -254,10 +292,10 @@ closeUploadPopup() {
         c.isActive = updatedCompany.IsActive;
       },
       error: (err) => {
-         Swal.fire('Error', 'Status toggle failed.', 'error');
-          console.error('Status toggle failed:', err)
+        Swal.fire('Error', 'Status toggle failed.', 'error');
+        console.error('Status toggle failed:', err)
       }
-       
+
     });
   }
 
@@ -266,70 +304,83 @@ closeUploadPopup() {
   // ------------------------------------------------------------
   resetForm(): void {
     this.company = this.getEmptyCompany();
+
     this.isEditMode = false;
+
+    this.logoPreview = null;
+
+    this.selectedLogoFile = undefined as any;
+
+    if (this.logoInput) {
+      this.logoInput.nativeElement.value = '';
+    }
   }
 
   // ------------------------------------------------------------
   // 🔹 Filter Companies (search + status)
   // ------------------------------------------------------------
- // Modify filteredCompanies() to include sorting
-filteredCompanies(): Company[] {
-  if (!this.companies || this.companies.length === 0) return [];
+  // Modify filteredCompanies() to include sorting
+  filteredCompanies(): Company[] {
+    if (!this.companies || this.companies.length === 0) return [];
 
-  const search = this.searchText ? this.searchText.toLowerCase() : '';
-  let filtered = this.companies.filter(c => {
-    const name = c.companyName ? c.companyName.toLowerCase() : '';
-    const matchesSearch = search === '' || name.includes(search);
-    const matchesStatus = this.statusFilter === '' || c.isActive === this.statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+    const search = this.searchText ? this.searchText.toLowerCase() : '';
+    let filtered = this.companies.filter(c => {
+      const name = c.companyName ? c.companyName.toLowerCase() : '';
+      const matchesSearch = search === '' || name.includes(search);
+      const matchesStatus = this.statusFilter === '' || c.isActive === this.statusFilter;
+      return matchesSearch && matchesStatus;
+    });
 
-  // 🔹 Sort by selected column
-  filtered = filtered.sort((a, b) => {
-    const valA = (a[this.sortColumn] ?? '').toString().toLowerCase();
-    const valB = (b[this.sortColumn] ?? '').toString().toLowerCase();
+    // 🔹 Sort by selected column
+    filtered = filtered.sort((a, b) => {
+      const valA = (a[this.sortColumn] ?? '').toString().toLowerCase();
+      const valB = (b[this.sortColumn] ?? '').toString().toLowerCase();
 
-    if (valA < valB) return this.sortDirection === 'asc' ? -1 : 1;
-    if (valA > valB) return this.sortDirection === 'asc' ? 1 : -1;
-    return 0;
-  });
+      if (valA < valB) return this.sortDirection === 'asc' ? -1 : 1;
+      if (valA > valB) return this.sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
 
-  return filtered;
-}
-
-// 🔹 Add toggleSort method
-toggleSort(column: string): void {
-  if (this.sortColumn === column) {
-    // Toggle direction if clicking same column again
-    this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
-  } else {
-    // Switch to new column with ascending default
-    this.sortColumn = column;
-    this.sortDirection = 'asc';
+    return filtered;
   }
-}
-companyModel:any;
-openUploadPopup() {
-  this.companyModel = [
-     { companyName: 'ABC Technologies Pvt Ltd',
-       companyCode: 'ABC001', 
-       industryType: 'IT Services',
+
+  // 🔹 Add toggleSort method
+  toggleSort(column: string): void {
+    if (this.sortColumn === column) {
+      // Toggle direction if clicking same column again
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      // Switch to new column with ascending default
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
+  }
+  companyModel: any;
+  openUploadPopup() {
+    this.companyModel = [
+      {
+        companyName: 'ABC Technologies Pvt Ltd',
+        companyCode: 'ABC001',
+        industryType: 'IT Services',
         headquarters: 'Bangalore, India',
         CompanyContact: '9876543210',
         CompanyEmail: 'abc@gmail.com',
-        isActive: true },
-         { companyName: 'Global Solutions Ltd',
-           companyCode: 'GSL002',
-            industryType: 'Manufacturing',
-             headquarters: 'Mumbai, India',
-             CompanyContact: '9876543210',
-             CompanyEmail: 'abc@gmail.com',
-              isActive: false } ];
-  this.showUploadPopup = false;
-  setTimeout(() => {
-    this.showUploadPopup = true;
-  }, 0);
-}
+        isActive: true
+      },
+      {
+        companyName: 'Global Solutions Ltd',
+        companyCode: 'GSL002',
+        industryType: 'Manufacturing',
+        headquarters: 'Mumbai, India',
+        CompanyContact: '9876543210',
+        CompanyEmail: 'abc@gmail.com',
+        isActive: false
+      }];
+    this.showUploadPopup = false;
+    setTimeout(() => {
+      this.showUploadPopup = true;
+    }, 0);
+  }
 
   handleBulkUpload(file: File) {
     // Implement backend upload logic here
@@ -364,31 +415,44 @@ openUploadPopup() {
     doc.save('CompanyList.pdf');
   }
   // Pagination
-pageSize = 5;
-currentPage = 1;
+  pageSize = 5;
+  currentPage = 1;
 
-get totalPages(): number {
-  return Math.ceil(this.filteredCompanies().length / this.pageSize);
-}
+  get totalPages(): number {
+    return Math.ceil(this.filteredCompanies().length / this.pageSize);
+  }
 
-get pagedCompanies(): Company[] {
-  const start = (this.currentPage - 1) * this.pageSize;
-  const end = start + this.pageSize;
-  return this.filteredCompanies().slice(start, end);
-}
+  get pagedCompanies(): Company[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    const end = start + this.pageSize;
+    return this.filteredCompanies().slice(start, end);
+  }
 
-changePageSize(event: any): void {
-  this.pageSize = +event.target.value;
-  this.currentPage = 1;
-}
+  changePageSize(event: any): void {
+    this.pageSize = +event.target.value;
+    this.currentPage = 1;
+  }
 
-goToPage(page: number): void {
-  this.currentPage = page;
-}
+  goToPage(page: number): void {
+    this.currentPage = page;
+  }
   Math = Math; // <-- Add this line
 
   onCancel(): void {
-  this.resetForm();
+    this.resetForm();
 
-}
+  }
+  removeLogo(): void {
+
+    this.selectedLogoFile = undefined as any;
+
+    this.logoPreview = null;
+
+    this.company.CompanyLogo = '';
+
+    if (this.logoInput) {
+      this.logoInput.nativeElement.value = '';
+    }
+
+  }
 }

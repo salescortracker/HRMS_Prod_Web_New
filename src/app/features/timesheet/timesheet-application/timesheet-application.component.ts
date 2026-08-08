@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 
 import { TimesheetService } from '../service/timesheet.service';
+import Swal from 'sweetalert2';
 
 export interface TimesheetProject {
   projectName: string;
@@ -25,7 +26,7 @@ export interface TimesheetModel {
   attachment?: File | null;
   projects: TimesheetProject[];
   status: string;
-   hrEmail?: string;
+  hrEmail?: string;
 }
 @Component({
   selector: 'app-timesheet-application',
@@ -34,7 +35,7 @@ export interface TimesheetModel {
   styleUrl: './timesheet-application.component.css'
 })
 export class TimesheetApplicationComponent {
-model: TimesheetModel = {
+  model: TimesheetModel = {
     employeeName: '',
     employeeCode: '',
     date: '',
@@ -43,8 +44,8 @@ model: TimesheetModel = {
     projects: [],
     status: 'Pending'
   };
-isEditMode = false;
-editingTimesheetId = 0;
+  isEditMode = false;
+  editingTimesheetId = 0;
   userId!: number;
   companyId!: number;
   regionId!: number;
@@ -60,37 +61,37 @@ editingTimesheetId = 0;
   pageSize = 5;
   currentPage = 1;
   pageSizeOptions = [5, 10, 20, 50];
- todayDate: string = '';
- canViewTimesheet = false;
-canCreateTimesheet = false;
-canEditTimesheet = false;
-  constructor(private timesheetService: TimesheetService) {}
+  todayDate: string = '';
+  canViewTimesheet = false;
+  canCreateTimesheet = false;
+  canEditTimesheet = false;
+  constructor(private timesheetService: TimesheetService) { }
 
   ngOnInit(): void {
-     const menus = JSON.parse(
-    sessionStorage.getItem('Menus') || '[]'
-  );
+    const menus = JSON.parse(
+      sessionStorage.getItem('Menus') || '[]'
+    );
 
-  const timesheetMenu = menus.find(
-    (m: any) =>
-      m.menuName?.trim().toLowerCase() ===
-      'submit timesheet'
-  );
+    const timesheetMenu = menus.find(
+      (m: any) =>
+        m.menuName?.trim().toLowerCase() ===
+        'submit timesheet'
+    );
 
-  this.canViewTimesheet =
-    timesheetMenu?.canView ?? false;
+    this.canViewTimesheet =
+      timesheetMenu?.canView ?? false;
 
-  this.canCreateTimesheet =
-    timesheetMenu?.canAdd ?? false;
+    this.canCreateTimesheet =
+      timesheetMenu?.canAdd ?? false;
 
-  this.canEditTimesheet =
-    timesheetMenu?.canEdit ?? false;
+    this.canEditTimesheet =
+      timesheetMenu?.canEdit ?? false;
 
-  console.log('View:', this.canViewTimesheet);
-  console.log('Create:', this.canCreateTimesheet);
-  console.log('Edit:', this.canEditTimesheet);
+    console.log('View:', this.canViewTimesheet);
+    console.log('Create:', this.canCreateTimesheet);
+    console.log('Edit:', this.canEditTimesheet);
     const today = new Date();
-  this.todayDate = today.toISOString().split('T')[0];
+    this.todayDate = today.toISOString().split('T')[0];
     this.userId = Number(sessionStorage.getItem("UserId"));
     this.companyId = Number(sessionStorage.getItem("CompanyId"));
     this.regionId = Number(sessionStorage.getItem("RegionId"));
@@ -102,8 +103,8 @@ canEditTimesheet = false;
       this.model.employeeCode = res.employeeCode;
     });
 
-       this.model.employeeName = sessionStorage.getItem('Name') || '';
-      this.model.employeeCode = sessionStorage.getItem('EmployeeCode') || '';
+    this.model.employeeName = sessionStorage.getItem('Name') || '';
+    this.model.employeeCode = sessionStorage.getItem('EmployeeCode') || '';
   }
 
   // ================= TIME HELPERS =================
@@ -133,8 +134,37 @@ canEditTimesheet = false;
     });
   }
 
+  // removeProject(index: number) {
+  //   this.model.projects.splice(index, 1);
+  // }
   removeProject(index: number) {
-    this.model.projects.splice(index, 1);
+
+    Swal.fire({
+      title: 'Delete Task?',
+      text: 'Are you sure you want to remove this task?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, Delete'
+    }).then((result) => {
+
+      if (result.isConfirmed) {
+
+        this.model.projects.splice(index, 1);
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Deleted',
+          text: 'Task removed successfully.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+
+      }
+
+    });
+
   }
 
   // ================= HOURS CALC =================
@@ -171,173 +201,228 @@ canEditTimesheet = false;
   }
 
   // ================= SAVE =================
-//   saveTimesheet(form: any) {
-//     if (!form.valid || this.model.projects.length === 0) {
-//       alert('Please complete the form');
-//       return;
-//     }
+  //   saveTimesheet(form: any) {
+  //     if (!form.valid || this.model.projects.length === 0) {
+  //       alert('Please complete the form');
+  //       return;
+  //     }
 
-//     const formData = new FormData();
-//     formData.append('UserId', this.userId.toString());
-//     formData.append('CompanyId', this.companyId.toString());
-//     formData.append('RegionId', this.regionId.toString());
-//     formData.append('EmployeeCode', this.model.employeeCode);
-//     formData.append('EmployeeName', this.model.employeeName);
-//     formData.append('TimesheetDate', this.model.date);
-//     formData.append('Comments', this.model.comments ?? '');
-//     formData.append('Status', 'Pending');
-//     formData.append('HrEmail', this.model.hrEmail || '');
+  //     const formData = new FormData();
+  //     formData.append('UserId', this.userId.toString());
+  //     formData.append('CompanyId', this.companyId.toString());
+  //     formData.append('RegionId', this.regionId.toString());
+  //     formData.append('EmployeeCode', this.model.employeeCode);
+  //     formData.append('EmployeeName', this.model.employeeName);
+  //     formData.append('TimesheetDate', this.model.date);
+  //     formData.append('Comments', this.model.comments ?? '');
+  //     formData.append('Status', 'Pending');
+  //     formData.append('HrEmail', this.model.hrEmail || '');
 
-//     if (this.model.attachment) {
-//       formData.append('Attachment', this.model.attachment);
-//     }
-// if (this.isEditMode) {
+  //     if (this.model.attachment) {
+  //       formData.append('Attachment', this.model.attachment);
+  //     }
+  // if (this.isEditMode) {
 
-//   formData.append('TimesheetId',
-//     this.editingTimesheetId.toString());
+  //   formData.append('TimesheetId',
+  //     this.editingTimesheetId.toString());
 
-//   this.timesheetService
-//       .updateTimesheet(formData)
-//       .subscribe({
-//         next: () => {
+  //   this.timesheetService
+  //       .updateTimesheet(formData)
+  //       .subscribe({
+  //         next: () => {
 
-//           alert('Timesheet updated successfully');
+  //           alert('Timesheet updated successfully');
 
-//           this.isEditMode = false;
-//           this.editingTimesheetId = 0;
+  //           this.isEditMode = false;
+  //           this.editingTimesheetId = 0;
 
-//           form.resetForm();
+  //           form.resetForm();
 
-//           this.model.projects = [];
+  //           this.model.projects = [];
 
-//           this.loadMyTimesheets();
-//         },
-//         error: err => {
-//           console.error(err);
-//           alert('Update failed');
-//         }
-//       });
+  //           this.loadMyTimesheets();
+  //         },
+  //         error: err => {
+  //           console.error(err);
+  //           alert('Update failed');
+  //         }
+  //       });
 
-//   return;
-// }
-//     this.model.projects.forEach((p, i) => {
-//       this.calculateProjectHours(p);
-//       formData.append(`Projects[${i}].ProjectName`, p.projectName);
-//       formData.append(`Projects[${i}].Description`, p.description || '');
-//       formData.append(`Projects[${i}].StartTime`, p.startTime);
-//       formData.append(`Projects[${i}].EndTime`, p.endTime);
-//       formData.append(`Projects[${i}].TotalMinutes`, String(p.totalMinutes ?? 0));
-//       formData.append(`Projects[${i}].TotalHoursText`, p.totalHoursText ?? '0 Hours');
-//       formData.append(`Projects[${i}].OTMinutes`, String(p.otMinutes ?? 0));
-//       formData.append(`Projects[${i}].OTHoursText`, p.otHoursText ?? '0 Hours');
-//     });
+  //   return;
+  // }
+  //     this.model.projects.forEach((p, i) => {
+  //       this.calculateProjectHours(p);
+  //       formData.append(`Projects[${i}].ProjectName`, p.projectName);
+  //       formData.append(`Projects[${i}].Description`, p.description || '');
+  //       formData.append(`Projects[${i}].StartTime`, p.startTime);
+  //       formData.append(`Projects[${i}].EndTime`, p.endTime);
+  //       formData.append(`Projects[${i}].TotalMinutes`, String(p.totalMinutes ?? 0));
+  //       formData.append(`Projects[${i}].TotalHoursText`, p.totalHoursText ?? '0 Hours');
+  //       formData.append(`Projects[${i}].OTMinutes`, String(p.otMinutes ?? 0));
+  //       formData.append(`Projects[${i}].OTHoursText`, p.otHoursText ?? '0 Hours');
+  //     });
 
-//     this.timesheetService.submittimesheet(formData).subscribe({
-//       next: () => {
-//         alert('Timesheet saved successfully');
-//         form.resetForm();
-//         this.model.projects = [];
-//         this.loadMyTimesheets();
-//       },
-//       error: err => {
-//         console.error(err);
-//         alert('Save failed');
-//       }
-//     });
-//   }
-saveTimesheet(form: any) {
-  if (!this.canCreateTimesheet) {
-  alert('You do not have permission to create timesheets');
-  return;
-}
+  //     this.timesheetService.submittimesheet(formData).subscribe({
+  //       next: () => {
+  //         alert('Timesheet saved successfully');
+  //         form.resetForm();
+  //         this.model.projects = [];
+  //         this.loadMyTimesheets();
+  //       },
+  //       error: err => {
+  //         console.error(err);
+  //         alert('Save failed');
+  //       }
+  //     });
+  //   }
+  saveTimesheet(form: any) {
+    if (!this.canCreateTimesheet) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Access Denied',
+        text: 'You do not have permission to create timesheets.'
+      });
+      return;
+    }
 
-  if (!form.valid || this.model.projects.length === 0) {
-    alert('Please complete the form');
-    return;
-  }
+    if (!form.valid || this.model.projects.length === 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Incomplete Form',
+        text: 'Please complete all required fields before submitting.'
+      });
+      return;
+    }
 
-  const formData = new FormData();
+    const formData = new FormData();
 
-  formData.append('UserId', this.userId.toString());
-  formData.append('CompanyId', this.companyId.toString());
-  formData.append('RegionId', this.regionId.toString());
+    formData.append('UserId', this.userId.toString());
+    formData.append('CompanyId', this.companyId.toString());
+    formData.append('RegionId', this.regionId.toString());
 
-  formData.append('EmployeeCode', this.model.employeeCode);
-  formData.append('EmployeeName', this.model.employeeName);
+    formData.append('EmployeeCode', this.model.employeeCode);
+    formData.append('EmployeeName', this.model.employeeName);
 
-  formData.append('TimesheetDate', this.model.date);
-  formData.append('Comments', this.model.comments || '');
-  formData.append('Status', 'Pending');
+    formData.append('TimesheetDate', this.model.date);
+    formData.append('Comments', this.model.comments || '');
+    formData.append('Status', 'Pending');
 
-  formData.append('HrEmail', this.model.hrEmail || '');
+    formData.append('HrEmail', this.model.hrEmail || '');
 
-  if (this.model.attachment) {
-    formData.append('Attachment', this.model.attachment);
-  }
+    if (this.model.attachment) {
+      formData.append('Attachment', this.model.attachment);
+    }
 
-  // Append projects for both Save and Update
-  this.model.projects.forEach((p, i) => {
+    // Append projects for both Save and Update
+    this.model.projects.forEach((p, i) => {
 
-    this.calculateProjectHours(p);
+      this.calculateProjectHours(p);
 
-    formData.append(
-      `Projects[${i}].ProjectName`,
-      p.projectName
-    );
+      formData.append(
+        `Projects[${i}].ProjectName`,
+        p.projectName
+      );
 
-    formData.append(
-      `Projects[${i}].Description`,
-      p.description || ''
-    );
+      formData.append(
+        `Projects[${i}].Description`,
+        p.description || ''
+      );
 
-    formData.append(
-      `Projects[${i}].StartTime`,
-      p.startTime
-    );
+      formData.append(
+        `Projects[${i}].StartTime`,
+        p.startTime
+      );
 
-    formData.append(
-      `Projects[${i}].EndTime`,
-      p.endTime
-    );
+      formData.append(
+        `Projects[${i}].EndTime`,
+        p.endTime
+      );
 
-    formData.append(
-      `Projects[${i}].TotalMinutes`,
-      String(p.totalMinutes ?? 0)
-    );
+      formData.append(
+        `Projects[${i}].TotalMinutes`,
+        String(p.totalMinutes ?? 0)
+      );
 
-    formData.append(
-      `Projects[${i}].TotalHoursText`,
-      p.totalHoursText || '0 Hours'
-    );
+      formData.append(
+        `Projects[${i}].TotalHoursText`,
+        p.totalHoursText || '0 Hours'
+      );
 
-    formData.append(
-      `Projects[${i}].OTMinutes`,
-      String(p.otMinutes ?? 0)
-    );
+      formData.append(
+        `Projects[${i}].OTMinutes`,
+        String(p.otMinutes ?? 0)
+      );
 
-    formData.append(
-      `Projects[${i}].OTHoursText`,
-      p.otHoursText || '0 Hours'
-    );
-  });
+      formData.append(
+        `Projects[${i}].OTHoursText`,
+        p.otHoursText || '0 Hours'
+      );
+    });
 
-  // UPDATE
-  if (this.isEditMode) {
+    // UPDATE
+    if (this.isEditMode) {
 
-    formData.append(
-      'TimesheetId',
-      this.editingTimesheetId.toString()
-    );
+      formData.append(
+        'TimesheetId',
+        this.editingTimesheetId.toString()
+      );
 
-    this.timesheetService
-      .updateTimesheet(formData)
+      this.timesheetService
+        .updateTimesheet(formData)
+        .subscribe({
+          next: () => {
+
+            Swal.fire({
+              icon: 'success',
+              title: 'Updated',
+              text: 'Timesheet updated successfully.',
+              timer: 2000,
+              showConfirmButton: false
+            });
+
+            this.isEditMode = false;
+            this.editingTimesheetId = 0;
+
+            form.resetForm();
+
+            this.model = {
+              employeeName: sessionStorage.getItem('Name') || '',
+              employeeCode: sessionStorage.getItem('EmployeeCode') || '',
+              date: '',
+              comments: '',
+              attachment: null,
+              projects: [],
+              status: 'Pending',
+              hrEmail: ''
+            };
+
+            this.loadMyTimesheets();
+          },
+          error: err => {
+            console.error(err);
+            Swal.fire({
+              icon: 'error',
+              title: 'Update Failed',
+              text: 'Unable to update the timesheet.'
+            });
+          }
+        });
+
+      return;
+    }
+
+    // SAVE
+    this.timesheetService.submittimesheet(formData)
       .subscribe({
         next: () => {
 
-          alert('Timesheet updated successfully');
-
-          this.isEditMode = false;
-          this.editingTimesheetId = 0;
+          Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: 'Timesheet saved successfully.',
+            timer: 2000,
+            showConfirmButton: false
+          });
 
           form.resetForm();
 
@@ -356,98 +441,75 @@ saveTimesheet(form: any) {
         },
         error: err => {
           console.error(err);
-          alert('Update failed');
+          Swal.fire({
+            icon: 'error',
+            title: 'Save Failed',
+            text: 'Unable to save the timesheet. Please try again.'
+          });
         }
       });
-
-    return;
   }
+  editTimesheet(row: any) {
+    if (!this.canEditTimesheet) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Access Denied',
+        text: 'You do not have permission to edit timesheets.'
+      });
+      return;
+    }
 
-  // SAVE
-  this.timesheetService.submittimesheet(formData)
-    .subscribe({
-      next: () => {
+    this.isEditMode = true;
+    this.editingTimesheetId = row.timesheetId;
 
-        alert('Timesheet saved successfully');
+    this.model = {
+      employeeName: row.employeeName,
+      employeeCode: row.employeeCode,
+      date: row.timesheetDate
+        ? new Date(row.timesheetDate).toISOString().split('T')[0]
+        : '',
+      comments: row.comments,
+      attachment: null,
+      hrEmail: row.hrEmail,
+      status: row.status,
 
-        form.resetForm();
+      projects: row.projects.map((p: any) => ({
+        projectName: p.projectName,
+        description: p.description,
+        startTime: p.startTime,
+        endTime: p.endTime,
+        totalHours: p.totalHours,
+        totalHoursText: p.totalHoursText,
+        totalMinutes: p.totalMinutes,
+        overtimeHours: p.overtimeHours,
+        otMinutes: p.otMinutes,
+        otHoursText: p.otHoursText
+      }))
+    };
 
-        this.model = {
-          employeeName: sessionStorage.getItem('Name') || '',
-          employeeCode: sessionStorage.getItem('EmployeeCode') || '',
-          date: '',
-          comments: '',
-          attachment: null,
-          projects: [],
-          status: 'Pending',
-          hrEmail: ''
-        };
-
-        this.loadMyTimesheets();
-      },
-      error: err => {
-        console.error(err);
-        alert('Save failed');
-      }
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
     });
-}
-editTimesheet(row: any) {
-  if (!this.canEditTimesheet) {
-  alert('You do not have permission to edit timesheets');
-  return;
-}
-
-  this.isEditMode = true;
-  this.editingTimesheetId = row.timesheetId;
-
-  this.model = {
-    employeeName: row.employeeName,
-    employeeCode: row.employeeCode,
-    date: row.timesheetDate
-      ? new Date(row.timesheetDate).toISOString().split('T')[0]
-      : '',
-    comments: row.comments,
-    attachment: null,
-    hrEmail: row.hrEmail,
-    status: row.status,
-
-    projects: row.projects.map((p: any) => ({
-      projectName: p.projectName,
-      description: p.description,
-      startTime: p.startTime,
-      endTime: p.endTime,
-      totalHours: p.totalHours,
-      totalHoursText: p.totalHoursText,
-      totalMinutes: p.totalMinutes,
-      overtimeHours: p.overtimeHours,
-      otMinutes: p.otMinutes,
-      otHoursText: p.otHoursText
-    }))
-  };
-
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
-  });
-}
+  }
 
   isFormValid(): boolean {
 
-  if (!this.model.date) return false;
+    if (!this.model.date) return false;
 
-  if (!this.model.projects || this.model.projects.length === 0) return false;
+    if (!this.model.projects || this.model.projects.length === 0) return false;
 
-  for (let p of this.model.projects) {
+    for (let p of this.model.projects) {
 
-    if (!p.projectName) return false;
-    if (!p.description) return false;
-    if (!p.startTime) return false;
-    if (!p.endTime) return false;
+      if (!p.projectName) return false;
+      if (!p.description) return false;
+      if (!p.startTime) return false;
+      if (!p.endTime) return false;
 
+    }
+
+    return true;
   }
-
-  return true;
-}
 
   onFileSelect(event: any) {
     this.model.attachment = event.target.files[0];
@@ -455,22 +517,22 @@ editTimesheet(row: any) {
 
   // ================= LOAD TIMESHEETS =================
   loadMyTimesheets() {
-  this.timesheetService.gettimesheetlisting(this.userId).subscribe(res => {
+    this.timesheetService.gettimesheetlisting(this.userId).subscribe(res => {
 
-    this.submittedTimesheets = res
-      .map((row: any) => ({
-        ...row,
-        timesheetDate: new Date(row.timesheetDate),
-        projects: row.projects.map((p: any) => ({
-          ...p,
-          otHoursText: p.otHoursText ?? '0 Hours'
+      this.submittedTimesheets = res
+        .map((row: any) => ({
+          ...row,
+          timesheetDate: new Date(row.timesheetDate),
+          projects: row.projects.map((p: any) => ({
+            ...p,
+            otHoursText: p.otHoursText ?? '0 Hours'
+          }))
         }))
-      }))
-      .sort((a: any, b: any) =>
-        new Date(b.timesheetDate).getTime() - new Date(a.timesheetDate).getTime()
-      ); 
-  });
-}
+        .sort((a: any, b: any) =>
+          new Date(b.timesheetDate).getTime() - new Date(a.timesheetDate).getTime()
+        );
+    });
+  }
 
   // ================= SELECT ALL =================
   toggleSelectAll(event: any) {
@@ -483,17 +545,34 @@ editTimesheet(row: any) {
   sendSelectedTimesheets() {
     const selectedIds = this.submittedTimesheets.filter(x => x.selected).map(x => x.timesheetId);
     if (!selectedIds.length) {
-      alert("Select at least one pending timesheet");
+
+      Swal.fire({
+        icon: 'warning',
+        title: 'No Selection',
+        text: 'Please select at least one pending timesheet.'
+      });
+
       return;
     }
     this.timesheetService.sendSelectedTimesheets(selectedIds).subscribe({
       next: () => {
-        alert("Timesheets sent successfully");
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'Selected timesheets have been sent successfully.',
+          timer: 2000,
+          showConfirmButton: false
+        });
         this.loadMyTimesheets();
       },
       error: err => {
         console.error(err);
-        alert("Failed to send timesheets");
+        // alert("Failed to send timesheets");
+        Swal.fire({
+          icon: 'error',
+          title: 'Failed',
+          text: 'Unable to send the selected timesheets.'
+        });
       }
     });
   }
@@ -548,9 +627,9 @@ editTimesheet(row: any) {
     this.currentPage = 1;
   }
   openViewModal(row: any) {
-  this.selectedTimesheet = row;
-}
-closeViewModal() {
-  this.selectedTimesheet = null;
-}
+    this.selectedTimesheet = row;
+  }
+  closeViewModal() {
+    this.selectedTimesheet = null;
+  }
 }

@@ -11,95 +11,104 @@ import { EmployeeForm } from '../../../../admin/layout/models/employee-forms.mod
   styleUrl: './employee-my-letters-forms.component.css'
 })
 export class EmployeeMyLettersFormsComponent {
- letters: EmployeeLetter[] = [];
+  letters: EmployeeLetter[] = [];
   employeeCode: string = '';
-documentTypes: any[] = [];
-companyId: number = 0;
-regionId: number = 0;
+  documentTypes: any[] = [];
+  companyId: number = 0;
+  regionId: number = 0;
 
-  constructor(private adminService: AdminService) {}
+  constructor(private adminService: AdminService) { }
 
   ngOnInit() {
     this.loadDocumentTypes();
     this.employeeCode = sessionStorage.getItem("EmployeeCode") || '';
-      this.companyId = Number(sessionStorage.getItem("CompanyId"));
-  this.regionId = Number(sessionStorage.getItem("RegionId"));
+    this.companyId = Number(sessionStorage.getItem("CompanyId"));
+    this.regionId = Number(sessionStorage.getItem("RegionId"));
     this.loadMyLetters();
-    
+
   }
   loadDocumentTypes() {
-  this.adminService.getAttachmentTypesByCategory('Letters')
-    .subscribe((res: any[]) => {
-      this.documentTypes = res.map(x => ({
-        id: x.attachmentTypeId,
-        name: x.attachmentTypeName
-      }));
-    });
-}
-getDocumentTypeName(id: number | string): string {
-  const doc = this.documentTypes.find(d => d.id == Number(id));
-  return doc ? doc.name : '';
-}
-loadMyLetters() {
-  this.adminService.getMyLetters(
-    this.employeeCode,
-    this.companyId,
-    this.regionId
-  ).subscribe({
-    next: (res: any[]) => {
-      this.letters = res.map(x => {
-        const allFiles = (x.fileName || '').toString().split(',').map((f: string) => f.trim()).filter((f: string) => f);
-        const latestFile = allFiles.length ? allFiles[allFiles.length - 1] : '';
-
-        return {
-          id: x.id,
-          documentType: x.documentTypeId,
-          title: x.documentName,
-          empCode: x.employeeCode,
-          empName: x.employeeName,
-          issuedDate: x.issuedDate,
-          validityDate: x.validityDate,
-          fileName: latestFile,
-          remarks: x.remarks,
-          confidential: x.isConfidential
-        };
+    this.adminService.getAttachmentTypesByCategory('Letters')
+      .subscribe((res: any[]) => {
+        this.documentTypes = res.map(x => ({
+          id: x.attachmentTypeId,
+          name: x.attachmentTypeName
+        }));
       });
-    },
-    error: (err) => console.error(err)
-  });
-}
+  }
+  getDocumentTypeName(id: number | string): string {
+    const doc = this.documentTypes.find(d => d.id == Number(id));
+    return doc ? doc.name : '';
+  }
+  loadMyLetters() {
+    this.adminService.getMyLetters(
+      this.employeeCode,
+      this.companyId,
+      this.regionId
+    ).subscribe({
+      next: (res: any[]) => {
+        this.letters = res.map(x => {
+          // const allFiles = (x.fileName || '').toString().split(',').map((f: string) => f.trim()).filter((f: string) => f);
+          // const latestFile = allFiles.length ? allFiles[allFiles.length - 1] : '';
 
-viewDocument(file: string) {
-  if (!file) {
-    return;
+          return {
+            id: x.id,
+            documentType: x.documentTypeId,
+            title: x.documentName,
+            empCode: x.employeeCode,
+            empName: x.employeeName,
+            issuedDate: x.issuedDate,
+            validityDate: x.validityDate,
+            fileName: x.fileName,
+            remarks: x.remarks,
+            confidential: x.isConfidential
+          };
+        });
+      },
+      error: (err) => console.error(err)
+    });
   }
 
-  const trimmedFile = file.trim();
-  const isAbsolute = /^https?:\/\//i.test(trimmedFile);
-  const filePath = isAbsolute
-    ? trimmedFile
-    : `${environment.baseurl.replace(/\/+$/, '')}/${environment.LettersPath.replace(/^\/+|\/+$/g, '')}/${trimmedFile.split('/').map(encodeURIComponent).join('/')}`;
+  viewDocument(file: string) {
+    if (!file) {
+      return;
+    }
 
-  fetch(filePath)
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`Download failed with status ${response.status}`);
-      }
-      return response.blob();
-    })
-    .then(blob => {
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = trimmedFile.split('/').pop() || 'document';
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
-    })
-    .catch(err => {
-      console.error('Download failed', err);
-    });
+    const trimmedFile = file.trim();
+    const isAbsolute = /^https?:\/\//i.test(trimmedFile);
+    const filePath = isAbsolute
+      ? trimmedFile
+      : `${environment.baseurl.replace(/\/+$/, '')}/${environment.LettersPath.replace(/^\/+|\/+$/g, '')}/${trimmedFile.split('/').map(encodeURIComponent).join('/')}`;
+
+    fetch(filePath)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Download failed with status ${response.status}`);
+        }
+        return response.blob();
+      })
+      .then(blob => {
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = trimmedFile.split('/').pop() || 'document';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+      })
+      .catch(err => {
+        console.error('Download failed', err);
+      });
+  }
+  getDisplayFileName(file: string): string {
+
+  const index = file.indexOf('_');
+
+  return index >= 0
+    ? file.substring(index + 1)
+    : file;
+
 }
 }

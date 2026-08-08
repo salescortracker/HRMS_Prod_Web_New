@@ -142,7 +142,8 @@ toggleSelectAll(event: any): void {
       next: (res) => {
         this.letters = res.map((x: any) => {
           const allFiles = (x.fileName || '').toString().split(',').map((f: string) => f.trim()).filter((f: string) => f);
-          const latestFile = allFiles.length ? allFiles[allFiles.length - 1] : '';
+          // const latestFile = allFiles.length ? allFiles[allFiles.length - 1] : '';
+
 
           return {
             id: x.id,
@@ -152,7 +153,8 @@ toggleSelectAll(event: any): void {
             empName: x.employeeName,
             issuedDate: x.issuedDate,
             validityDate: x.validityDate,
-            fileName: latestFile,
+            // fileName: latestFile,
+             fileName: x.fileName,
             remarks: x.remarks,
             confidential: x.isConfidential
           };
@@ -485,6 +487,14 @@ toggleSelectAll(event: any): void {
         error: (err) => console.error(err)
       });
   }
+getDisplayFileName(file: string): string {
 
+    const index = file.indexOf('_');
+
+    return index >= 0
+        ? file.substring(index + 1)
+        : file;
+
+}
 
 }
