@@ -65,24 +65,35 @@ export class PayGroupsComponent {
   //================ Load Salries ==========================
 
   loadAllAssignedSalaries() {
-    this.payrollService.getAllAssignedSalaries(this.userId)
-      .subscribe({
-        next: (res:any) => {
-          console.log("loadAllAssignedSalaries:", res);   // 🔥 ADD THIS
-          this.salaries = res || [];
+  this.payrollService.getAllAssignedSalaries(this.userId)
+    .subscribe({
+      next: (res: any) => {
 
-            this.currentPage = 1; 
-        },
-        error: (err:any) => {
-          console.error(err);
+        console.log('Salary API Response:', res);
+
+        // If API directly returns array
+        if (Array.isArray(res)) {
+          this.salaries = res;
         }
-      });
-  }
+        // If API returns { data: [...] }
+        else if (Array.isArray(res?.data)) {
+          this.salaries = res.data;
+        }
+        else {
+          this.salaries = [];
+        }
 
-  getEmployeeName(employeeId: number): string {
-    const emp = this.employees.find(e => e.userId == employeeId);
-    return emp ? emp.fullName : '';
-  }
+        console.log('Salaries:', this.salaries);
+
+        this.currentPage = 1;
+      },
+
+      error: (err: any) => {
+        console.error('Error loading salaries:', err);
+        this.salaries = [];
+      }
+    });
+}
 
   getStructureName(structureId: number): string {
     const structure = this.structures.find(s => s.structureId == structureId);
@@ -154,18 +165,24 @@ onRegionChange() {
   }
 }
  loadEmployees() {
-
   const companyId = Number(this.salary.companyId);
   const regionId = Number(this.salary.regionId);
 
   this.admin.getUsersByCompanyRegion(companyId, regionId)
     .subscribe({
-      next: (res: any[]) => {
+      next: (res: any) => {
 
-        this.filteredEmployees = res.filter(x => x.status === 'Active');
+        const users = Array.isArray(res)
+          ? res
+          : (res?.data || []);
 
-        console.log(this.filteredEmployees);
+        this.filteredEmployees = users.filter(
+          (x: any) => x.status === 'Active'
+        );
+
+        console.log('Employees:', this.filteredEmployees);
       },
+
       error: (err) => {
         console.error(err);
         this.filteredEmployees = [];

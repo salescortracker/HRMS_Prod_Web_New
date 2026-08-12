@@ -18,5 +18,8 @@ export interface employeeprofile{
     profilePictureBase64:string;
     companyName:string;
     mobileNumber:string;
-    
+    designationName?: string;
+    designation?: string;
+    departmentName?: string;
+    department?: string;
 }

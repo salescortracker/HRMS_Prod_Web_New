@@ -47,9 +47,30 @@ loadMyLetters() {
     this.regionId
   ).subscribe({
     next: (res: any[]) => {
+
       this.letters = res.map(x => {
-        const allFiles = (x.fileName || '').toString().split(',').map((f: string) => f.trim()).filter((f: string) => f);
-        const latestFile = allFiles.length ? allFiles[allFiles.length - 1] : '';
+
+        const allFileNames = (x.fileName || '')
+          .toString()
+          .split(',')
+          .map((f: string) => f.trim())
+          .filter((f: string) => f);
+
+        const allFilePaths = (x.filePath || '')
+          .toString()
+          .split(',')
+          .map((f: string) => f.trim())
+          .filter((f: string) => f);
+
+        const latestFileName =
+          allFileNames.length
+            ? allFileNames[allFileNames.length - 1]
+            : '';
+
+        const latestFilePath =
+          allFilePaths.length
+            ? allFilePaths[allFilePaths.length - 1]
+            : '';
 
         return {
           id: x.id,
@@ -59,47 +80,108 @@ loadMyLetters() {
           empName: x.employeeName,
           issuedDate: x.issuedDate,
           validityDate: x.validityDate,
-          fileName: latestFile,
+
+          // File name for display/download name
+          fileName: latestFileName,
+
+          // Actual path returned by API
+          filePath: latestFilePath,
+
           remarks: x.remarks,
           confidential: x.isConfidential
         };
       });
+
+      console.log('My Letters:', this.letters);
     },
-    error: (err) => console.error(err)
+
+    error: (err) => {
+      console.error('Error loading letters:', err);
+    }
   });
 }
 
-viewDocument(file: string) {
-  if (!file) {
+viewDocument(filePath: string) {
+
+  if (!filePath) {
+    console.error('File path is empty');
     return;
   }
 
-  const trimmedFile = file.trim();
-  const isAbsolute = /^https?:\/\//i.test(trimmedFile);
-  const filePath = isAbsolute
-    ? trimmedFile
-    : `${environment.baseurl.replace(/\/+$/, '')}/${environment.LettersPath.replace(/^\/+|\/+$/g, '')}/${trimmedFile.split('/').map(encodeURIComponent).join('/')}`;
+  const trimmedPath = filePath.trim();
 
-  fetch(filePath)
+  const fileUrl = /^https?:\/\//i.test(trimmedPath)
+    ? trimmedPath
+    : `${environment.baseurl.replace(/\/+$/, '')}/${trimmedPath
+        .replace(/^\/+/, '')
+        .split('/')
+        .map(encodeURIComponent)
+        .join('/')}`;
+
+  console.log('View File URL:', fileUrl);
+
+  window.open(fileUrl, '_blank');
+}
+downloadDocument(filePath: string, fileName?: string) {
+
+  if (!filePath) {
+    console.error('File path is empty');
+    return;
+  }
+
+  const trimmedPath = filePath.trim();
+
+  const fileUrl = /^https?:\/\//i.test(trimmedPath)
+    ? trimmedPath
+    : `${environment.baseurl.replace(/\/+$/, '')}/${trimmedPath
+        .replace(/^\/+/, '')
+        .split('/')
+        .map(encodeURIComponent)
+        .join('/')}`;
+
+  console.log('Download File URL:', fileUrl);
+
+  fetch(fileUrl)
     .then(response => {
+
       if (!response.ok) {
-        throw new Error(`Download failed with status ${response.status}`);
+        throw new Error(
+          `Download failed with status ${response.status}`
+        );
       }
+
       return response.blob();
     })
     .then(blob => {
+
       const blobUrl = window.URL.createObjectURL(blob);
+
       const link = document.createElement('a');
+
       link.href = blobUrl;
-      link.download = trimmedFile.split('/').pop() || 'document';
+
+      link.download =
+        fileName ||
+        trimmedPath.split('/').pop() ||
+        'document';
+
       link.style.display = 'none';
+
       document.body.appendChild(link);
+
       link.click();
+
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
+
+      setTimeout(() => {
+        window.URL.revokeObjectURL(blobUrl);
+      }, 100);
+
     })
     .catch(err => {
-      console.error('Download failed', err);
+
+      console.error('Download failed:', err);
+
     });
 }
 }
