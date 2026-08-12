@@ -44,7 +44,7 @@
                 <option [ngValue]="null">Select Employee</option>
 
                 <option *ngFor="let e of filteredEmployees" [ngValue]="e.userId">
-                  {{ e.employeeCode || e.employeeCodeNumber || e.employeeNo || e.userId }} - {{ e.fullName }}
+                  {{ e.employeeCode }} - {{ e.fullName }}
                 </option>
 
               </select>
@@ -112,7 +112,7 @@
           <tbody>
             <tr *ngFor="let s of paginatedSalaries; let i = index">
               <td>{{ i + 1 }}</td>
-              <td>{{ getEmployeeName(s.employeeId) }}</td>
+              <td> {{ s.fullName || '-' }}</td>
               <td>{{s.effectiveFrom}}</td>
               <td>{{ getStructureName(s.structureId) }}</td>
               <td>{{ companyMap[s.companyId] }}</td>

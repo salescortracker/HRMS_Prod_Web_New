@@ -1,14 +1,14 @@
- <app-header></app-header>
- <app-sidebar></app-sidebar>
- <div class="main-body">
+<app-header></app-header>
+<app-sidebar></app-sidebar>
+<div class="main-body">
   <div class="dashboard-header">
-  <h2 class="dashboard-title">Employee Profile</h2>
-  <nav class="breadcrumb">
-    <a routerLink="/dashboard"> Home</a> &gt; 
-     <!-- <a href="#"> Employee Profile </a> &gt;  -->
-    <span>Profile</span>
-  </nav>
-</div>
+    <h2 class="dashboard-title">Employee Profile</h2>
+    <nav class="breadcrumb">
+      <a routerLink="/dashboard"> Home</a> &gt;
+      <!-- <a href="#"> Employee Profile </a> &gt;  -->
+      <span>Profile</span>
+    </nav>
+  </div>
   <div class="dashboard">
     <!-- Content -->
     <div class="content" *ngIf="profile">
@@ -16,81 +16,117 @@
         <!-- Profile Header -->
         <div class="profile-header">
           <div class="profile-photo">
-  <ng-container *ngIf="profileImage; else defaultProfile">
-    <img [src]="profileImage" class="profile-image" />
-  </ng-container>
+            <ng-container *ngIf="profileImage; else defaultProfile">
+              <img [src]="profileImage" class="profile-image" />
+            </ng-container>
 
-  <ng-template #defaultProfile>
-    <i class="fa-solid fa-user-circle fa-4x"></i>
-  </ng-template>
+            <ng-template #defaultProfile>
+              <i class="fa-solid fa-user-circle fa-4x"></i>
+            </ng-template>
 
-  <div class="upload-overlay" (click)="openImageOptions()">
-    <i class="fa-solid fa-camera fa-4x"></i>
-  </div>
+            <div class="upload-overlay" (click)="openImageOptions()">
+              <i class="fa-solid fa-camera fa-4x"></i>
+            </div>
 
-  <!-- CAMERA -->
-<input type="file" accept="image/*" capture="environment"
-       #cameraInput (change)="onPhotoSelected($event)" 
-       style="position:absolute; left:-9999px; top:-9999px;" />
+            <!-- CAMERA -->
+            <input type="file" accept="image/*" capture="environment" #cameraInput (change)="onPhotoSelected($event)"
+              style="position:absolute; left:-9999px; top:-9999px;" />
 
-<!-- GALLERY -->
-<input type="file" accept="image/*"
-       #galleryInput (change)="onPhotoSelected($event)" 
-       style="position:absolute; left:-9999px; top:-9999px;" />
+            <!-- GALLERY -->
+            <input type="file" accept="image/*" #galleryInput (change)="onPhotoSelected($event)"
+              style="position:absolute; left:-9999px; top:-9999px;" />
 
+          </div>
+
+        
+<div class="profile-info">
+  <h2>{{ profile.fullName }}</h2>
+
+  <p class="designation-department">
+    <span>{{ designationName }}</span>
+    <span class="separator">|</span>
+    <span>{{ departmentName }}</span>
+  </p>
+
+  <p class="company-region">
+    {{ companyName }} - {{ regionName }}
+  </p>
+
+  <p class="role-manager">
+    {{ profile.rolename }} - {{ profile.reportingManager }}
+  </p>
 </div>
 
-           <div class="profile-info">
-            <h2>{{ profile.fullName }} - {{ companyName  }} - {{ regionName  }}</h2>
-            <p>{{ profile.rolename   }} - {{ profile.reportingManager }} </p>
-          </div>
+
         </div>
 
         <!-- Profile Details -->
         <div class="profile-details">
           <div class="detail-box">
             <i class="fa-solid fa-id-badge"></i>
-            <div><span>Employee Code</span><p>{{ profile.employeeCode }}</p></div>
+            <div><span>Employee Code</span>
+              <p>{{ profile.employeeCode }}</p>
+            </div>
           </div>
           <div class="detail-box">
             <i class="fa-solid fa-envelope"></i>
-            <div><span>Email</span><p>{{ profile.email }}</p></div>
+            <div><span>Email</span>
+              <p>{{ profile.email }}</p>
+            </div>
           </div>
           <div class="detail-box">
             <i class="fa-solid fa-phone"></i>
-            <div><span>Phone</span><p>{{ profile.phone }}</p></div>
+            <div><span>Phone</span>
+              <p>{{ profile.phone }}</p>
+            </div>
           </div>
           <div class="detail-box">
             <i class="fa-solid fa-layer-group"></i>
-            <div><span>Band / Grade</span><p>{{ profile.bandGrade }}</p></div>
+            <div><span>Band / Grade</span>
+              <p>{{ profile.bandGrade }}</p>
+            </div>
           </div>
           <div class="detail-box">
             <i class="fa-solid fa-id-card"></i>
-            <div><span>ESIC</span><p>{{ profile.esicNumber }}</p></div>
+            <div><span>ESIC</span>
+              <p>{{ profile.esicNumber }}</p>
+            </div>
           </div>
           <div class="detail-box">
             <i class="fa-solid fa-piggy-bank"></i>
-            <div><span>PF Number</span><p>{{ profile.pfNumber }}</p></div>
+            <div><span>PF Number</span>
+              <p>{{ profile.pfNumber }}</p>
+            </div>
           </div>
           <div class="detail-box">
             <i class="fa-solid fa-hashtag"></i>
-            <div><span>UAN</span><p>{{ profile.uan }}</p></div>
+            <div><span>UAN</span>
+              <p>{{ profile.uan }}</p>
+            </div>
           </div>
           <div class="detail-box">
             <i class="fa-solid fa-user-tie"></i>
-            <div><span>Reporting Manager</span><p>{{ profile.reportingManager }}</p></div>
+            <div><span>Reporting Manager</span>
+              <p>{{ profile.reportingManager }}</p>
+            </div>
           </div>
           <div class="detail-box">
             <i class="fa-solid fa-calendar-check"></i>
-            <div><span>Date of Joining</span><p>{{ profile.dateOfJoining | date:'dd MMM yyyy' }}</p></div>
+            <div><span>Date of Joining</span>
+              <p>{{ profile.dateOfJoining | date:'dd MMM yyyy' }}</p>
+            </div>
           </div>
           <div class="detail-box">
             <i class="fa-solid fa-briefcase"></i>
-            <div><span>Employment Type</span><p>{{ profile.employeeType }}</p></div>
+            <div><span>Employment Type</span>
+              <p>{{ profile.employeeType }}</p>
+            </div>
           </div>
           <div class="detail-box">
             <i class="fa-solid fa-user-check"></i>
-            <div><span>Service Status</span><p>{{ profile.serviceStatus }}</p></div>
+            <div><span>Service Status</span>
+              <p>{{ profile.serviceStatus }}</p>
+            </div>
           </div>
           <!-- <div class="detail-box">
             <i class="fa-solid fa-location-dot"></i>
@@ -98,31 +134,29 @@
           </div> -->
           <div class="detail-box">
             <i class="fa-solid fa-clock"></i>
-            <div><span>Shift</span><p>{{ shiftAllocationName}}-{{ ShiftstartTime }} to {{ ShiftendTime }}</p></div>
+            <div><span>Shift</span>
+              <p>{{ shiftAllocationName}}-{{ ShiftstartTime }} to {{ ShiftendTime }}</p>
+            </div>
           </div>
           <!-- <div class="detail-box">
             <i class="fa-brands fa-linkedin"></i>
             <div><span>Linkedin ID</span><p>{{ profile.skypeId }}</p></div>
           </div> -->
           <div class="detail-box">
-  <i class="fa-brands fa-linkedin"></i>
-  <div>
-    <span>LinkedIn</span>
-    <p *ngIf="profile.skypeId; else noLinkedIn">
-      <a
-        [href]="getLinkedInUrl(profile.skypeId)"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {{ profile.skypeId }}
-      </a>
-    </p>
+            <i class="fa-brands fa-linkedin"></i>
+            <div>
+              <span>LinkedIn</span>
+              <p *ngIf="profile.skypeId; else noLinkedIn">
+                <a [href]="getLinkedInUrl(profile.skypeId)" target="_blank" rel="noopener noreferrer">
+                  {{ profile.skypeId }}
+                </a>
+              </p>
 
-    <ng-template #noLinkedIn>
-      <p>-</p>
-    </ng-template>
-  </div>
-</div>
+              <ng-template #noLinkedIn>
+                <p>-</p>
+              </ng-template>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -144,6 +178,6 @@
         <button><i class="fa fa-paper-plane"></i></button>
       </div>
     </div> -->
-  </div> 
+  </div>
 </div>
-  <app-footer></app-footer>
+<app-footer></app-footer>

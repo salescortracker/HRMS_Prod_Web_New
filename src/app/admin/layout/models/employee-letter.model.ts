@@ -7,6 +7,7 @@ export interface EmployeeLetter {
   issuedDate: string;
   validityDate?: string;
   fileName?: string;
+  filePath?: string;
   remarks?: string;
   confidential: boolean;
 }

@@ -23,12 +23,33 @@
           <td>{{ l.validityDate | date:'dd/MM/yyyy' : '-' }}</td>
 
           <td>
-            <span *ngIf="l.fileName">
-              <a style="cursor:pointer;color:blue"
-                 (click)="viewDocument(l.fileName)">
-                View / Download
-              </a>
-            </span>
+
+            <ng-container *ngIf="l.filePath; else noFile">
+
+              <!-- VIEW -->
+              <button
+                type="button"
+                class="btn btn-sm btn-primary me-2"
+                (click)="viewDocument(l.filePath)">
+                View
+              </button>
+
+              <!-- DOWNLOAD -->
+              <button
+                type="button"
+                class="btn btn-sm btn-success"
+                (click)="downloadDocument(l.filePath, l.fileName)">
+                Download
+              </button>
+
+            </ng-container>
+
+            <ng-template #noFile>
+              <span class="text-muted">
+                No File
+              </span>
+            </ng-template>
+
           </td>
         </tr>
       </tbody>

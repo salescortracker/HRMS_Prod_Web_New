@@ -19,15 +19,29 @@ export class ProfileComponent {
 
   companyName: string = '';
 regionName: string = '';
+designationName: string = '';
+departmentName: string = '';
   @ViewChild('cameraInput') cameraInput!: ElementRef<HTMLInputElement>;
   @ViewChild('galleryInput') galleryInput!: ElementRef<HTMLInputElement>;
   constructor(private profileService: EmployeeResignationService) { }
   ngOnInit(): void {
        console.log('CompanyName =>', sessionStorage.getItem('CompanyName'));
   console.log('RegionName =>', sessionStorage.getItem('RegionName'));
+    console.log('DesignationName =>', sessionStorage.getItem('DesignationName'));
+  console.log('DepartmentName =>', sessionStorage.getItem('DepartmentName'));
 
   this.companyName = sessionStorage.getItem('CompanyName') || '';
   this.regionName = sessionStorage.getItem('RegionName') || '';
+
+  this.designationName =
+  sessionStorage.getItem('DesignationName') ||
+  sessionStorage.getItem('Designation') ||
+  '';
+
+this.departmentName =
+  sessionStorage.getItem('DepartmentName') ||
+  sessionStorage.getItem('Department') ||
+  '';
 
     const storedUserId = sessionStorage.getItem('UserId');
     this.getshiftallocationName();
@@ -87,6 +101,19 @@ regionName: string = '';
           this.profile = res.data;
            this.companyName = res.data.companyName;
         this.regionName = res.data.regionName;
+        this.designationName =
+    res.data.designationName ||
+    res.data.designation ||
+    sessionStorage.getItem('DesignationName') ||
+    sessionStorage.getItem('Designation') ||
+    '';
+
+  this.departmentName =
+    res.data.departmentName ||
+    res.data.department ||
+    sessionStorage.getItem('DepartmentName') ||
+    sessionStorage.getItem('Department') ||
+    '';
         }
       },
       error: (err) => {
