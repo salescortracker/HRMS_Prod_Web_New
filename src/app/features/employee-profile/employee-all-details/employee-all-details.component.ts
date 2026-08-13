@@ -16,7 +16,7 @@ filteredEmployees: any[] = [];
 
 companyId!: number;
 regionId!: number;
-
+Math = Math;
 searchText = '';
 constructor(private service: EmployeeResignationService
     , route: Router, private adminService: AdminService
@@ -34,103 +34,270 @@ ngOnInit(): void {
   this.loadReference();
 
 }
+getUserId(item: any): number | null {
+
+  if (!item) {
+    return null;
+  }
+
+  const userId =
+    item.userId ??
+    item.UserId ??
+    item.userID ??
+    item.UserID;
+
+  if (
+    userId === null ||
+    userId === undefined ||
+    userId === ''
+  ) {
+    return null;
+  }
+
+  const id = Number(userId);
+
+  return Number.isInteger(id) ? id : null;
+}
 
 loadEmployees() {
 
   this.service
-      .getEmployeePersonalDetails(this.companyId, this.regionId)
-      .subscribe({
+    .getEmployeePersonalDetails(
+      this.companyId,
+      this.regionId
+    )
+    .subscribe({
 
-        next: (res) => {
+      next: (res) => {
 
-          this.employees = res;
-          this.filteredEmployees = res;
+        this.employees = res || [];
 
-        },
+        this.filteredEmployees = [
+          ...this.employees
+        ];
 
-        error: (err) => {
+        this.currentPage = 1;
 
-          console.log(err);
+        this.loadPagination();
 
-        }
+      },
 
-      });
+      error: (err) => {
+
+        console.log(err);
+
+      }
+
+    });
 
 }
-filterEmployees() {
+getEmployeeName(item: any): string {
 
-    const search = this.searchText.toLowerCase();
+  // If API already returns employee name
+  if (item.employeeName) {
+    return item.employeeName;
+  }
 
-    this.filteredEmployees = this.employees.filter(x =>
+  if (item.employeeFullName) {
+    return item.employeeFullName;
+  }
 
-        (x.firstName ?? '').toLowerCase().includes(search)
+  if (item.fullName) {
+    return item.fullName;
+  }
 
-        ||
+  // Get employee using INT userId
+  const userId = this.getUserId(item);
 
-        (x.lastName ?? '').toLowerCase().includes(search)
+  if (userId !== null) {
 
-        ||
-
-        (x.personalEmail ?? '').toLowerCase().includes(search)
-
-        ||
-
-        (x.mobileNumber ?? '').includes(search)
-
-        ||
-
-        (x.employeeType ?? '').toLowerCase().includes(search)
-
-        ||
-
-        (x.bandGrade ?? '').toLowerCase().includes(search)
-
-        ||
-
-        (x.bloodGroup ?? '').toLowerCase().includes(search)
-
+    const employee = this.employees.find(emp =>
+      this.getUserId(emp) === userId
     );
 
+    if (employee) {
+
+      return `${employee.firstName || ''} ${employee.lastName || ''}`
+        .trim() || '-';
+
+    }
+  }
+
+  return '-';
+}
+
+
+getEmployeeCode(item: any): string {
+
+  // If API already returns employee code
+  if (item.employeeCode) {
+    return String(item.employeeCode);
+  }
+
+  if (item.employeeNumber) {
+    return String(item.employeeNumber);
+  }
+
+  // Get employee using INT userId
+  const userId = this.getUserId(item);
+
+  if (userId !== null) {
+
+    const employee = this.employees.find(emp =>
+      this.getUserId(emp) === userId
+    );
+
+    if (employee) {
+
+      return String(
+        employee.employeeCode ??
+        employee.employeeNumber ??
+        '-'
+      );
+
+    }
+  }
+
+  return '-';
+}
+filterAllEmployees(): void {
+
+  const search = (this.searchText || '').trim().toLowerCase();
+
+  if (!search) {
+
+    this.filteredEmployees = [...this.employees];
+    this.filteredFamily = [...this.familyList];
+    this.filteredEmergency = [...this.emergencyList];
+    this.filteredReferences = [...this.referenceList];
+
+    this.currentPage = 1;
+    this.loadPagination();
+
+    return;
+  }
+
+  this.filteredEmployees = this.employees.filter(emp =>
+
+    this.searchValue(emp.firstName, search) ||
+
+    this.searchValue(emp.lastName, search) ||
+
+    this.searchValue(
+      `${emp.firstName || ''} ${emp.lastName || ''}`,
+      search
+    ) ||
+
+    this.searchValue(emp.employeeCode, search) ||
+
+    this.searchValue(emp.employeeNumber, search) ||
+
+    this.searchValue(emp.personalEmail, search) ||
+
+    this.searchValue(emp.mobileNumber, search) ||
+
+    this.searchValue(emp.employeeType, search) ||
+
+    this.searchValue(emp.bandGrade, search) ||
+
+    this.searchValue(emp.bloodGroup, search) ||
+
+    this.searchValue(emp.panNumber, search) ||
+
+    this.searchValue(emp.aadhaarNumber, search)
+
+  );
+
+  const matchingUserIds: number[] =
+    this.filteredEmployees
+      .map(emp => this.getUserId(emp))
+      .filter((id): id is number => id !== null);
+
+  this.filteredFamily = this.familyList.filter(item => {
+
+    const itemUserId = this.getUserId(item);
+
+    return (
+      itemUserId !== null &&
+      matchingUserIds.includes(itemUserId)
+    );
+
+  });
+
+  this.filteredEmergency = this.emergencyList.filter(item => {
+
+    const itemUserId = this.getUserId(item);
+
+    return (
+      itemUserId !== null &&
+      matchingUserIds.includes(itemUserId)
+    );
+
+  });
+
+  this.filteredReferences = this.referenceList.filter(item => {
+
+    const itemUserId = this.getUserId(item);
+
+    return (
+      itemUserId !== null &&
+      matchingUserIds.includes(itemUserId)
+    );
+
+  });
+
+  this.currentPage = 1;
+  this.loadPagination();
+}
+
+
+// ============================================================
+// SEARCH HELPER
+// ============================================================
+
+searchValue(value: any, search: string): boolean {
+
+  if (value === null || value === undefined) {
+    return false;
+  }
+
+  return String(value)
+    .toLowerCase()
+    .includes(search);
 }
 familyList:any[]=[];
 filteredFamily:any[]=[];
 searchTextfamily='';
 
-loadFamily(){
+loadFamily() {
 
-this.service
-.getEmployeeFamilyDetails(this.companyId,this.regionId)
-.subscribe(res=>{
+  this.service
+    .getEmployeeFamilyDetails(
+      this.companyId,
+      this.regionId
+    )
+    .subscribe({
 
-this.familyList=res;
-this.filteredFamily=res;
+      next: (res) => {
 
-});
+        this.familyList = res || [];
 
-}
-filterFamily(){
+        this.filteredFamily = [
+          ...this.familyList
+        ];
 
-const txt=this.searchTextfamily.toLowerCase();
+      },
 
-this.filteredFamily=this.familyList.filter(x=>
+      error: (err) => {
 
-(x.name??'').toLowerCase().includes(txt)
+        console.error(err);
 
-||
+      }
 
-(x.relationship??'').toLowerCase().includes(txt)
-
-||
-
-(x.phone??'').includes(txt)
-
-||
-
-(x.occupation??'').toLowerCase().includes(txt)
-
-);
+    });
 
 }
+
 emergencyList: any[] = [];
 filteredEmergency: any[] = [];
 
@@ -140,44 +307,35 @@ searchTextemergency = '';
 loadEmergency() {
 
   this.service
-      .getEmployeeEmergencyContacts(this.companyId, this.regionId)
-      .subscribe({
+    .getEmployeeEmergencyContacts(
+      this.companyId,
+      this.regionId
+    )
+    .subscribe({
 
-        next: (res: any[]) => {
+      next: (res: any[]) => {
 
-          this.emergencyList = res;
-          this.filteredEmergency = res;
+        this.emergencyList = res || [];
 
-        },
+        this.filteredEmergency = [
+          ...this.emergencyList
+        ];
 
-        error: (err) => {
+      },
 
-          console.error('Error loading emergency contacts', err);
+      error: (err) => {
 
-        }
+        console.error(
+          'Error loading emergency contacts',
+          err
+        );
 
-      });
+      }
 
-}
-filterEmergency() {
-
-  const txt = this.searchTextemergency.toLowerCase();
-
-  this.filteredEmergency = this.emergencyList.filter(x =>
-
-    (x.contactName ?? '').toLowerCase().includes(txt) ||
-
-    (x.phoneNumber ?? '').includes(txt) ||
-
-    (x.alternatePhone ?? '').includes(txt) ||
-
-    (x.email ?? '').toLowerCase().includes(txt) ||
-
-    (x.address ?? '').toLowerCase().includes(txt)
-
-  );
+    });
 
 }
+
 referenceList: any[] = [];
 filteredReferences: any[] = [];
 
@@ -185,44 +343,35 @@ searchTextreference = '';
 loadReference() {
 
   this.service
-      .getEmployeeReferences(this.companyId, this.regionId)
-      .subscribe({
+    .getEmployeeReferences(
+      this.companyId,
+      this.regionId
+    )
+    .subscribe({
 
-        next: (res: any[]) => {
+      next: (res: any[]) => {
 
-          this.referenceList = res;
-          this.filteredReferences = res;
+        this.referenceList = res || [];
 
-        },
+        this.filteredReferences = [
+          ...this.referenceList
+        ];
 
-        error: (err) => {
+      },
 
-          console.error('Error loading employee references', err);
+      error: (err) => {
 
-        }
+        console.error(
+          'Error loading employee references',
+          err
+        );
 
-      });
+      }
 
-}
-filterReference() {
-
-  const txt = this.searchTextreference.toLowerCase();
-
-  this.filteredReferences = this.referenceList.filter(x =>
-
-    (x.name ?? '').toLowerCase().includes(txt) ||
-
-    (x.titleOrDesignation ?? '').toLowerCase().includes(txt) ||
-
-    (x.companyName ?? '').toLowerCase().includes(txt) ||
-
-    (x.emailID ?? '').toLowerCase().includes(txt) ||
-
-    (x.mobileNumber ?? '').includes(txt)
-
-  );
+    });
 
 }
+
 selectedEmployee: any;
 
 activeTab = 'personal';

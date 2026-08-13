@@ -1,224 +1,686 @@
 <app-header></app-header>
 <app-sidebar></app-sidebar>
-<div class="dashboard-header">
-  <h2 class="dashboard-title">All Employee Details</h2>
 
-  <nav class="breadcrumb">
-    <a routerLink="/dashboard">Home</a> &gt;
-    <span>All Employee Details</span>
-  </nav>
-</div>
+
+<!-- =========================
+     MAIN CONTAINER
+========================= -->
+
 <div class="tab-container">
-<div class="container-fluid">
 
-  <div class="card">
+  <div class="container-fluid">
 
-    <div class="card-header bg-dark text-white">
-      <h5 class="mb-0">Employee Personal Details</h5>
-    </div>
+    <!-- =========================
+         GLOBAL EMPLOYEE SEARCH
+    ========================== -->
 
-    <div class="card-body">
-<div class="row mb-3">
+    <div class="card mb-4 employee-search-card">
 
-    <div class="col-md-4">
+      <div class="card-body">
 
-        <input
-            class="form-control"
-            placeholder="Search Employee"
-            [(ngModel)]="searchText"
-            (keyup)="filterEmployees()">
+        <div class="row align-items-center">
 
-    </div>
+          <div class="col-md-8">
 
-</div>
+            <label class="form-label fw-bold employee-search-label">
+              Search Employee
+            </label>
 
-<div class="table-responsive">
+            <input
+              type="text"
+              class="form-control employee-search"
+              placeholder="Search by Employee Name, Employee Code, Employee Number, Email or Mobile..."
+              [(ngModel)]="searchText"
+              (input)="filterAllEmployees()"
+            >
 
-<table class="table table-bordered table-hover table-striped">
+          </div>
 
-<thead class="table-dark">
+          <div class="col-md-4 text-md-end mt-3 mt-md-0">
 
-<tr>
+            <span class="search-info">
+              Showing details for:
+              <strong>
+                {{ searchText ? searchText : 'All Employees' }}
+              </strong>
+            </span>
 
-<th>#</th>
-
-<th>Photo</th>
-
-<th>Name</th>
-
-<th>Email</th>
-
-<th>Mobile</th>
-
-<th>DOB</th>
-
-<th>Joining</th>
-
-<th>Employee Type</th>
-
-<th>Band</th>
-
-<th>Blood Group</th>
-
-<th>PAN</th>
-
-<th>Aadhaar</th>
-
-</tr>
-
-</thead>
-
-<tbody>
-
-<tr *ngFor="let emp of filteredEmployees;let i=index">
-
-<td>{{i+1}}</td>
-
-<td>
-
-<img
-*ngIf="emp.profilePicture"
-[src]="emp.profilePicture"
-width="45"
-height="45"
-class="rounded-circle">
-
-</td>
-
-<td>{{emp.firstName}} {{emp.lastName}}</td>
-
-<td>{{emp.personalEmail}}</td>
-
-<td>{{emp.mobileNumber}}</td>
-
-<td>{{emp.dateOfBirth | date:'dd/MM/yyyy'}}</td>
-
-<td>{{emp.dateOfJoining | date:'dd/MM/yyyy'}}</td>
-
-<td>{{emp.employeeType}}</td>
-
-<td>{{emp.bandGrade}}</td>
-
-<td>{{emp.bloodGroup}}</td>
-
-<td>{{emp.panNumber}}</td>
-
-<td>{{emp.aadhaarNumber}}</td>
-
-</tr>
-
-<tr *ngIf="filteredEmployees.length==0">
-
-<td colspan="12" class="text-center">
-
-No Records Found
-
-</td>
-
-</tr>
-
-</tbody>
-
-</table>
-
-</div>
-</div>
-</div>
-</div>
-<div class="container-fluid">
-
-  <div class="card">
-
-    <div class="card-header bg-primary text-white">
-      <h5 class="mb-0">Employee Family Details</h5>
-    </div>
-
-    <div class="card-body">
-
-      <div class="row mb-3">
-
-        <div class="col-md-4">
-
-          <input
-            type="text"
-            class="form-control"
-            placeholder="Search Family Member..."
-            [(ngModel)]="searchTextfamily"
-            (keyup)="filterFamily()">
+          </div>
 
         </div>
 
       </div>
 
-      <div class="table-responsive">
+    </div>
 
-        <table class="table table-bordered table-hover table-striped">
 
-          <thead class="table-dark">
+    <!-- =========================================================
+         EMPLOYEE PERSONAL DETAILS
+    ========================================================== -->
 
-            <tr>
+    <div class="card mb-4">
 
-              <th>#</th>
-              <th>Name</th>
-              <th>Relationship</th>
-              <th>DOB</th>
-              <th>Gender</th>
-              <th>Occupation</th>
-              <th>Phone</th>
-              <th>Address</th>
-              <th>Dependent</th>
+      <div class="card-header project-header">
+        <h5 class="mb-0">
+          Employee Personal Details
+        </h5>
+      </div>
 
-            </tr>
+      <div class="card-body">
 
-          </thead>
+        <div class="table-responsive">
 
-          <tbody>
+          <table class="table table-bordered table-hover table-striped">
 
-            <tr *ngFor="let item of filteredFamily; let i=index">
+            <thead class="main-table-header">
 
-              <td>{{i+1}}</td>
+              <tr>
 
-              <td>{{item.name}}</td>
+                <th>#</th>
 
-              <td>{{item.relationship}}</td>
+                <th>Photo</th>
 
-              <td>{{item.dateOfBirth | date:'dd/MM/yyyy'}}</td>
+                <th>Name</th>
 
-              <td>{{item.gender}}</td>
+                <th>Employee Code</th>
 
-              <td>{{item.occupation}}</td>
+                <th>Employee Number</th>
 
-              <td>{{item.phone}}</td>
+                <th>Email</th>
 
-              <td>{{item.address}}</td>
+                <th>Mobile</th>
 
-              <td>
+                <th>DOB</th>
 
-                <span class="badge bg-success" *ngIf="item.isDependent">
-                  Yes
-                </span>
+                <th>Joining</th>
 
-                <span class="badge bg-secondary" *ngIf="!item.isDependent">
-                  No
-                </span>
+                <th>Employee Type</th>
 
-              </td>
+                <th>Band</th>
 
-            </tr>
+                <th>Blood Group</th>
 
-            <tr *ngIf="filteredFamily.length==0">
+                <th>PAN</th>
 
-              <td colspan="9" class="text-center">
+                <th>Aadhaar</th>
 
-                No Records Found
+              </tr>
 
-              </td>
+            </thead>
 
-            </tr>
 
-          </tbody>
+            <tbody>
 
-        </table>
+              <tr
+                *ngFor="let emp of pagedEmployees; let i = index"
+              >
+
+                <td>
+                  {{ ((currentPage - 1) * pageSize) + i + 1 }}
+                </td>
+
+
+                <td>
+
+                  <img
+                    *ngIf="emp.profilePicture"
+                    [src]="emp.profilePicture"
+                    width="45"
+                    height="45"
+                    class="rounded-circle employee-photo"
+                  >
+
+                  <span
+                    *ngIf="!emp.profilePicture"
+                    class="no-photo"
+                  >
+                    N/A
+                  </span>
+
+                </td>
+
+
+                <td>
+                  {{ emp.firstName }} {{ emp.lastName }}
+                </td>
+
+
+                <td>
+                  {{ emp.employeeCode || emp.employeeID || emp.employeeId || '-' }}
+                </td>
+
+
+                <td>
+                  {{ emp.employeeNumber || emp.empNumber || '-' }}
+                </td>
+
+
+                <td>
+                  {{ emp.personalEmail || '-' }}
+                </td>
+
+
+                <td>
+                  {{ emp.mobileNumber || '-' }}
+                </td>
+
+
+                <td>
+                  {{ emp.dateOfBirth | date:'dd/MM/yyyy' }}
+                </td>
+
+
+                <td>
+                  {{ emp.dateOfJoining | date:'dd/MM/yyyy' }}
+                </td>
+
+
+                <td>
+                  {{ emp.employeeType || '-' }}
+                </td>
+
+
+                <td>
+                  {{ emp.bandGrade || '-' }}
+                </td>
+
+
+                <td>
+                  {{ emp.bloodGroup || '-' }}
+                </td>
+
+
+                <td>
+                  {{ emp.panNumber || '-' }}
+                </td>
+
+
+                <td>
+                  {{ emp.aadhaarNumber || '-' }}
+                </td>
+
+              </tr>
+
+
+              <tr *ngIf="filteredEmployees.length === 0">
+
+                <td
+                  colspan="14"
+                  class="text-center no-records"
+                >
+                  No Employee Records Found
+                </td>
+
+              </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+
+        <!-- PERSONAL PAGINATION -->
+
+        <div
+          class="d-flex justify-content-between align-items-center mt-3"
+          *ngIf="filteredEmployees.length > 0"
+        >
+
+          <div class="text-muted">
+
+            Showing
+            {{ ((currentPage - 1) * pageSize) + 1 }}
+
+            -
+
+            {{
+              Math.min(
+                currentPage * pageSize,
+                filteredEmployees.length
+              )
+            }}
+
+            of
+            {{ filteredEmployees.length }}
+            employees
+
+          </div>
+
+
+          <div>
+
+            <button
+              class="btn btn-sm btn-outline-project me-1"
+              [disabled]="currentPage === 1"
+              (click)="previousPage()"
+            >
+              Previous
+            </button>
+
+
+            <button
+              *ngFor="let page of pages"
+              class="btn btn-sm me-1"
+              [ngClass]="
+                page === currentPage
+                  ? 'btn-project'
+                  : 'btn-outline-project'
+              "
+              (click)="goToPage(page)"
+            >
+              {{ page }}
+            </button>
+
+
+            <button
+              class="btn btn-sm btn-outline-project"
+              [disabled]="currentPage === totalPages"
+              (click)="nextPage()"
+            >
+              Next
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         EMPLOYEE FAMILY DETAILS
+    ========================================================== -->
+
+    <div class="card mb-4">
+
+      <div class="card-header project-header">
+
+        <h5 class="mb-0">
+          Employee Family Details
+        </h5>
+
+      </div>
+
+
+      <div class="card-body">
+
+        <div class="table-responsive">
+
+          <table class="table table-bordered table-hover table-striped">
+
+            <thead class="main-table-header">
+
+              <tr>
+
+                <th>#</th>
+
+                <th>Employee</th>
+
+                <th>Employee Code</th>
+
+                <th>Name</th>
+
+                <th>Relationship</th>
+
+                <th>DOB</th>
+
+                <th>Gender</th>
+
+                <th>Occupation</th>
+
+                <th>Phone</th>
+
+                <th>Address</th>
+
+                <th>Dependent</th>
+
+              </tr>
+
+            </thead>
+
+
+            <tbody>
+
+              <tr
+                *ngFor="let item of filteredFamily; let i = index"
+              >
+
+                <td>
+                  {{ i + 1 }}
+                </td>
+
+
+                <td>
+                  {{ getEmployeeName(item) }}
+                </td>
+
+
+                <td>
+                  {{ getEmployeeCode(item) }}
+                </td>
+
+
+                <td>
+                  {{ item.name || '-' }}
+                </td>
+
+
+                <td>
+                  {{ item.relationship || '-' }}
+                </td>
+
+
+                <td>
+                  {{ item.dateOfBirth | date:'dd/MM/yyyy' }}
+                </td>
+
+
+                <td>
+                  {{ item.gender || '-' }}
+                </td>
+
+
+                <td>
+                  {{ item.occupation || '-' }}
+                </td>
+
+
+                <td>
+                  {{ item.phone || '-' }}
+                </td>
+
+
+                <td>
+                  {{ item.address || '-' }}
+                </td>
+
+
+                <td>
+
+                  <span
+                    class="badge bg-success"
+                    *ngIf="item.isDependent"
+                  >
+                    Yes
+                  </span>
+
+
+                  <span
+                    class="badge bg-secondary"
+                    *ngIf="!item.isDependent"
+                  >
+                    No
+                  </span>
+
+                </td>
+
+              </tr>
+
+
+              <tr *ngIf="filteredFamily.length === 0">
+
+                <td
+                  colspan="11"
+                  class="text-center no-records"
+                >
+                  No Family Records Found
+                </td>
+
+              </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         EMPLOYEE EMERGENCY CONTACTS
+    ========================================================== -->
+
+    <div class="card mb-4">
+
+      <div class="card-header project-header">
+
+        <h5 class="mb-0">
+          Employee Emergency Contacts
+        </h5>
+
+      </div>
+
+
+      <div class="card-body">
+
+        <div class="table-responsive">
+
+          <table class="table table-bordered table-striped table-hover">
+
+            <thead class="main-table-header">
+
+              <tr>
+
+                <th>#</th>
+
+                <th>Employee</th>
+
+                <th>Employee Code</th>
+
+                <th>Contact Name</th>
+
+                <th>Relationship</th>
+
+                <th>Phone</th>
+
+                <th>Alternate Phone</th>
+
+                <th>Email</th>
+
+                <th>Address</th>
+
+              </tr>
+
+            </thead>
+
+
+            <tbody>
+
+              <tr
+                *ngFor="
+                  let item of filteredEmergency;
+                  let i = index
+                "
+              >
+
+                <td>
+                  {{ i + 1 }}
+                </td>
+
+
+                <td>
+                  {{ getEmployeeName(item) }}
+                </td>
+
+
+                <td>
+                  {{ getEmployeeCode(item) }}
+                </td>
+
+
+                <td>
+                  {{ item.contactName || '-' }}
+                </td>
+
+
+                <td>
+                  {{ item.relationship || '-' }}
+                </td>
+
+
+                <td>
+                  {{ item.phoneNumber || '-' }}
+                </td>
+
+
+                <td>
+                  {{ item.alternatePhone || '-' }}
+                </td>
+
+
+                <td>
+                  {{ item.email || '-' }}
+                </td>
+
+
+                <td>
+                  {{ item.address || '-' }}
+                </td>
+
+              </tr>
+
+
+              <tr *ngIf="filteredEmergency.length === 0">
+
+                <td
+                  colspan="9"
+                  class="text-center no-records"
+                >
+                  No Emergency Contact Records Found
+                </td>
+
+              </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         EMPLOYEE REFERENCES
+    ========================================================== -->
+
+    <div class="card mb-4">
+
+      <div class="card-header project-header">
+
+        <h5 class="mb-0">
+          Employee References
+        </h5>
+
+      </div>
+
+
+      <div class="card-body">
+
+        <div class="table-responsive">
+
+          <table class="table table-bordered table-striped table-hover">
+
+            <thead class="main-table-header">
+
+              <tr>
+
+                <th>#</th>
+
+                <th>Employee</th>
+
+                <th>Employee Code</th>
+
+                <th>Name</th>
+
+                <th>Designation</th>
+
+                <th>Company</th>
+
+                <th>Email</th>
+
+                <th>Mobile</th>
+
+              </tr>
+
+            </thead>
+
+
+            <tbody>
+
+              <tr
+                *ngFor="
+                  let item of filteredReferences;
+                  let i = index
+                "
+              >
+
+                <td>
+                  {{ i + 1 }}
+                </td>
+
+
+                <td>
+                  {{ getEmployeeName(item) }}
+                </td>
+
+
+                <td>
+                  {{ getEmployeeCode(item) }}
+                </td>
+
+
+                <td>
+                  {{ item.name || '-' }}
+                </td>
+
+
+                <td>
+                  {{ item.titleOrDesignation || '-' }}
+                </td>
+
+
+                <td>
+                  {{ item.companyName || '-' }}
+                </td>
+
+
+                <td>
+                  {{ item.emailID || '-' }}
+                </td>
+
+
+                <td>
+                  {{ item.mobileNumber || '-' }}
+                </td>
+
+              </tr>
+
+
+              <tr *ngIf="filteredReferences.length === 0">
+
+                <td
+                  colspan="8"
+                  class="text-center no-records"
+                >
+                  No Reference Records Found
+                </td>
+
+              </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
 
       </div>
 
@@ -227,174 +689,6 @@ No Records Found
   </div>
 
 </div>
-<div class="container-fluid">
 
-  <div class="card">
 
-    <div class="card-header bg-danger text-white">
-      <h5 class="mb-0">Employee Emergency Contacts</h5>
-    </div>
-
-    <div class="card-body">
-
-      <div class="row mb-3">
-
-        <div class="col-md-4">
-
-          <input
-            type="text"
-            class="form-control"
-            placeholder="Search Contact..."
-            [(ngModel)]="searchTextemergency"
-            (keyup)="filterEmergency()">
-
-        </div>
-
-      </div>
-
-      <div class="table-responsive">
-
-        <table class="table table-bordered table-striped table-hover">
-
-          <thead class="table-dark">
-
-            <tr>
-
-              <th>#</th>
-              <th>Contact Name</th>
-              <th>Relationship</th>
-              <th>Phone</th>
-              <th>Alternate Phone</th>
-              <th>Email</th>
-              <th>Address</th>
-
-            </tr>
-
-          </thead>
-
-          <tbody>
-
-            <tr *ngFor="let item of filteredEmergency;let i=index">
-
-              <td>{{i+1}}</td>
-
-              <td>{{item.contactName}}</td>
-
-              <td>{{item.relationship}}</td>
-
-              <td>{{item.phoneNumber}}</td>
-
-              <td>{{item.alternatePhone}}</td>
-
-              <td>{{item.email}}</td>
-
-              <td>{{item.address}}</td>
-
-            </tr>
-
-            <tr *ngIf="filteredEmergency.length==0">
-
-              <td colspan="7" class="text-center">
-
-                No Records Found
-
-              </td>
-
-            </tr>
-
-          </tbody>
-
-        </table>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</div>
-<div class="container-fluid">
-
-  <div class="card">
-
-    <div class="card-header bg-success text-white">
-      <h5 class="mb-0">Employee References</h5>
-    </div>
-
-    <div class="card-body">
-
-      <div class="row mb-3">
-
-        <div class="col-md-4">
-
-          <input
-            type="text"
-            class="form-control"
-            placeholder="Search Reference..."
-            [(ngModel)]="searchTextreference"
-            (keyup)="filterReference()">
-
-        </div>
-
-      </div>
-
-      <div class="table-responsive">
-
-        <table class="table table-bordered table-striped table-hover">
-
-          <thead class="table-dark">
-
-            <tr>
-
-              <th>#</th>
-              <th>Name</th>
-              <th>Designation</th>
-              <th>Company</th>
-              <th>Email</th>
-              <th>Mobile</th>
-
-            </tr>
-
-          </thead>
-
-          <tbody>
-
-            <tr *ngFor="let item of filteredReferences;let i=index">
-
-              <td>{{i+1}}</td>
-
-              <td>{{item.name}}</td>
-
-              <td>{{item.titleOrDesignation}}</td>
-
-              <td>{{item.companyName}}</td>
-
-              <td>{{item.emailID}}</td>
-
-              <td>{{item.mobileNumber}}</td>
-
-            </tr>
-
-            <tr *ngIf="filteredReferences.length==0">
-
-              <td colspan="6" class="text-center">
-
-                No Records Found
-
-              </td>
-
-            </tr>
-
-          </tbody>
-
-        </table>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</div>
-</div>
 <app-footer></app-footer>

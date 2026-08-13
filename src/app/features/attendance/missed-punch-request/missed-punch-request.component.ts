@@ -24,6 +24,66 @@ rejectedRequests: any[] = [];
   userId =Number(sessionStorage.getItem('UserId')) || 1;    // logged-in user
   managerId =Number(sessionStorage.getItem("UserId")) || 0; // logged-in manager
 selectedTab: string = '';
+// ============================================================
+// SEARCH
+// ============================================================
+
+mySearchText = '';
+pendingSearchText = '';
+approvedSearchText = '';
+rejectedSearchText = '';
+
+
+// ============================================================
+// PAGINATION - MY REQUESTS
+// ============================================================
+
+myPage = 1;
+myPageSize = 10;
+myTotalPages = 1;
+myPages: number[] = [];
+filteredMyRequests: any[] = [];
+paginatedMyRequests: any[] = [];
+
+
+// ============================================================
+// PAGINATION - PENDING
+// ============================================================
+
+pendingPage = 1;
+pendingPageSize = 10;
+pendingTotalPages = 1;
+pendingPages: number[] = [];
+filteredPendingRequests: any[] = [];
+paginatedPendingRequests: any[] = [];
+
+
+// ============================================================
+// PAGINATION - APPROVED
+// ============================================================
+
+approvedPage = 1;
+approvedPageSize = 10;
+approvedTotalPages = 1;
+approvedPages: number[] = [];
+filteredApprovedRequests: any[] = [];
+paginatedApprovedRequests: any[] = [];
+
+
+// ============================================================
+// PAGINATION - REJECTED
+// ============================================================
+
+rejectedPage = 1;
+rejectedPageSize = 10;
+rejectedTotalPages = 1;
+rejectedPages: number[] = [];
+filteredRejectedRequests: any[] = [];
+paginatedRejectedRequests: any[] = [];
+
+
+// Used by Math.min() in HTML
+Math = Math;
   constructor(
     private fb: FormBuilder,
     private missedPunchService: MissedPunchService
@@ -171,48 +231,251 @@ handleMissedTypeChanges() {
   /* ================= LOAD DATA ================= */
 
 loadMyRequests() {
-  this.missedPunchService
-    .getMissedPunchRequest(this.companyId, this.regionId, this.userId) // ✅ PASS USERID
-    .subscribe(res => this.myRequests = res);
-}
 
-loadApprovalRequests() {
   this.missedPunchService
-    .getApprovalMissedPunchRequest(this.companyId, this.regionId, this.managerId)
+    .getMissedPunchRequest(
+      this.companyId,
+      this.regionId,
+      this.userId
+    )
     .subscribe(res => {
 
-      this.pendingRequests = res.filter((x: any) => x.status === 'Pending');
-      this.approvedRequests = res.filter((x: any) => x.status === 'Approved');
-      this.rejectedRequests = res.filter((x: any) => x.status === 'Rejected');
+      this.myRequests = res || [];
 
-      // add UI properties only for pending
-      this.pendingRequests = this.pendingRequests.map(x => ({
-        ...x,
-        selected: false,
-        managerRemarks: x.managerRemarks || ''
-      }));
+      this.filteredMyRequests = [...this.myRequests];
+
+      this.myPage = 1;
+
+      this.updateMyPagination();
     });
 }
 
-  /* ================= APPROVAL ACTIONS ================= */
+loadApprovalRequests() {
 
-  // approve(item: any) {
+  this.missedPunchService
+    .getApprovalMissedPunchRequest(
+      this.companyId,
+      this.regionId,
+      this.managerId
+    )
+    .subscribe(res => {
 
-  //   const payload = {
-  //     missedPunchRequestIds: [item.missedPunchRequestId],
-  //     status: 'Approved',
-  //     managerRemarks: item.managerRemarks,
-  //     managerId: this.managerId,
-  //     companyId: this.companyId,
-  //     regionId: this.regionId, 
-  //      hrEmail: item.hrEmail
-  //   };
+      this.pendingRequests = res
+        .filter((x: any) => x.status === 'Pending')
+        .map((x: any) => ({
+          ...x,
+          selected: false,
+          managerRemarks: x.managerRemarks || ''
+        }));
+
+      this.approvedRequests =
+        res.filter((x: any) => x.status === 'Approved');
+
+      this.rejectedRequests =
+        res.filter((x: any) => x.status === 'Rejected');
 
 
-  //   this.missedPunchService.bulkApproveRejectPunch(payload)
-  //     .subscribe(() => this.loadApprovalRequests());
-  // }
+      // Initialize Pending pagination
+      this.filteredPendingRequests = [
+        ...this.pendingRequests
+      ];
 
+      this.pendingPage = 1;
+
+      this.updatePendingPagination();
+
+
+      // Initialize Approved pagination
+      this.filteredApprovedRequests = [
+        ...this.approvedRequests
+      ];
+
+      this.approvedPage = 1;
+
+      this.updateApprovedPagination();
+
+
+      // Initialize Rejected pagination
+      this.filteredRejectedRequests = [
+        ...this.rejectedRequests
+      ];
+
+      this.rejectedPage = 1;
+
+      this.updateRejectedPagination();
+
+    });
+}
+filterApprovedRequests() {
+
+  const search =
+    this.approvedSearchText.trim().toLowerCase();
+
+  if (!search) {
+
+    this.filteredApprovedRequests =
+      [...this.approvedRequests];
+
+  } else {
+
+    this.filteredApprovedRequests =
+      this.approvedRequests.filter(item =>
+        String(item.employeeName || '').toLowerCase().includes(search) ||
+        String(item.missedDate || '').toLowerCase().includes(search) ||
+        String(item.missedType || '').toLowerCase().includes(search) ||
+        String(item.reason || '').toLowerCase().includes(search) ||
+        String(item.managerRemarks || '').toLowerCase().includes(search)
+      );
+  }
+
+  this.approvedPage = 1;
+
+  this.updateApprovedPagination();
+}
+
+
+updateApprovedPagination() {
+
+  this.approvedTotalPages = Math.max(
+    1,
+    Math.ceil(
+      this.filteredApprovedRequests.length /
+      this.approvedPageSize
+    )
+  );
+
+  if (this.approvedPage > this.approvedTotalPages) {
+    this.approvedPage = this.approvedTotalPages;
+  }
+
+  const startIndex =
+    (this.approvedPage - 1) *
+    this.approvedPageSize;
+
+  const endIndex =
+    startIndex +
+    this.approvedPageSize;
+
+  this.paginatedApprovedRequests =
+    this.filteredApprovedRequests.slice(
+      startIndex,
+      endIndex
+    );
+
+  this.approvedPages = Array.from(
+    { length: this.approvedTotalPages },
+    (_, i) => i + 1
+  );
+}
+
+
+approvedPageChange(page: number) {
+
+  if (
+    page < 1 ||
+    page > this.approvedTotalPages
+  ) {
+    return;
+  }
+
+  this.approvedPage = page;
+
+  this.updateApprovedPagination();
+}
+
+
+changeApprovedPageSize() {
+
+  this.approvedPage = 1;
+
+  this.updateApprovedPagination();
+}
+filterRejectedRequests() {
+
+  const search =
+    this.rejectedSearchText.trim().toLowerCase();
+
+  if (!search) {
+
+    this.filteredRejectedRequests =
+      [...this.rejectedRequests];
+
+  } else {
+
+    this.filteredRejectedRequests =
+      this.rejectedRequests.filter(item =>
+        String(item.employeeName || '').toLowerCase().includes(search) ||
+        String(item.missedDate || '').toLowerCase().includes(search) ||
+        String(item.missedType || '').toLowerCase().includes(search) ||
+        String(item.reason || '').toLowerCase().includes(search) ||
+        String(item.managerRemarks || '').toLowerCase().includes(search)
+      );
+  }
+
+  this.rejectedPage = 1;
+
+  this.updateRejectedPagination();
+}
+
+
+updateRejectedPagination() {
+
+  this.rejectedTotalPages = Math.max(
+    1,
+    Math.ceil(
+      this.filteredRejectedRequests.length /
+      this.rejectedPageSize
+    )
+  );
+
+  if (this.rejectedPage > this.rejectedTotalPages) {
+    this.rejectedPage = this.rejectedTotalPages;
+  }
+
+  const startIndex =
+    (this.rejectedPage - 1) *
+    this.rejectedPageSize;
+
+  const endIndex =
+    startIndex +
+    this.rejectedPageSize;
+
+  this.paginatedRejectedRequests =
+    this.filteredRejectedRequests.slice(
+      startIndex,
+      endIndex
+    );
+
+  this.rejectedPages = Array.from(
+    { length: this.rejectedTotalPages },
+    (_, i) => i + 1
+  );
+}
+
+
+rejectedPageChange(page: number) {
+
+  if (
+    page < 1 ||
+    page > this.rejectedTotalPages
+  ) {
+    return;
+  }
+
+  this.rejectedPage = page;
+
+  this.updateRejectedPagination();
+}
+
+
+changeRejectedPageSize() {
+
+  this.rejectedPage = 1;
+
+  this.updateRejectedPagination();
+}
+
+  
   approve(item: any) {
 
   Swal.fire({
@@ -251,21 +514,7 @@ loadApprovalRequests() {
   });
 }
 
-  // reject(item: any) {
-  //   const payload = {
-  //     missedPunchRequestIds: [item.missedPunchRequestId],
-  //     status: 'Rejected',
-  //     managerRemarks: item.managerRemarks,
-     
-  //        managerId: this.managerId,
-  //     companyId: this.companyId,
-  //     regionId: this.regionId,
-  //     hrEmail: item.hrEmail 
-  //   };
-
-  //   this.missedPunchService.bulkApproveRejectPunch(payload)
-  //     .subscribe(() => this.loadApprovalRequests());
-  // }
+  
 
   reject(item: any) {
 
@@ -305,28 +554,7 @@ loadApprovalRequests() {
   });
 }
 
-  /* ================= BULK APPROVE / REJECT ================= */
-
-  // bulkApproveReject(status: 'Approved' | 'Rejected') {
-
-  //   const selectedItems = this.approvalRequests
-  //     .filter(x => x.selected)
-  //     .map(x => ({
-  //       missedPunchRequestIds: x.missedPunchRequestId,
-  //       status: status,
-  //       managerRemarks: x.managerRemarks,
-  //         managerId: this.managerId,
-  //     companyId: this.companyId,
-  //     regionId: this.regionId,
-  //     hrEmail: x.hrEmail 
-  //     }));
-
-  //   if (selectedItems.length === 0) return;
-
-  //   this.missedPunchService
-  //     .bulkApproveRejectPunch(selectedItems)
-  //     .subscribe(() => this.loadApprovalRequests());
-  // }
+  
   bulkApproveReject(status: 'Approved' | 'Rejected') {
 
   const selectedIds = this.pendingRequests
@@ -416,5 +644,155 @@ loadApprovalRequests() {
     });
 
   }
+  filterMyRequests() {
+
+  const search = this.mySearchText.trim().toLowerCase();
+
+  if (!search) {
+    this.filteredMyRequests = [...this.myRequests];
+  } else {
+
+    this.filteredMyRequests = this.myRequests.filter(item =>
+      String(item.missedDate || '').toLowerCase().includes(search) ||
+      String(item.missedType || '').toLowerCase().includes(search) ||
+      String(item.correctClockIn || '').toLowerCase().includes(search) ||
+      String(item.correctClockOut || '').toLowerCase().includes(search) ||
+      String(item.reason || '').toLowerCase().includes(search) ||
+      String(item.managerRemarks || '').toLowerCase().includes(search) ||
+      String(item.status || '').toLowerCase().includes(search)
+    );
+  }
+
+  this.myPage = 1;
+  this.updateMyPagination();
+}
+
+
+updateMyPagination() {
+
+  this.myTotalPages = Math.max(
+    1,
+    Math.ceil(this.filteredMyRequests.length / this.myPageSize)
+  );
+
+  if (this.myPage > this.myTotalPages) {
+    this.myPage = this.myTotalPages;
+  }
+
+  const startIndex = (this.myPage - 1) * this.myPageSize;
+
+  const endIndex = startIndex + this.myPageSize;
+
+  this.paginatedMyRequests =
+    this.filteredMyRequests.slice(startIndex, endIndex);
+
+  this.myPages = Array.from(
+    { length: this.myTotalPages },
+    (_, i) => i + 1
+  );
+}
+
+
+myPageChange(page: number) {
+
+  if (page < 1 || page > this.myTotalPages) {
+    return;
+  }
+
+  this.myPage = page;
+  this.updateMyPagination();
+}
+
+
+changeMyPageSize() {
+
+  this.myPage = 1;
+  this.updateMyPagination();
+}
+
+filterPendingRequests() {
+
+  const search = this.pendingSearchText.trim().toLowerCase();
+
+  if (!search) {
+
+    this.filteredPendingRequests = [
+      ...this.pendingRequests
+    ];
+
+  } else {
+
+    this.filteredPendingRequests =
+      this.pendingRequests.filter(item =>
+        String(item.employeeName || '').toLowerCase().includes(search) ||
+        String(item.missedDate || '').toLowerCase().includes(search) ||
+        String(item.missedType || '').toLowerCase().includes(search) ||
+        String(item.correctClockIn || '').toLowerCase().includes(search) ||
+        String(item.correctClockOut || '').toLowerCase().includes(search) ||
+        String(item.reason || '').toLowerCase().includes(search) ||
+        String(item.managerRemarks || '').toLowerCase().includes(search)
+      );
+  }
+
+  this.pendingPage = 1;
+
+  this.updatePendingPagination();
+}
+
+
+updatePendingPagination() {
+
+  this.pendingTotalPages = Math.max(
+    1,
+    Math.ceil(
+      this.filteredPendingRequests.length /
+      this.pendingPageSize
+    )
+  );
+
+  if (this.pendingPage > this.pendingTotalPages) {
+    this.pendingPage = this.pendingTotalPages;
+  }
+
+  const startIndex =
+    (this.pendingPage - 1) * this.pendingPageSize;
+
+  const endIndex =
+    startIndex + this.pendingPageSize;
+
+  this.paginatedPendingRequests =
+    this.filteredPendingRequests.slice(
+      startIndex,
+      endIndex
+    );
+
+  this.pendingPages = Array.from(
+    { length: this.pendingTotalPages },
+    (_, i) => i + 1
+  );
+}
+
+
+pendingPageChange(page: number) {
+
+  if (
+    page < 1 ||
+    page > this.pendingTotalPages
+  ) {
+    return;
+  }
+
+  this.pendingPage = page;
+
+  this.updatePendingPagination();
+}
+
+
+changePendingPageSize() {
+
+  this.pendingPage = 1;
+
+  this.updatePendingPagination();
+}
   
 }

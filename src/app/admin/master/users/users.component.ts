@@ -189,43 +189,126 @@ getEmptyUser(): User {
   
   applyFilters(): void {
 
-  if (
-    !this.filter.employeeName &&
-    !this.filter.companyId &&
-    !this.filter.regionId
-  ) {
+  // ============================================================
+  // COMPANY + REGION ARE REQUIRED FOR SEARCH
+  // ============================================================
+
+  if (!this.filter.companyId || !this.filter.regionId) {
+
+    this.filter.employeeName = '';
+
     this.filteredUsers = [...this.users];
-  } else {
-    this.filteredUsers = this.users.filter(u => {
 
-      const matchesName =
-        !this.filter.employeeName ||
-        u.fullName.toLowerCase().includes(this.filter.employeeName.toLowerCase());
+    this.currentPage = 1;
+    this.setPagination();
 
-      const matchesCompany =
-        !this.filter.companyId ||
-        Number(u.companyId) === Number(this.filter.companyId);
-
-      const matchesRegion =
-        !this.filter.regionId ||
-        Number(u.regionId) === Number(this.filter.regionId);
-
-      return matchesName && matchesCompany && matchesRegion;
-    });
+    return;
   }
 
-  this.currentPage = 1;      // ✅ RESET PAGE
-  this.setPagination();     // ✅ APPLY PAGINATION
-  this.loadUsersForListing();
+
+  // ============================================================
+  // FILTER USERS
+  // ============================================================
+
+  this.filteredUsers = this.users.filter(u => {
+
+    const matchesCompany =
+      Number(u.companyId) === Number(this.filter.companyId);
+
+    const matchesRegion =
+      Number(u.regionId) === Number(this.filter.regionId);
+
+    const matchesName =
+      !this.filter.employeeName ||
+      (u.fullName || '')
+        .toLowerCase()
+        .includes(
+          this.filter.employeeName.toLowerCase().trim()
+        );
+
+    return matchesCompany && matchesRegion && matchesName;
+  });
+
+
+  // ============================================================
+  // RESET PAGINATION
+  // ============================================================
+
+  this.currentPage = 1;
+  this.setPagination();
 }
 onFilterCompanyChange(): void {
+
+  // Reset region
   this.filter.regionId = 0;
-  // filter regions based on company
+
+  // Reset search
+  this.filter.employeeName = '';
+
+  // Filter regions based on company
   this.filterRegions = this.filter.companyId
-    ? this.regions.filter(r => Number(r.companyID) === Number(this.filter.companyId))
+    ? this.regions.filter(r =>
+        Number(r.companyID) === Number(this.filter.companyId)
+      )
     : [...this.regions];
 
-  this.applyFilters();
+  // Clear list until region is selected
+  this.filteredUsers = [...this.users];
+
+  this.currentPage = 1;
+  this.setPagination();
+}
+onFilterRegionChange(): void {
+
+  // Clear previous search
+  this.filter.employeeName = '';
+
+  // Load users for selected Company + Region
+  if (this.filter.companyId && this.filter.regionId) {
+
+    this.userService
+      .getUsersByCompanyRegion(
+        this.filter.companyId,
+        this.filter.regionId
+      )
+      .subscribe({
+        next: (res: any[]) => {
+
+          const mappedUsers = res.map(u => ({
+            ...u,
+            companyId: Number(u.companyID),
+            regionId: Number(u.regionID),
+            reportingHr: Number(
+              u.reportingHR ?? u.reportingHr ?? 0
+            ),
+            password: u.password || ''
+          }));
+
+          this.users = this.sortUsersByEmployeeCode(mappedUsers);
+
+          this.filteredUsers = [...this.users];
+
+          this.currentPage = 1;
+          this.setPagination();
+        },
+
+        error: (err) => {
+          console.error('Failed to load users', err);
+
+          this.users = [];
+          this.filteredUsers = [];
+          this.setPagination();
+        }
+      });
+
+  } else {
+
+    this.filteredUsers = [];
+    this.users = [];
+
+    this.currentPage = 1;
+    this.setPagination();
+  }
 }
 getreporting(id:any)
 {

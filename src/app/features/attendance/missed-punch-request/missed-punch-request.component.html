@@ -3,6 +3,7 @@
 
 <div class="dashboard-header">
   <h2 class="dashboard-title">Missed Punch Requests</h2>
+
   <nav class="breadcrumb">
     <a href="#">Home</a> &gt;
     <a href="#">Attendance</a> &gt;
@@ -12,253 +13,1293 @@
 
 <div class="tab-container mt-4">
 
-  <!-- Tabs -->
-  <input type="radio" id="tab1" name="tab" [checked]="selectedTab === 'tab1'">
-  <input type="radio" id="tab2" name="tab" [checked]="selectedTab === 'tab2'">
+  <!-- ========================================================= -->
+  <!-- TABS -->
+  <!-- ========================================================= -->
+
+  <input
+    type="radio"
+    id="tab1"
+    name="tab"
+    [checked]="selectedTab === 'tab1'">
+
+  <input
+    type="radio"
+    id="tab2"
+    name="tab"
+    [checked]="selectedTab === 'tab2'">
 
   <div class="tab-header">
-    <label class="tab-label" for="tab1" *ngIf="canViewPersonal">My Requests</label>
-    <label class="tab-label" for="tab2" *ngIf="canViewManager">Manager Approval</label>
+
+    <label
+      class="tab-label"
+      for="tab1"
+      *ngIf="canViewPersonal">
+      My Requests
+    </label>
+
+    <label
+      class="tab-label"
+      for="tab2"
+      *ngIf="canViewManager">
+      Manager Approval
+    </label>
+
   </div>
 
-  <!-- ================= MY REQUESTS ================= -->
+
+  <!-- ========================================================= -->
+  <!-- MY REQUESTS TAB -->
+  <!-- ========================================================= -->
+
   <div id="content1" class="tab-content">
+
+    <!-- ======================================================= -->
+    <!-- SUBMIT / UPDATE FORM -->
+    <!-- ======================================================= -->
+
     <div class="card p-4 shadow-sm mb-4">
+
       <h5 class="mb-3">
-        {{ isEditMode ? 'Update Missed Punch Request' : 'Submit Missed Punch Request' }}
+        {{
+          isEditMode
+            ? 'Update Missed Punch Request'
+            : 'Submit Missed Punch Request'
+        }}
       </h5>
 
-      <form [formGroup]="missedPunchForm" (ngSubmit)="submitMissedPunch()">
+      <form
+        [formGroup]="missedPunchForm"
+        (ngSubmit)="submitMissedPunch()">
+
+        <!-- DATE + MISSED TYPE -->
 
         <div class="row mb-3">
-          <div class="col-md-6">
-            <label class="form-label">Date <span class="text-danger">*</span></label>
-            <input type="date" class="form-control" formControlName="missedDate">
-          </div>
 
           <div class="col-md-6">
-            <label class="form-label">Missed Type <span class="text-danger">*</span></label>
-            <select class="form-select" formControlName="missedType">
-              <option value="">Select</option>
-              <option value="Missed Clock In">Missed Clock In</option>
-              <option value="Missed Clock Out">Missed Clock Out</option>
-              <option value="Both In & Out">Both In & Out</option>
+
+            <label class="form-label">
+              Date
+              <span class="text-danger">*</span>
+            </label>
+
+            <input
+              type="date"
+              class="form-control"
+              formControlName="missedDate">
+
+          </div>
+
+
+          <div class="col-md-6">
+
+            <label class="form-label">
+              Missed Type
+              <span class="text-danger">*</span>
+            </label>
+
+            <select
+              class="form-select"
+              formControlName="missedType">
+
+              <option value="">
+                Select
+              </option>
+
+              <option value="Missed Clock In">
+                Missed Clock In
+              </option>
+
+              <option value="Missed Clock Out">
+                Missed Clock Out
+              </option>
+
+              <option value="Both In & Out">
+                Both In & Out
+              </option>
+
             </select>
+
           </div>
+
         </div>
+
+
+        <!-- CLOCK IN + CLOCK OUT -->
 
         <div class="row mb-3">
-          <div class="col-md-6">
-            <label class="form-label">Correct Clock In</label>
-            <input type="time" class="form-control" formControlName="correctClockIn">
-          </div>
 
           <div class="col-md-6">
-            <label class="form-label">Correct Clock Out</label>
-            <input type="time" class="form-control" formControlName="correctClockOut">
+
+            <label class="form-label">
+              Correct Clock In
+            </label>
+
+            <input
+              type="time"
+              class="form-control"
+              formControlName="correctClockIn">
+
           </div>
+
+
+          <div class="col-md-6">
+
+            <label class="form-label">
+              Correct Clock Out
+            </label>
+
+            <input
+              type="time"
+              class="form-control"
+              formControlName="correctClockOut">
+
+          </div>
+
         </div>
+
+
+        <!-- REASON -->
 
         <div class="mb-3">
-          <label class="form-label">Reason <span class="text-danger">*</span></label>
-          <textarea rows="3" class="form-control" formControlName="reason"></textarea>
+
+          <label class="form-label">
+            Reason
+            <span class="text-danger">*</span>
+          </label>
+
+          <textarea
+            rows="3"
+            class="form-control"
+            formControlName="reason">
+          </textarea>
+
         </div>
+
+
+        <!-- HR EMAIL -->
 
         <div class="mb-3">
-          <label class="form-label">HR Email (CC)</label>
-          <input type="email" class="form-control" formControlName="hrEmail">
+
+          <label class="form-label">
+            HR Email (CC)
+          </label>
+
+          <input
+            type="email"
+            class="form-control"
+            formControlName="hrEmail">
+
         </div>
 
-        <button   *ngIf="(!isEditMode && canCreateMyRequest) ||
-         (isEditMode && canEditMyRequest)" class="btn btn-primary">
-          {{ isEditMode ? 'Update' : 'Submit' }}
+
+        <!-- SUBMIT / UPDATE -->
+
+        <button
+          type="submit"
+          *ngIf="
+            (!isEditMode && canCreateMyRequest) ||
+            (isEditMode && canEditMyRequest)
+          "
+          class="btn btn-primary">
+
+          {{
+            isEditMode
+              ? 'Update'
+              : 'Submit'
+          }}
+
         </button>
+
       </form>
+
     </div>
 
+
+    <!-- ======================================================= -->
     <!-- MY REQUESTS LIST -->
+    <!-- ======================================================= -->
+
     <div class="card p-4 shadow-sm">
-      <h5 class="mb-3">My Missed Punch Requests</h5>
+
+      <!-- HEADER -->
+
+      <div
+        class="d-flex justify-content-between align-items-center mb-3">
+
+        <h5 class="mb-0">
+          My Missed Punch Requests
+        </h5>
+
+
+        <!-- SEARCH + PAGE SIZE -->
+
+        <div class="d-flex gap-2">
+
+          <input
+            type="text"
+            class="form-control"
+            style="width: 250px;"
+            placeholder="Search requests..."
+            [(ngModel)]="mySearchText"
+            (input)="filterMyRequests()">
+
+          <select
+            class="form-select"
+            style="width: 120px;"
+            [(ngModel)]="myPageSize"
+            (change)="changeMyPageSize()">
+
+            <option [value]="5">
+              5
+            </option>
+
+            <option [value]="10">
+              10
+            </option>
+
+            <option [value]="25">
+              25
+            </option>
+
+            <option [value]="50">
+              50
+            </option>
+
+          </select>
+
+        </div>
+
+      </div>
+
+
+      <!-- TABLE -->
 
       <table class="table table-bordered table-hover">
+
         <thead class="table-light">
+
           <tr>
-            <th>Date</th>
-            <th>Type</th>
-            <th>In</th>
-            <th>Out</th>
-            <th>Reason</th>
-            <th>Manager Remarks</th>
-            <th>Status</th>
-            <th>Action</th>
+
+            <th>
+              Date
+            </th>
+
+            <th>
+              Type
+            </th>
+
+            <th>
+              In
+            </th>
+
+            <th>
+              Out
+            </th>
+
+            <th>
+              Reason
+            </th>
+
+            <th>
+              Manager Remarks
+            </th>
+
+            <th>
+              Status
+            </th>
+
           </tr>
+
         </thead>
 
+
         <tbody>
-          <tr *ngFor="let item of myRequests">
-            <td>{{ item.missedDate | date }}</td>
-            <td>{{ item.missedType }}</td>
-            <td>{{ item.correctClockIn }}</td>
-            <td>{{ item.correctClockOut }}</td>
-            <td>{{ item.reason }}</td>
-            <td>{{ item.managerRemarks }}</td>
+
+          <tr
+            *ngFor="let item of paginatedMyRequests">
+
             <td>
-              <span class="badge" [ngClass]="{
-                  'bg-warning text-dark': item.status === 'Pending',
-                  'bg-success': item.status === 'Approved',
-                  'bg-danger': item.status === 'Rejected'
+              {{ item.missedDate | date }}
+            </td>
+
+            <td>
+              {{ item.missedType }}
+            </td>
+
+            <td>
+              {{ item.correctClockIn }}
+            </td>
+
+            <td>
+              {{ item.correctClockOut }}
+            </td>
+
+            <td>
+              {{ item.reason }}
+            </td>
+
+            <td>
+              {{ item.managerRemarks }}
+            </td>
+
+            <td>
+
+              <span
+                class="badge"
+                [ngClass]="{
+                  'bg-warning text-dark':
+                    item.status === 'Pending',
+
+                  'bg-success':
+                    item.status === 'Approved',
+
+                  'bg-danger':
+                    item.status === 'Rejected'
                 }">
+
                 {{ item.status }}
+
               </span>
+
             </td>
-            <td>
-              <i class="fa fa-edit text-primary" (click)="editMissedPunch(item)" *ngIf="item.status === 'Pending' && canEditMyRequest"></i>
-            </td>
+
           </tr>
 
-          <tr *ngIf="myRequests.length === 0">
-            <td colspan="7" class="text-center text-muted">No records found</td>
+
+          <!-- NO RECORDS -->
+
+          <tr
+            *ngIf="paginatedMyRequests.length === 0">
+
+            <td
+              colspan="7"
+              class="text-center text-muted">
+
+              No records found
+
+            </td>
+
           </tr>
+
         </tbody>
+
       </table>
+
+
+      <!-- MY REQUESTS PAGINATION -->
+
+      <div
+        class="d-flex justify-content-between align-items-center mt-3">
+
+        <div class="text-muted">
+
+          Showing
+
+          {{
+            filteredMyRequests.length === 0
+              ? 0
+              : ((myPage - 1) * myPageSize) + 1
+          }}
+
+          -
+
+          {{
+            Math.min(
+              myPage * myPageSize,
+              filteredMyRequests.length
+            )
+          }}
+
+          of
+
+          {{ filteredMyRequests.length }}
+
+          records
+
+        </div>
+
+
+        <div>
+
+          <!-- PREVIOUS -->
+
+          <button
+            class="btn btn-sm btn-outline-primary me-1"
+            [disabled]="myPage === 1"
+            (click)="myPageChange(myPage - 1)">
+
+            Previous
+
+          </button>
+
+
+          <!-- PAGE NUMBERS -->
+
+          <button
+            *ngFor="let page of myPages"
+            class="btn btn-sm me-1"
+            [ngClass]="
+              page === myPage
+                ? 'btn-primary'
+                : 'btn-outline-primary'
+            "
+            (click)="myPageChange(page)">
+
+            {{ page }}
+
+          </button>
+
+
+          <!-- NEXT -->
+
+          <button
+            class="btn btn-sm btn-outline-primary"
+            [disabled]="myPage === myTotalPages"
+            (click)="myPageChange(myPage + 1)">
+
+            Next
+
+          </button>
+
+        </div>
+
+      </div>
+
     </div>
+
   </div>
 
-  <!-- ================= MANAGER APPROVAL ================= -->
+
+
+  <!-- ========================================================= -->
+  <!-- MANAGER APPROVAL TAB -->
+  <!-- ========================================================= -->
+
   <div id="content2" class="tab-content">
+
+
+    <!-- ======================================================= -->
+    <!-- PENDING APPROVALS -->
+    <!-- ======================================================= -->
+
     <div class="card p-4 shadow-sm">
-      <h5 class="mb-3">Pending Approvals</h5>
+
+
+      <!-- HEADER -->
+
+      <div
+        class="d-flex justify-content-between align-items-center mb-3">
+
+        <h5 class="mb-0">
+          Pending Approvals
+        </h5>
+
+
+        <!-- SEARCH + PAGE SIZE -->
+
+        <div class="d-flex gap-2">
+
+          <input
+            type="text"
+            class="form-control"
+            style="width: 250px;"
+            placeholder="Search employee, type, reason..."
+            [(ngModel)]="pendingSearchText"
+            (input)="filterPendingRequests()">
+
+          <select
+            class="form-select"
+            style="width: 120px;"
+            [(ngModel)]="pendingPageSize"
+            (change)="changePendingPageSize()">
+
+            <option [value]="5">
+              5
+            </option>
+
+            <option [value]="10">
+              10
+            </option>
+
+            <option [value]="25">
+              25
+            </option>
+
+            <option [value]="50">
+              50
+            </option>
+
+          </select>
+
+        </div>
+
+      </div>
+
+
+      <!-- TABLE -->
 
       <table class="table table-bordered table-hover">
+
         <thead class="table-light">
+
           <tr>
+
             <th>
-              <input type="checkbox" (change)="selectAll($event)">
+
+              <input
+                type="checkbox"
+                (change)="selectAll($event)">
+
             </th>
-            <th>Employee</th>
-            <th>Date</th>
-            <th>Type</th>
-            <th>In</th>
-            <th>Out</th>
-            <th>Reason</th>
-            <th>Remarks</th>
-            <th>Action</th>
+
+            <th>
+              Employee
+            </th>
+
+            <th>
+              Date
+            </th>
+
+            <th>
+              Type
+            </th>
+
+            <th>
+              In
+            </th>
+
+            <th>
+              Out
+            </th>
+
+            <th>
+              Reason
+            </th>
+
+            <th>
+              Remarks
+            </th>
+
+            <th>
+              Action
+            </th>
+
           </tr>
+
         </thead>
 
+
         <tbody>
-          <tr *ngFor="let item of pendingRequests">
+
+          <tr
+            *ngFor="let item of paginatedPendingRequests">
+
+            <!-- CHECKBOX -->
+
             <td>
-              <input type="checkbox" [(ngModel)]="item.selected">
+
+              <input
+                type="checkbox"
+                [(ngModel)]="item.selected">
+
             </td>
-            <td>{{ item.employeeName }}</td>
-            <td>{{ item.missedDate | date }}</td>
-            <td>{{ item.missedType }}</td>
-            <td>{{ item.correctClockIn }}</td>
-            <td>{{ item.correctClockOut }}</td>
-            <td>{{ item.reason }}</td>
+
+
+            <!-- EMPLOYEE -->
+
             <td>
-              <input class="form-control form-control-sm" [(ngModel)]="item.managerRemarks">
+              {{ item.employeeName }}
             </td>
+
+
+            <!-- DATE -->
+
             <td>
-              <button class="btn btn-sm btn-outline-success me-2" (click)="approve(item)">
+              {{ item.missedDate | date }}
+            </td>
+
+
+            <!-- TYPE -->
+
+            <td>
+              {{ item.missedType }}
+            </td>
+
+
+            <!-- CLOCK IN -->
+
+            <td>
+              {{ item.correctClockIn }}
+            </td>
+
+
+            <!-- CLOCK OUT -->
+
+            <td>
+              {{ item.correctClockOut }}
+            </td>
+
+
+            <!-- REASON -->
+
+            <td>
+              {{ item.reason }}
+            </td>
+
+
+            <!-- REMARKS -->
+
+            <td>
+
+              <input
+                class="form-control form-control-sm"
+                [(ngModel)]="item.managerRemarks">
+
+            </td>
+
+
+            <!-- ACTION -->
+
+            <td>
+
+              <button
+                class="btn btn-sm btn-outline-success me-2"
+                (click)="approve(item)">
+
                 <i class="fa fa-check"></i>
+
               </button>
 
-              <button class="btn btn-sm btn-outline-danger" (click)="reject(item)">
+
+              <button
+                class="btn btn-sm btn-outline-danger"
+                (click)="reject(item)">
+
                 <i class="fa fa-times"></i>
+
               </button>
+
             </td>
+
           </tr>
 
-          <tr *ngIf="pendingRequests.length === 0">
-            <td colspan="9" class="text-center text-muted">
+
+          <!-- NO RECORDS -->
+
+          <tr
+            *ngIf="paginatedPendingRequests.length === 0">
+
+            <td
+              colspan="9"
+              class="text-center text-muted">
+
               No pending approvals
+
             </td>
+
           </tr>
+
         </tbody>
+
       </table>
+
+
+      <!-- PENDING PAGINATION -->
+
+      <div
+        class="d-flex justify-content-between align-items-center mt-3">
+
+
+        <!-- RECORD COUNT -->
+
+        <div class="text-muted">
+
+          Showing
+
+          {{
+            filteredPendingRequests.length === 0
+              ? 0
+              : ((pendingPage - 1) * pendingPageSize) + 1
+          }}
+
+          -
+
+          {{
+            Math.min(
+              pendingPage * pendingPageSize,
+              filteredPendingRequests.length
+            )
+          }}
+
+          of
+
+          {{ filteredPendingRequests.length }}
+
+          records
+
+        </div>
+
+
+        <!-- PAGINATION -->
+
+        <div>
+
+          <button
+            class="btn btn-sm btn-outline-primary me-1"
+            [disabled]="pendingPage === 1"
+            (click)="pendingPageChange(pendingPage - 1)">
+
+            Previous
+
+          </button>
+
+
+          <button
+            *ngFor="let page of pendingPages"
+            class="btn btn-sm me-1"
+            [ngClass]="
+              page === pendingPage
+                ? 'btn-primary'
+                : 'btn-outline-primary'
+            "
+            (click)="pendingPageChange(page)">
+
+            {{ page }}
+
+          </button>
+
+
+          <button
+            class="btn btn-sm btn-outline-primary"
+            [disabled]="pendingPage === pendingTotalPages"
+            (click)="pendingPageChange(pendingPage + 1)">
+
+            Next
+
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- BULK ACTIONS -->
 
       <div class="text-end mt-3">
-        <button class="btn btn-success btn-sm me-2" (click)="bulkApproveReject('Approved')">
+
+        <button
+          class="btn btn-success btn-sm me-2"
+          (click)="bulkApproveReject('Approved')">
+
           Approve Selected
+
         </button>
-        <button class="btn btn-danger btn-sm" (click)="bulkApproveReject('Rejected')">
+
+
+        <button
+          class="btn btn-danger btn-sm"
+          (click)="bulkApproveReject('Rejected')">
+
           Reject Selected
+
         </button>
+
       </div>
+
     </div>
+
+
+
+    <!-- ======================================================= -->
+    <!-- APPROVED REQUESTS -->
+    <!-- ======================================================= -->
+
     <div class="card p-4 shadow-sm mt-4">
-  <h5 class="mb-3 text-success">Approved Requests</h5>
 
-  <table class="table table-bordered table-hover">
-    <thead class="table-light">
-      <tr>
-        <th>Employee</th>
-        <th>Date</th>
-        <th>Type</th>
-        <th>In</th>
-        <th>Out</th>
-        <th>Reason</th>
-        <th>Remarks</th>
-        <th>Status</th>
-      </tr>
-    </thead>
 
-    <tbody>
-      <tr *ngFor="let item of approvedRequests">
-        <td>{{ item.employeeName }}</td>
-        <td>{{ item.missedDate | date }}</td>
-        <td>{{ item.missedType }}</td>
-        <td>{{ item.correctClockIn }}</td>
-        <td>{{ item.correctClockOut }}</td>
-        <td>{{ item.reason }}</td>
-        <td>{{ item.managerRemarks }}</td>
-        <td><span class="badge bg-success">Approved</span></td>
-      </tr>
+      <!-- HEADER -->
 
-      <tr *ngIf="approvedRequests.length === 0">
-        <td colspan="8" class="text-center text-muted">No approved records</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-<div class="card p-4 shadow-sm mt-4">
-  <h5 class="mb-3 text-danger">Rejected Requests</h5>
+      <div
+        class="d-flex justify-content-between align-items-center mb-3">
 
-  <table class="table table-bordered table-hover">
-    <thead class="table-light">
-      <tr>
-        <th>Employee</th>
-        <th>Date</th>
-        <th>Type</th>
-        <th>In</th>
-        <th>Out</th>
-        <th>Reason</th>
-        <th>Remarks</th>
-        <th>Status</th>
-      </tr>
-    </thead>
+        <h5 class="mb-0 text-success">
+          Approved Requests
+        </h5>
 
-    <tbody>
-      <tr *ngFor="let item of rejectedRequests">
-        <td>{{ item.employeeName }}</td>
-        <td>{{ item.missedDate | date }}</td>
-        <td>{{ item.missedType }}</td>
-        <td>{{ item.correctClockIn }}</td>
-        <td>{{ item.correctClockOut }}</td>
-        <td>{{ item.reason }}</td>
-        <td>{{ item.managerRemarks }}</td>
-        <td><span class="badge bg-danger">Rejected</span></td>
-      </tr>
 
-      <tr *ngIf="rejectedRequests.length === 0">
-        <td colspan="8" class="text-center text-muted">No rejected records</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+        <!-- SEARCH + PAGE SIZE -->
+
+        <div class="d-flex gap-2">
+
+          <input
+            type="text"
+            class="form-control"
+            style="width: 250px;"
+            placeholder="Search..."
+            [(ngModel)]="approvedSearchText"
+            (input)="filterApprovedRequests()">
+
+          <select
+            class="form-select"
+            style="width: 120px;"
+            [(ngModel)]="approvedPageSize"
+            (change)="changeApprovedPageSize()">
+
+            <option [value]="5">
+              5
+            </option>
+
+            <option [value]="10">
+              10
+            </option>
+
+            <option [value]="25">
+              25
+            </option>
+
+            <option [value]="50">
+              50
+            </option>
+
+          </select>
+
+        </div>
+
+      </div>
+
+
+      <!-- TABLE -->
+
+      <table class="table table-bordered table-hover">
+
+        <thead class="table-light">
+
+          <tr>
+
+            <th>
+              Employee
+            </th>
+
+            <th>
+              Date
+            </th>
+
+            <th>
+              Type
+            </th>
+
+            <th>
+              In
+            </th>
+
+            <th>
+              Out
+            </th>
+
+            <th>
+              Reason
+            </th>
+
+            <th>
+              Remarks
+            </th>
+
+            <th>
+              Status
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody>
+
+          <tr
+            *ngFor="let item of paginatedApprovedRequests">
+
+            <td>
+              {{ item.employeeName }}
+            </td>
+
+            <td>
+              {{ item.missedDate | date }}
+            </td>
+
+            <td>
+              {{ item.missedType }}
+            </td>
+
+            <td>
+              {{ item.correctClockIn }}
+            </td>
+
+            <td>
+              {{ item.correctClockOut }}
+            </td>
+
+            <td>
+              {{ item.reason }}
+            </td>
+
+            <td>
+              {{ item.managerRemarks }}
+            </td>
+
+            <td>
+
+              <span class="badge bg-success">
+                Approved
+              </span>
+
+            </td>
+
+          </tr>
+
+
+          <!-- NO RECORDS -->
+
+          <tr
+            *ngIf="paginatedApprovedRequests.length === 0">
+
+            <td
+              colspan="8"
+              class="text-center text-muted">
+
+              No approved records
+
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+
+      <!-- APPROVED PAGINATION -->
+
+      <div
+        class="d-flex justify-content-between align-items-center mt-3">
+
+
+        <div class="text-muted">
+
+          Showing
+
+          {{
+            filteredApprovedRequests.length === 0
+              ? 0
+              : ((approvedPage - 1) * approvedPageSize) + 1
+          }}
+
+          -
+
+          {{
+            Math.min(
+              approvedPage * approvedPageSize,
+              filteredApprovedRequests.length
+            )
+          }}
+
+          of
+
+          {{ filteredApprovedRequests.length }}
+
+          records
+
+        </div>
+
+
+        <div>
+
+          <button
+            class="btn btn-sm btn-outline-primary me-1"
+            [disabled]="approvedPage === 1"
+            (click)="approvedPageChange(approvedPage - 1)">
+
+            Previous
+
+          </button>
+
+
+          <button
+            *ngFor="let page of approvedPages"
+            class="btn btn-sm me-1"
+            [ngClass]="
+              page === approvedPage
+                ? 'btn-primary'
+                : 'btn-outline-primary'
+            "
+            (click)="approvedPageChange(page)">
+
+            {{ page }}
+
+          </button>
+
+
+          <button
+            class="btn btn-sm btn-outline-primary"
+            [disabled]="approvedPage === approvedTotalPages"
+            (click)="approvedPageChange(approvedPage + 1)">
+
+            Next
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+
+    <!-- ======================================================= -->
+    <!-- REJECTED REQUESTS -->
+    <!-- ======================================================= -->
+
+    <div class="card p-4 shadow-sm mt-4">
+
+
+      <!-- HEADER -->
+
+      <div
+        class="d-flex justify-content-between align-items-center mb-3">
+
+        <h5 class="mb-0 text-danger">
+          Rejected Requests
+        </h5>
+
+
+        <!-- SEARCH + PAGE SIZE -->
+
+        <div class="d-flex gap-2">
+
+          <input
+            type="text"
+            class="form-control"
+            style="width: 250px;"
+            placeholder="Search..."
+            [(ngModel)]="rejectedSearchText"
+            (input)="filterRejectedRequests()">
+
+          <select
+            class="form-select"
+            style="width: 120px;"
+            [(ngModel)]="rejectedPageSize"
+            (change)="changeRejectedPageSize()">
+
+            <option [value]="5">
+              5
+            </option>
+
+            <option [value]="10">
+              10
+            </option>
+
+            <option [value]="25">
+              25
+            </option>
+
+            <option [value]="50">
+              50
+            </option>
+
+          </select>
+
+        </div>
+
+      </div>
+
+
+      <!-- TABLE -->
+
+      <table class="table table-bordered table-hover">
+
+        <thead class="table-light">
+
+          <tr>
+
+            <th>
+              Employee
+            </th>
+
+            <th>
+              Date
+            </th>
+
+            <th>
+              Type
+            </th>
+
+            <th>
+              In
+            </th>
+
+            <th>
+              Out
+            </th>
+
+            <th>
+              Reason
+            </th>
+
+            <th>
+              Remarks
+            </th>
+
+            <th>
+              Status
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody>
+
+          <tr
+            *ngFor="let item of paginatedRejectedRequests">
+
+            <td>
+              {{ item.employeeName }}
+            </td>
+
+            <td>
+              {{ item.missedDate | date }}
+            </td>
+
+            <td>
+              {{ item.missedType }}
+            </td>
+
+            <td>
+              {{ item.correctClockIn }}
+            </td>
+
+            <td>
+              {{ item.correctClockOut }}
+            </td>
+
+            <td>
+              {{ item.reason }}
+            </td>
+
+            <td>
+              {{ item.managerRemarks }}
+            </td>
+
+            <td>
+
+              <span class="badge bg-danger">
+                Rejected
+              </span>
+
+            </td>
+
+          </tr>
+
+
+          <!-- NO RECORDS -->
+
+          <tr
+            *ngIf="paginatedRejectedRequests.length === 0">
+
+            <td
+              colspan="8"
+              class="text-center text-muted">
+
+              No rejected records
+
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+
+      <!-- REJECTED PAGINATION -->
+
+      <div
+        class="d-flex justify-content-between align-items-center mt-3">
+
+
+        <div class="text-muted">
+
+          Showing
+
+          {{
+            filteredRejectedRequests.length === 0
+              ? 0
+              : ((rejectedPage - 1) * rejectedPageSize) + 1
+          }}
+
+          -
+
+          {{
+            Math.min(
+              rejectedPage * rejectedPageSize,
+              filteredRejectedRequests.length
+            )
+          }}
+
+          of
+
+          {{ filteredRejectedRequests.length }}
+
+          records
+
+        </div>
+
+
+        <div>
+
+          <button
+            class="btn btn-sm btn-outline-primary me-1"
+            [disabled]="rejectedPage === 1"
+            (click)="rejectedPageChange(rejectedPage - 1)">
+
+            Previous
+
+          </button>
+
+
+          <button
+            *ngFor="let page of rejectedPages"
+            class="btn btn-sm me-1"
+            [ngClass]="
+              page === rejectedPage
+                ? 'btn-primary'
+                : 'btn-outline-primary'
+            "
+            (click)="rejectedPageChange(page)">
+
+            {{ page }}
+
+          </button>
+
+          <button
+            class="btn btn-sm btn-outline-primary"
+            [disabled]="rejectedPage === rejectedTotalPages"
+            (click)="rejectedPageChange(rejectedPage + 1)">
+
+            Next
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
   </div>
+
 </div>
 
 <app-footer></app-footer>
