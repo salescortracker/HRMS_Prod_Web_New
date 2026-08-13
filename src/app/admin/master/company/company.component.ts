@@ -126,16 +126,45 @@ closeUploadPopup() {
       }
     });
   }
- onLogoSelected(event: any) {
-  const file = event.target.files[0];
-  if (file) {
-    this.selectedLogoFile = file;
-    const reader = new FileReader();
-    reader.onload = () => {
-      this.logoPreview = reader.result;
-      this.company.CompanyLogo = reader.result as string;
-    };
-    reader.readAsDataURL(file);
+ onLogoSelected(event: any): void {
+
+  const file = event.target.files?.[0];
+
+  if (!file) {
+    return;
+  }
+
+  this.selectedLogoFile = file;
+
+  const reader = new FileReader();
+
+  reader.onload = () => {
+
+    this.logoPreview = reader.result;
+
+    this.company.CompanyLogo = reader.result as string;
+
+  };
+
+  reader.readAsDataURL(file);
+}
+removeLogo(): void {
+
+  this.logoPreview = null;
+
+  // Clear logo from model
+  this.company.CompanyLogo = '';
+
+  // Clear selected file
+  this.selectedLogoFile = undefined as any;
+
+  // Clear file input
+  const fileInput = document.querySelector(
+    'input[type="file"]'
+  ) as HTMLInputElement;
+
+  if (fileInput) {
+    fileInput.value = '';
   }
 }
 
@@ -198,11 +227,30 @@ closeUploadPopup() {
   // 🔹 Edit Company
   // ------------------------------------------------------------
   editCompany(c: Company): void {
-    this.company = { ...c };
-    console.log(this.company);
-    this.isEditMode = true;
+
+  // Copy company data
+  this.company = { ...c };
+
+  this.isEditMode = true;
+
+  // API response is companyLogo (lowercase)
+  // Angular interface uses CompanyLogo
+  const existingLogo = (c as any).companyLogo ?? c.CompanyLogo;
+
+  if (typeof existingLogo === 'string' && existingLogo.trim() !== '') {
+    this.company.CompanyLogo = existingLogo;
+    this.logoPreview = existingLogo;
+  } else {
+    this.company.CompanyLogo = '';
+    this.logoPreview = null;
   }
 
+  // No newly selected file
+  this.selectedLogoFile = undefined as any;
+
+  console.log('Editing Company:', this.company);
+  console.log('Existing Logo:', this.logoPreview);
+}
   // ------------------------------------------------------------
   // 🔹 Delete Company
   // ------------------------------------------------------------
@@ -265,9 +313,23 @@ closeUploadPopup() {
   // 🔹 Reset Form
   // ------------------------------------------------------------
   resetForm(): void {
-    this.company = this.getEmptyCompany();
-    this.isEditMode = false;
+
+  this.company = this.getEmptyCompany();
+
+  this.isEditMode = false;
+
+  this.logoPreview = null;
+
+  this.selectedLogoFile = undefined as any;
+
+  const fileInput = document.querySelector(
+    'input[type="file"]'
+  ) as HTMLInputElement;
+
+  if (fileInput) {
+    fileInput.value = '';
   }
+}
 
   // ------------------------------------------------------------
   // 🔹 Filter Companies (search + status)

@@ -266,40 +266,89 @@
     </div>
 
     <div class="card shadow-sm mb-4">
-      <div class="card-body">
-        <h5 class="mb-3 fw-semibold">Filters</h5>
+  <div class="card-body">
+    <h5 class="mb-3 fw-semibold">Filters</h5>
 
-        <div class="row g-3">
+    <div class="row g-3">
 
-          <!-- Employee Name -->
-          <!-- <div class="col-md-4">
-            <input type="text" class="form-control" placeholder="Search by Employee Name"
-              [(ngModel)]="filter.employeeName" (input)="applyFilters()" />
-          </div> -->
+      <!-- Search Employee -->
+      <!-- Search Employee -->
+<div class="col-md-4">
+  <label class="form-label fw-semibold">
+    Search Employee
+  </label>
 
-          <!-- Company -->
-          <div class="col-md-4">
-            <select class="form-select" [(ngModel)]="filter.companyId" (change)="onFilterCompanyChange()">
-              <option value="0">All Companies</option>
-              <option *ngFor="let c of companies" [ngValue]="c.companyId">
-                {{ c.companyName }}
-              </option>
-            </select>
-          </div>
+        <div class="input-group">
+          <span class="input-group-text bg-white">
+            <i class="fa-solid fa-magnifying-glass text-danger"></i>
+          </span>
 
-          <!-- Region -->
-          <div class="col-md-4">
-            <select class="form-select" [(ngModel)]="filter.regionId" (change)="applyFilters()">
-              <option value="0">All Regions</option>
-              <option *ngFor="let r of filterRegions" [ngValue]="r.regionID">
-                {{ r.regionName }}
-              </option>
-            </select>
-          </div>
-
+          <input
+            type="text"
+            class="form-control"
+            placeholder="Search by Employee Name"
+            [(ngModel)]="filter.employeeName"
+            (input)="applyFilters()"
+            [disabled]="!filter.companyId || !filter.regionId"
+          />
         </div>
+
+        <!-- Optional message -->
+        <small
+          class="text-muted"
+          *ngIf="!filter.companyId || !filter.regionId">
+          Please select Company and Region first
+        </small>
       </div>
+
+      <!-- Company -->
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">
+          Company
+        </label>
+
+        <select
+          class="form-select"
+          [(ngModel)]="filter.companyId"
+          (change)="onFilterCompanyChange()">
+
+          <option [ngValue]="0">All Companies</option>
+
+          <option
+            *ngFor="let c of companies"
+            [ngValue]="c.companyId">
+            {{ c.companyName }}
+          </option>
+
+        </select>
+      </div>
+
+      <!-- Region -->
+<div class="col-md-4">
+  <label class="form-label fw-semibold">
+    Region
+  </label>
+
+  <select
+    class="form-select"
+    [(ngModel)]="filter.regionId"
+    (change)="onFilterRegionChange()"
+    [disabled]="!filter.companyId">
+
+    <option [ngValue]="0">Select Region</option>
+
+    <option
+      *ngFor="let r of filterRegions"
+      [ngValue]="r.regionID">
+      {{ r.regionName }}
+    </option>
+
+  </select>
+</div>
+
     </div>
+  </div>
+</div>
 
     <!-- User List -->
     <div class="card shadow-sm">

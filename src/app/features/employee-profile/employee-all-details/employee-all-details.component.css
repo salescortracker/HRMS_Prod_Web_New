@@ -1,155 +1,196 @@
-/* ===========================
-   PAGE HEADER
-=========================== */
+/* =========================================================
+   PROJECT COLOR
+========================================================= */
 
-.dashboard-header {
-  background: #ffffff;
-  margin: 20px;
-  padding: 18px 25px;
-  border-radius: 12px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
-
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+:root {
+  --project-red: #922b21;
+  --project-red-dark: #7b241c;
 }
 
-.dashboard-title {
-  margin: 0;
+
+/* =========================================================
+   GLOBAL EMPLOYEE SEARCH
+========================================================= */
+
+.employee-search-card {
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+}
+
+.employee-search-label {
   color: #922b21;
-  font-size: 26px;
-  font-weight: 700;
 }
 
-.breadcrumb {
-  font-size: 14px;
+.employee-search {
+  border: 1px solid #922b21;
+  border-radius: 6px;
+  height: 42px;
+}
+
+.employee-search:focus {
+  border-color: #922b21;
+  box-shadow: 0 0 0 0.15rem rgba(146, 43, 33, 0.15);
+}
+
+.search-info {
   color: #666;
-  margin: 0;
+  font-size: 14px;
 }
 
-.breadcrumb a {
-  text-decoration: none;
-  color: #922b21;
-  font-weight: 500;
-}
 
-.breadcrumb a:hover {
-  text-decoration: none;
-}
+/* =========================================================
+   ALL CARD HEADERS
+========================================================= */
 
-.breadcrumb span {
-  color: #333;
-  font-weight: 600;
-}
-
-/* ===========================
-   TAB CONTAINER
-=========================== */
-
-.tab-container {
-  margin: 20px;
-  background: #ffffff;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-}
-
-/* ===========================
-   TAB HEADER
-=========================== */
-
-.tab-header {
-  display: flex;
-  background: #110605;
-}
-
-/* ===========================
-   TAB BUTTONS
-=========================== */
-
-.tab-label {
-  flex: 1;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  padding: 15px 20px;
-
+.project-header {
+  background: #922b21 !important;
+  color: #ffffff !important;
+  padding: 12px 18px;
   border: none;
-  outline: none;
+}
 
-  background: transparent;
+.project-header h5 {
   color: #ffffff;
-
-  font-size: 15px;
   font-weight: 600;
-
-  cursor: pointer;
-
-  transition: all 0.3s ease;
 }
 
-/* Divider Between Tabs */
 
-.tab-label:not(:last-child) {
-  border-right: 1px solid rgba(255, 255, 255, 0.2);
+/* =========================================================
+   ALL TABLE HEADERS
+========================================================= */
+
+.project-table-header {
+  background: #922b21 !important;
+  color: #ffffff !important;
 }
 
-/* Hover */
-
-.tab-label:hover {
-  background: rgba(255, 255, 255, 0.12);
+.project-table-header th {
+  background: #922b21 !important;
+  color: #ffffff !important;
+  border-color: #7b241c !important;
+  font-weight: 600;
+  white-space: nowrap;
+  vertical-align: middle;
 }
 
-/* Active Tab */
 
-.tab-label.active,
-.tab-label.router-link-active {
-  background: #ffffff !important;
+/* =========================================================
+   TABLE
+========================================================= */
+
+.table {
+  margin-bottom: 0;
+}
+
+.table tbody td {
+  vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(146, 43, 33, 0.06);
+}
+
+
+/* =========================================================
+   EMPLOYEE PHOTO
+========================================================= */
+
+.employee-photo {
+  object-fit: cover;
+  border: 2px solid #922b21;
+}
+
+.no-photo {
+  color: #999;
+  font-size: 13px;
+}
+
+
+/* =========================================================
+   NO RECORDS
+========================================================= */
+
+.no-records {
+  padding: 20px !important;
+  color: #777;
+}
+
+
+/* =========================================================
+   PAGINATION
+========================================================= */
+
+.btn-project {
+  background: #922b21 !important;
+  border-color: #922b21 !important;
+  color: #ffffff !important;
+}
+
+.btn-project:hover {
+  background: #7b241c !important;
+  border-color: #7b241c !important;
+}
+
+.btn-outline-project {
   color: #922b21 !important;
-  font-weight: 700;
-  box-shadow: none;
+  border-color: #922b21 !important;
 }
 
-/* Remove Any Line Above Active Tab */
-
-.tab-label.active::before,
-.tab-label.active::after,
-.tab-label.router-link-active::before,
-.tab-label.router-link-active::after {
-  display: none !important;
-  content: none !important;
+.btn-outline-project:hover {
+  background: #922b21 !important;
+  border-color: #922b21 !important;
+  color: #ffffff !important;
 }
 
-/* ===========================
-   CONTENT AREA
-=========================== */
+.btn-outline-project:disabled {
+  color: #999 !important;
+  border-color: #ccc !important;
+  background: #ffffff !important;
+}
 
-.tab-content {
+
+/* =========================================================
+   CARD
+========================================================= */
+
+.card {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.card-body {
   background: #ffffff;
-  padding: 25px;
-  min-height: 500px;
 }
 
-/* ===========================
+
+/* =========================================================
    RESPONSIVE
-=========================== */
+========================================================= */
 
 @media (max-width: 768px) {
 
-  .dashboard-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+  .employee-search-card .col-md-8,
+  .employee-search-card .col-md-4 {
+    width: 100%;
   }
 
-  .tab-header {
-    flex-direction: column;
+  .search-info {
+    display: block;
+    margin-top: 10px;
+    text-align: left !important;
   }
 
-  .tab-label {
-    border-right: none !important;
-    border-bottom: 1px solid rgba(255,255,255,0.15);
-  }
+}
+.main-table-header {
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+
+.main-table-header th {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-color: #333333 !important;
+  font-weight: 600;
+  white-space: nowrap;
+  vertical-align: middle;
 }

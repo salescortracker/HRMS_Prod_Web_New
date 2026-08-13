@@ -111,26 +111,47 @@
             </div>
 
               <!-- Company Logo -->
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Company Logo</label>
+<div class="col-md-6">
+  <label class="form-label fw-semibold">Company Logo</label>
 
-              <input
-                type="file"
-                class="form-control"
-                (change)="onLogoSelected($event)"
-                accept="image/*"
-              />
+  <input
+    type="file"
+    class="form-control"
+    (change)="onLogoSelected($event)"
+    accept="image/*"
+  />
 
-              <!-- Preview -->
-              <div *ngIf="logoPreview" class="mt-2">
-                <img 
-                  [src]="logoPreview" 
-                  width="120" 
-                  height="60" 
-                  style="object-fit: contain; border:1px solid #ddd; padding:4px; border-radius:6px;"
-                />
-              </div>
-            </div>
+  <!-- Existing / Selected Logo -->
+  <div *ngIf="logoPreview" class="mt-2">
+
+    <div class="d-flex align-items-center gap-3">
+
+      <img
+        [src]="logoPreview"
+        width="120"
+        height="60"
+        style="
+          object-fit: contain;
+          border: 1px solid #ddd;
+          padding: 4px;
+          border-radius: 6px;
+          background: white;
+        "
+      />
+
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-danger"
+        (click)="removeLogo()"
+      >
+        <i class="fa-solid fa-trash me-1"></i>
+        Remove
+      </button>
+
+    </div>
+
+  </div>
+</div>
 
             <!-- Industry Type -->
             <div class="col-md-6">
