@@ -89,7 +89,7 @@ private timer:any;
 
     // ⏱️ Check every minute (important)
     setInterval(() => {
-      this.checkClockButtonVisibility();
+      this.loadAttendance();
     }, 60000);
 
 
@@ -908,38 +908,47 @@ private getShiftDateTimes() {
   const [endHour, endMinute] =
     this.shiftEndTime.split(':').map(Number);
 
-  let shiftStart = new Date(now);
-  shiftStart.setHours(startHour, startMinute, 0, 0);
+  const shiftStart = new Date(now);
+  shiftStart.setHours(
+    startHour,
+    startMinute,
+    0,
+    0
+  );
 
-  let shiftEnd = new Date(now);
-  shiftEnd.setHours(endHour, endMinute, 0, 0);
+  const shiftEnd = new Date(now);
+  shiftEnd.setHours(
+    endHour,
+    endMinute,
+    0,
+    0
+  );
 
-  // Night Shift (Example: 18:30 -> 03:30)
+  // Example:
+  // 18:30 -> 03:30
   const isNightShift =
-    endHour < startHour ||
-    (endHour === startHour && endMinute < startMinute);
+    shiftEnd <= shiftStart;
 
   if (isNightShift) {
 
-    // If after midnight but before shift end
-    if (now.getHours() < endHour ||
-       (now.getHours() === endHour && now.getMinutes() <= endMinute)) {
+    if (now < shiftEnd) {
 
-      shiftStart.setDate(shiftStart.getDate() - 1);
+      shiftStart.setDate(
+        shiftStart.getDate() - 1
+      );
 
     } else {
 
-      shiftEnd.setDate(shiftEnd.getDate() + 1);
-
+      shiftEnd.setDate(
+        shiftEnd.getDate() + 1
+      );
     }
-
   }
 
   return {
     shiftStart,
     shiftEnd
   };
-
 }
 
 // // ✅ RETURNS HH:mm:ss FORMAT
@@ -1242,110 +1251,152 @@ formatWorkedHours(): string {
 }
  syncClockStateWithAPI() {
 
+  this.stopTimer();
+
+  if (!this.attendanceRecords ||
+      this.attendanceRecords.length === 0) {
+
+    this.isClockedIn = false;
+    this.clockStatus = 'Not Clocked In';
+    this.clockInDisplay = '--:--';
+    this.totalHoursDisplay = '00:00:00';
+    this.accumulatedMs = 0;
+
+    this.checkClockButtonVisibility();
+
+    return;
+  }
+
+  const records = [...this.attendanceRecords]
+    .sort((a: any, b: any) => {
+
+      const d1 = new Date(
+        `${a.attendanceDate.split('T')[0]}T${a.actionTime}`
+      );
+
+      const d2 = new Date(
+        `${b.attendanceDate.split('T')[0]}T${b.actionTime}`
+      );
+
+      return d1.getTime() - d2.getTime();
+    });
+
+  let totalMs = 0;
+
+  let lastClockIn: Date | null = null;
+
+  this.firstClockIn = null;
+  this.lastClockOut = null;
+
+  for (const r of records) {
+
+    const datePart =
+      r.attendanceDate.split('T')[0];
+
+    const recordTime =
+      new Date(`${datePart}T${r.actionTime}`);
+
+    // ==========================
+    // CLOCK IN
+    // ==========================
+
+    if (r.actionType === 'ClockIn') {
+
+      if (!this.firstClockIn) {
+        this.firstClockIn = r.actionTime;
+      }
+
+      lastClockIn = recordTime;
+    }
+
+    // ==========================
+    // CLOCK OUT
+    // ==========================
+
+    if (r.actionType === 'ClockOut') {
+
+      this.lastClockOut = r.actionTime;
+
+      if (lastClockIn) {
+
+        const duration =
+          recordTime.getTime() -
+          lastClockIn.getTime();
+
+        if (duration > 0) {
+          totalMs += duration;
+        }
+
+        lastClockIn = null;
+      }
+    }
+  }
+
+  this.accumulatedMs = totalMs;
+
+  // =====================================================
+  // 🔥 OPEN CLOCK-IN EXISTS
+  // =====================================================
+
+  if (lastClockIn) {
+
+    this.isClockedIn = true;
+
+    this.clockStatus = 'Clocked In';
+
+    this.clockInTime = lastClockIn;
+
+    this.clockInDisplay =
+      this.firstClockIn || '--:--';
+
+    this.startTimer(
+      totalMs,
+      lastClockIn
+    );
+
+  }
+
+  // =====================================================
+  // 🔴 CLOCK-IN HAS CLOCK-OUT
+  // =====================================================
+
+  else {
+
+    this.isClockedIn = false;
+
+    this.clockStatus = 'Clocked Out';
+
+    this.clockInDisplay =
+      this.firstClockIn || '--:--';
+
     this.stopTimer();
+  }
 
-    if (!this.attendanceRecords || this.attendanceRecords.length == 0) {
+  // =====================================================
+  // TOTAL WORKED TIME
+  // =====================================================
 
-        this.isClockedIn = false;
-        this.clockStatus = 'Not Clocked In';
-        this.clockInDisplay = '--:--';
-        this.totalHoursDisplay = '00:00:00';
-        this.accumulatedMs = 0;
-        return;
-    }
+  const finalSeconds =
+    Math.floor(totalMs / 1000);
 
-    const records = [...this.attendanceRecords]
-        .sort((a: any, b: any) => {
+  const hrs =
+    Math.floor(finalSeconds / 3600);
 
-            const d1 = new Date(a.createdDate || a.attendanceDate + ' ' + a.actionTime);
+  const mins =
+    Math.floor(
+      (finalSeconds % 3600) / 60
+    );
 
-            const d2 = new Date(b.createdDate || b.attendanceDate + ' ' + b.actionTime);
+  const secs =
+    finalSeconds % 60;
 
-            return d1.getTime() - d2.getTime();
+  this.totalHoursDisplay =
+    hrs.toString().padStart(2, '0') + ':' +
+    mins.toString().padStart(2, '0') + ':' +
+    secs.toString().padStart(2, '0');
 
-        });
-
-    let totalMs = 0;
-
-    let lastClockIn: Date | null = null;
-
-    this.firstClockIn = null;
-    this.lastClockOut = null;
-
-    for (const r of records) {
-
-        const recordTime = new Date(
-            `${r.attendanceDate.split('T')[0]}T${r.actionTime}`
-        );
-
-        if (r.actionType === 'ClockIn') {
-
-            if (!this.firstClockIn) {
-
-                this.firstClockIn = r.actionTime;
-
-            }
-
-            lastClockIn = recordTime;
-
-        }
-
-        if (r.actionType === 'ClockOut') {
-
-            this.lastClockOut = r.actionTime;
-
-            if (lastClockIn) {
-
-                totalMs += recordTime.getTime() - lastClockIn.getTime();
-
-                lastClockIn = null;
-
-            }
-
-        }
-
-    }
-
-    this.accumulatedMs = totalMs;
-
-    if (lastClockIn) {
-
-        this.isClockedIn = true;
-
-        this.clockStatus = 'Clocked In';
-
-        this.clockInTime = lastClockIn;
-
-        this.clockInDisplay = this.firstClockIn!;
-
-        this.startTimer(totalMs, lastClockIn);
-
-    }
-    else {
-
-        this.isClockedIn = false;
-
-        this.clockStatus = 'Clocked Out';
-
-        this.clockInDisplay = this.firstClockIn || '--:--';
-
-        this.stopTimer();
-
-    }
-
-    const finalSeconds = Math.floor(totalMs / 1000);
-
-    const hrs = Math.floor(finalSeconds / 3600);
-
-    const mins = Math.floor((finalSeconds % 3600) / 60);
-
-    const secs = finalSeconds % 60;
-
-    this.totalHoursDisplay =
-        hrs.toString().padStart(2, '0') + ':' +
-        mins.toString().padStart(2, '0') + ':' +
-        secs.toString().padStart(2, '0');
-
+  // 🔥 Recalculate button after API state
+  this.checkClockButtonVisibility();
 }
 async clockIn() {
 
@@ -2356,36 +2407,37 @@ console.log('Grace Time:', this.graceTime);
 
   return '';
 }
+checkClockButtonVisibility() {
 
-  checkClockButtonVisibility() {
-    if (!this.shiftStartTime) {
-      this.showClockButton = false;
-      return;
-    }
-
-    const now = new Date();
-
-    const [hours, minutes] = this.shiftStartTime.split(':').map(Number);
-
-    const shiftStart = new Date();
-    shiftStart.setHours(hours, minutes, 0, 0);
-
-    // ⏪ 30 mins before
-    const allowedTime = new Date(shiftStart.getTime() - (30 * 60 * 1000));
-
-    // ❌ After shift start + grace (optional)
-    const shiftEndLimit = new Date(shiftStart.getTime() + (2 * 60 * 60 * 1000)); // 2 hrs buffer
-
-    this.allowedClockTimeText = this.formatDisplayTime(allowedTime);
-
-    // ✅ FINAL CONDITION
-    this.showClockButton = now >= allowedTime && now <= shiftEndLimit;
-
-    console.log('Now:', now);
-    console.log('Allowed:', allowedTime);
-    console.log('Shift Start:', shiftStart);
-    console.log('Show Button:', this.showClockButton);
+  if (!this.shiftStartTime || !this.shiftEndTime) {
+    this.showClockButton = false;
+    return;
   }
+
+  if (this.isClockedIn) {
+    this.showClockButton = true;
+    return;
+  }
+
+  const now = new Date();
+
+  const { shiftStart, shiftEnd } =
+    this.getShiftDateTimes();
+
+  // Allow Clock In 30 minutes before shift
+  const allowedTime = new Date(
+    shiftStart.getTime() - (30 * 60 * 1000)
+  );
+
+  this.allowedClockTimeText =
+    this.formatDisplayTime(allowedTime);
+
+  // Employee is NOT clocked in,
+  // so now check whether Clock In is allowed.
+  this.showClockButton =
+    now >= allowedTime &&
+    now <= shiftEnd;
+}
 
   formatDisplayTime(date: Date): string {
     let hours = date.getHours();
