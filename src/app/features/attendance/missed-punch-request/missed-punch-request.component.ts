@@ -24,6 +24,7 @@ rejectedRequests: any[] = [];
   userId =Number(sessionStorage.getItem('UserId')) || 1;    // logged-in user
   managerId =Number(sessionStorage.getItem("UserId")) || 0; // logged-in manager
 selectedTab: string = '';
+maxDate: string = '';
 // ============================================================
 // SEARCH
 // ============================================================
@@ -90,11 +91,21 @@ Math = Math;
   ) {}
 
   ngOnInit(): void {
+    this.setMaxDate();
     this.initializeForm();
     this.loadMyRequests();
     this.loadApprovalRequests();
     this.loadPermissions();
   }
+  setMaxDate(): void {
+  const today = new Date();
+
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+
+  this.maxDate = `${year}-${month}-${day}`;
+}
 
   /* ================= FORM ================= */
 

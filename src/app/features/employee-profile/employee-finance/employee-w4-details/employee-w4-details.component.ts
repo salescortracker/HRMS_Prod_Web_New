@@ -73,32 +73,158 @@ loadPermissions() {
   }
 }
   initForm() {
-    const eid = Number(localStorage.getItem('employeeId')) || 1;
-    this.w4Form = this.fb.group({
-      w4Id: [0],
-      employeeId: [eid, Validators.required],
-      firstName: ['', [Validators.required, Validators.maxLength(50), Validators.pattern(/^[A-Za-z\s]+$/)]],
-      middleInitial: ['', [Validators.maxLength(1), Validators.pattern(/^[A-Z]?$/)]],
-      lastName: ['', [Validators.required, Validators.maxLength(50), Validators.pattern(/^[A-Za-z\s]+$/)]],
-      ssn: ['', [Validators.required, Validators.pattern(/^\d{3}-\d{2}-\d{4}$/)]],
-      address: ['', [Validators.required, Validators.maxLength(250)]],
-      city: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[A-Za-z\s]+$/)]],
-      state: ['', Validators.required],
-      zipCode: ['', [Validators.required, Validators.pattern(/^\d{5,6}(-\d{4})?$/)]],
-      filingStatus: ['', Validators.required],
-      multipleJobsOrSpouse: [false],
-      totalDependents: [0, [Validators.required, Validators.min(0), Validators.max(99)]],
-      dependentAmounts: [0, [Validators.max(9999999999)]],
-      otherIncome: [0, [Validators.max(9999999999)]],
-      deductions: [0, [Validators.max(9999999999)]],
-      extraWithholding: [0, [Validators.max(9999999999)]],
-      employeeSignature: ['', [Validators.required, Validators.maxLength(100)]],
-      formDate: ['', [Validators.required, this.noFutureDateValidator]],
-      regionId: [this.regionId],
-      userId: [this.userId],
-      companyId: [this.companyId]
-    });
-  }
+  const eid = Number(localStorage.getItem('employeeId')) || 1;
+
+  this.w4Form = this.fb.group({
+    w4Id: [0],
+
+    employeeId: [
+      eid,
+      Validators.required
+    ],
+
+    firstName: [
+      '',
+      [
+        Validators.required,
+        Validators.maxLength(50),
+        Validators.pattern(/^[A-Za-z\s]+$/)
+      ]
+    ],
+
+    middleInitial: [
+      '',
+      [
+        Validators.required,
+        Validators.maxLength(1),
+        Validators.pattern(/^[A-Z]$/)
+      ]
+    ],
+
+    lastName: [
+      '',
+      [
+        Validators.required,
+        Validators.maxLength(50),
+        Validators.pattern(/^[A-Za-z\s]+$/)
+      ]
+    ],
+
+    ssn: [
+      '',
+      [
+        Validators.required,
+        Validators.pattern(/^\d{3}-\d{2}-\d{4}$/)
+      ]
+    ],
+
+    address: [
+      '',
+      [
+        Validators.required,
+        Validators.maxLength(250)
+      ]
+    ],
+
+    city: [
+      '',
+      [
+        Validators.required,
+        Validators.maxLength(100),
+        Validators.pattern(/^[A-Za-z\s]+$/)
+      ]
+    ],
+
+    state: [
+      '',
+      Validators.required
+    ],
+
+    zipCode: [
+      '',
+      [
+        Validators.required,
+        Validators.pattern(/^\d{5,6}(-\d{4})?$/)
+      ]
+    ],
+
+    filingStatus: [
+      '',
+      Validators.required
+    ],
+
+    // Mandatory checkbox
+    multipleJobsOrSpouse: [
+      false,
+      Validators.requiredTrue
+    ],
+
+    totalDependents: [
+      0,
+      [
+        Validators.required,
+        Validators.min(0),
+        Validators.max(99)
+      ]
+    ],
+
+    dependentAmounts: [
+      null,
+      [
+        Validators.required,
+        Validators.min(0),
+        Validators.max(9999999999)
+      ]
+    ],
+
+    otherIncome: [
+      null,
+      [
+        Validators.required,
+        Validators.min(0),
+        Validators.max(9999999999)
+      ]
+    ],
+
+    deductions: [
+      null,
+      [
+        Validators.required,
+        Validators.min(0),
+        Validators.max(9999999999)
+      ]
+    ],
+
+    extraWithholding: [
+      null,
+      [
+        Validators.required,
+        Validators.min(0),
+        Validators.max(9999999999)
+      ]
+    ],
+
+    employeeSignature: [
+      '',
+      [
+        Validators.required,
+        Validators.maxLength(100)
+      ]
+    ],
+
+    formDate: [
+      '',
+      [
+        Validators.required,
+        this.noFutureDateValidator
+      ]
+    ],
+
+    regionId: [this.regionId],
+    userId: [this.userId],
+    companyId: [this.companyId]
+  });
+}
 
   // ------------------- Field Helpers -------------------
   trimField(controlName: string) {
@@ -127,11 +253,15 @@ loadPermissions() {
 
   // ------------------- Save / Update W4 -------------------
   saveW4() {
-     const w4Id = Number(
+
+  const w4Id = Number(
     this.w4Form.get('w4Id')?.value
   );
 
-  // Edit Permission
+  // ================================
+  // PERMISSION CHECK
+  // ================================
+
   if (w4Id > 0 && !this.canEdit) {
 
     Swal.fire(
@@ -143,7 +273,6 @@ loadPermissions() {
     return;
   }
 
-  // Create Permission
   if (w4Id === 0 && !this.canAdd) {
 
     Swal.fire(
@@ -154,39 +283,132 @@ loadPermissions() {
 
     return;
   }
-    Object.keys(this.w4Form.controls).forEach(key => {
-      const control = this.w4Form.get(key);
-      if (control && typeof control.value === 'string') control.setValue(control.value.trim(), { emitEvent: false });
+
+  // ================================
+  // TRIM STRING VALUES
+  // ================================
+
+  Object.keys(this.w4Form.controls).forEach(key => {
+
+    const control = this.w4Form.get(key);
+
+    if (
+      control &&
+      typeof control.value === 'string'
+    ) {
+      control.setValue(
+        control.value.trim(),
+        {
+          emitEvent: false
+        }
+      );
+    }
+
+  });
+
+  // ================================
+  // VALIDATION
+  // ================================
+
+  if (this.w4Form.invalid) {
+
+    this.w4Form.markAllAsTouched();
+
+    Swal.fire({
+      icon: 'warning',
+      title: 'Validation Required',
+      text: 'Please fill all mandatory fields correctly.',
+      confirmButtonText: 'OK'
     });
 
-    // if (this.w4Form.invalid) {
-    //   this.w4Form.markAllAsTouched();
-    //   Swal.fire('Invalid', 'Please fill all required fields correctly', 'warning');
-    //   return;
-    // }
-
-    const w4: W4Details = { ...this.w4Form.value, userId: this.userId, companyId: this.companyId, regionId: this.regionId };
-
-    if (this.isEditMode && w4.w4Id && w4.w4Id > 0) {
-      this.adminService.updateW4(w4).subscribe({
-        next: () => {
-          this.loadW4List();
-          this.resetForm();
-          Swal.fire('Updated', 'W4 details updated successfully', 'success');
-        },
-        error: () => Swal.fire('Error', 'Failed to update W4 details', 'error')
-      });
-    } else {
-      this.adminService.createW4(w4).subscribe({
-        next: () => {
-          this.loadW4List();
-          this.resetForm();
-          Swal.fire('Saved', 'W4 details saved successfully', 'success');
-        },
-        error: () => Swal.fire('Error', 'Failed to save W4 details', 'error')
-      });
-    }
+    return;
   }
+
+  // ================================
+  // SAVE DATA
+  // ================================
+
+  const w4: W4Details = {
+    ...this.w4Form.value,
+    userId: this.userId,
+    companyId: this.companyId,
+    regionId: this.regionId
+  };
+
+  // ================================
+  // UPDATE
+  // ================================
+
+  if (
+    this.isEditMode &&
+    w4.w4Id &&
+    w4.w4Id > 0
+  ) {
+
+    this.adminService.updateW4(w4).subscribe({
+
+      next: () => {
+
+        this.loadW4List();
+        this.resetForm();
+
+        Swal.fire(
+          'Updated',
+          'W4 details updated successfully',
+          'success'
+        );
+
+      },
+
+      error: () => {
+
+        Swal.fire(
+          'Error',
+          'Failed to update W4 details',
+          'error'
+        );
+
+      }
+
+    });
+
+  }
+
+  // ================================
+  // CREATE
+  // ================================
+
+  else {
+
+    this.adminService.createW4(w4).subscribe({
+
+      next: () => {
+
+        this.loadW4List();
+        this.resetForm();
+
+        Swal.fire(
+          'Saved',
+          'W4 details saved successfully',
+          'success'
+        );
+
+      },
+
+      error: () => {
+
+        Swal.fire(
+          'Error',
+          'Failed to save W4 details',
+          'error'
+        );
+
+      }
+
+    });
+
+  }
+}
 
   // ------------------- Edit / Delete -------------------
   editW4(w4: W4Details) {

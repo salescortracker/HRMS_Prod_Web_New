@@ -17,25 +17,12 @@
         <div class="profile-header">
           <div class="profile-photo">
             <ng-container *ngIf="profileImage; else defaultProfile">
-              <img [src]="profileImage" class="profile-image" />
+              <img [src]="profileImage" class="profile-image" alt="Profile Picture" />
             </ng-container>
 
             <ng-template #defaultProfile>
               <i class="fa-solid fa-user-circle fa-4x"></i>
             </ng-template>
-
-            <div class="upload-overlay" (click)="openImageOptions()">
-              <i class="fa-solid fa-camera fa-4x"></i>
-            </div>
-
-            <!-- CAMERA -->
-            <input type="file" accept="image/*" capture="environment" #cameraInput (change)="onPhotoSelected($event)"
-              style="position:absolute; left:-9999px; top:-9999px;" />
-
-            <!-- GALLERY -->
-            <input type="file" accept="image/*" #galleryInput (change)="onPhotoSelected($event)"
-              style="position:absolute; left:-9999px; top:-9999px;" />
-
           </div>
 
         

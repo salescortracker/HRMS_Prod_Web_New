@@ -122,31 +122,71 @@ rejectedRequests: any[] = [];
   }
 
   bulkAction(status: 'Approved' | 'Rejected'): void {
-    debugger;
-    const ids = this.getSelectedIds();
 
-    if (ids.length === 0) {
-      alert('Please select at least one request');
-      return;
-    }
+  const ids = this.getSelectedIds();
 
-    const payload: BulkApproveRejectWorkFromHome = {
-      wfhRequestIDs: ids,
-      status,
-      managerRemarks: this.managerRemarks,
-      managerID: this.userId,
-      companyID: this.companyId
-    };
-
-    this.attendanceService.bulkApproveReject(payload).subscribe({
-      next: () => {
-        Swal.fire("Approved", `${status} successfully`, 'success');
-        this.managerRemarks = '';
-        this.loadApprovalRequests();
-      },
-      error: err => console.error(err)
-    });
+  if (ids.length === 0) {
+    Swal.fire(
+      'Warning',
+      'Please select at least one request',
+      'warning'
+    );
+    return;
   }
+
+  const payload: BulkApproveRejectWorkFromHome = {
+    wfhRequestIDs: ids,
+    status: status,
+    managerRemarks: this.managerRemarks,
+    managerID: this.userId,
+    companyID: this.companyId
+  };
+
+  this.attendanceService.bulkApproveReject(payload).subscribe({
+
+    next: () => {
+
+      // Dynamic popup based on status
+      if (status === 'Approved') {
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Approved',
+          text: 'Request approved successfully',
+          confirmButtonText: 'OK'
+        });
+
+      } else {
+
+        Swal.fire({
+          icon: 'error',
+          title: 'Rejected',
+          text: 'Request rejected successfully',
+          confirmButtonText: 'OK'
+        });
+
+      }
+
+      this.managerRemarks = '';
+      this.selectAll = false;
+
+      this.loadApprovalRequests();
+    },
+
+    error: err => {
+
+      console.error('WFH Approval/Rejection Error:', err);
+
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: err.error?.message || 'Something went wrong',
+        confirmButtonText: 'OK'
+      });
+
+    }
+  });
+}
   canViewPersonal = false;
   canViewManager = false;
   canCreateMyRequest = false;

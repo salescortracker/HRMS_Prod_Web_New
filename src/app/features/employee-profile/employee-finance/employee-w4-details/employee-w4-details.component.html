@@ -4,13 +4,13 @@
   <!-- Employee Info -->
   <div class="row mb-3">
     <div class="col-md-4">
-      <label class="form-label">First Name</label>
+      <label class="form-label">First Name<span class="text-danger">*</span></label>
       <input type="text" class="form-control" placeholder="Enter first name"
              formControlName="firstName" maxlength="50" required
              (blur)="trimField('firstName')">
     </div>
     <div class="col-md-4">
-      <label class="form-label">Middle Initial</label>
+      <label class="form-label">Middle Initial<span class="text-danger">*</span></label>
       <input type="text" class="form-control" placeholder="Enter middle initial"
              formControlName="middleInitial" maxlength="1"
              (input)="toUpperCase($event, 'middleInitial')"
@@ -27,18 +27,18 @@
   <!-- SSN & Address -->
   <div class="row mb-3">
     <div class="col-md-4">
-      <label class="form-label">SSN</label>
+      <label class="form-label">SSN<span class="text-danger">*</span></label>
       <input type="text" class="form-control" placeholder="Enter SSN"
              formControlName="ssn" required
              (blur)="trimField('ssn')">
     </div>
     <div class="col-md-4">
-      <label class="form-label">Address</label>
+      <label class="form-label">Address<span class="text-danger">*</span></label>
       <textarea class="form-control" placeholder="Enter address"
                 formControlName="address" rows="2" maxlength="250" required></textarea>
     </div>
     <div class="col-md-4">
-      <label class="form-label">City</label>
+      <label class="form-label">City<span class="text-danger">*</span></label>
       <input type="text" class="form-control" placeholder="Enter city"
              formControlName="city" maxlength="100" required
              (blur)="trimField('city')">
@@ -48,20 +48,20 @@
   <!-- State, ZIP, Filing Status -->
   <div class="row mb-3">
     <div class="col-md-4">
-      <label class="form-label">State</label>
+      <label class="form-label">State<span class="text-danger">*</span></label>
       <select class="form-select" formControlName="state" required>
         <option value="">Select state</option>
         <option *ngFor="let s of states">{{ s }}</option>
       </select>
     </div>
     <div class="col-md-4">
-      <label class="form-label">ZIP Code</label>
+      <label class="form-label">ZIP Code<span class="text-danger">*</span></label>
       <input type="text" class="form-control" placeholder="Enter ZIP code"
              formControlName="zipCode" required
              (blur)="trimField('zipCode')">
     </div>
     <div class="col-md-4">
-      <label class="form-label">Filing Status</label>
+      <label class="form-label">Filing Status<span class="text-danger">*</span></label>
       <select class="form-select" formControlName="filingStatus" required>
         <option value="">Select status</option>
         <option>Single</option>
@@ -80,12 +80,12 @@
       </div>
     </div>
     <div class="col-md-4">
-      <label class="form-label">Total Dependents</label>
+      <label class="form-label">Total Dependents<span class="text-danger">*</span></label>
       <input type="number" class="form-control" placeholder="Enter total dependents"
              formControlName="totalDependents" min="0" max="99" required>
     </div>
     <div class="col-md-4">
-      <label class="form-label">Dependent Amounts</label>
+      <label class="form-label">Dependent Amounts<span class="text-danger">*</span></label>
       <input type="number" class="form-control" placeholder="Enter dependent amounts"
              formControlName="dependentAmounts" max="9999999999">
     </div>

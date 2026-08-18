@@ -1,7 +1,7 @@
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Component } from '@angular/core';
 import { EmployeeResignationService } from '../employee-services/employee-resignation.service';
 import { employeeprofile } from '../../../admin/layout/models/employeeprofile.model';
-import Swal from 'sweetalert2';
+import { environment } from '../../../../environments/environment';
 @Component({
   selector: 'app-profile',
   standalone: false,
@@ -12,24 +12,15 @@ import Swal from 'sweetalert2';
 export class ProfileComponent {
   profile!: employeeprofile;
   userId: number | null = null;
-  profileImage: string | ArrayBuffer | null = null;
-  isMobile = false;
-  // companyName: string = sessionStorage.getItem('CompanyName') || '';
-  // regionName: string = sessionStorage.getItem('RegionName') || '';
-
   companyName: string = '';
 regionName: string = '';
 designationName: string = '';
 departmentName: string = '';
-  @ViewChild('cameraInput') cameraInput!: ElementRef<HTMLInputElement>;
-  @ViewChild('galleryInput') galleryInput!: ElementRef<HTMLInputElement>;
+  profileImage: string = '';
+
   constructor(private profileService: EmployeeResignationService) { }
   ngOnInit(): void {
-       console.log('CompanyName =>', sessionStorage.getItem('CompanyName'));
-  console.log('RegionName =>', sessionStorage.getItem('RegionName'));
-    console.log('DesignationName =>', sessionStorage.getItem('DesignationName'));
-  console.log('DepartmentName =>', sessionStorage.getItem('DepartmentName'));
-
+      
   this.companyName = sessionStorage.getItem('CompanyName') || '';
   this.regionName = sessionStorage.getItem('RegionName') || '';
 
@@ -44,20 +35,14 @@ this.departmentName =
   '';
 
     const storedUserId = sessionStorage.getItem('UserId');
-    this.getshiftallocationName();
-    if (storedUserId) {
-      this.userId = +storedUserId;
-      this.loadProfile();
-      // Load stored profile image from sessionStorage
-      const savedImage = sessionStorage.getItem(`profileImage_${this.userId}`);
-      if (savedImage) {
-        this.profileImage = savedImage;
-      }
-    } else {
-      console.error('No user logged in');
-    }
 
-    this.isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+if (storedUserId) {
+  this.userId = +storedUserId;
+  this.loadProfile();
+  this.loadProfilePicture();
+} else {
+  console.error('No user logged in');
+}
 
   }
   employeeCode: number = 0;
@@ -90,6 +75,33 @@ this.departmentName =
 
     });
   }
+  loadProfilePicture() {
+  if (!this.userId) {
+    this.profileImage = 'assets/images/default-profile.png';
+    return;
+  }
+
+  this.profileService.GetByUserIdempProfile(this.userId)
+    .subscribe({
+      next: (res: any) => {
+
+        console.log('PROFILE PICTURE RESPONSE 👉', res);
+
+        const path = res?.profilePictureName;
+
+        this.profileImage = path
+          ? `${environment.baseurl}/${path}`
+          : 'assets/images/default-profile.png';
+
+        console.log('PROFILE IMAGE URL 👉', this.profileImage);
+      },
+
+      error: (err) => {
+        console.error('Failed to load profile picture:', err);
+        this.profileImage = 'assets/images/default-profile.png';
+      }
+    });
+}
 
   loadProfile() {
     if (!this.userId) return;
@@ -120,42 +132,6 @@ this.departmentName =
         console.error('Error loading profile', err);
       }
     });
-  }
-
-  openImageOptions() {
-    Swal.fire({
-      title: "Select Option",
-      showCancelButton: true,
-      confirmButtonText: "Open Camera",
-      cancelButtonText: "Choose File"
-    }).then((result) => {
-      if (result.isConfirmed) {
-        if (this.isMobile) {
-          this.cameraInput.nativeElement.click();
-        } else {
-          Swal.fire('Camera not supported on desktop');
-        }
-      } else if (result.isDismissed && result.dismiss === Swal.DismissReason.cancel) {
-        this.galleryInput.nativeElement.click();
-      }
-    });
-  }
-
-
-
-  onPhotoSelected(event: any) {
-    const file = event.target.files[0];
-    if (!file || !this.userId) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        this.profileImage = reader.result;
-        // Save image in sessionStorage
-        sessionStorage.setItem(`profileImage_${this.userId}`, reader.result);
-      }
-    };
-    reader.readAsDataURL(file);
   }
 
 }
