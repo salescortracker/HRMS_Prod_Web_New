@@ -318,6 +318,7 @@ updateTodayHoursCard() {
   }
 
   createChart() {
+
   if (this.attendanceChart) {
     this.attendanceChart.destroy();
   }
@@ -326,104 +327,548 @@ updateTodayHoursCard() {
   const data: number[] = [];
   const colors: string[] = [];
 
-  const today = new Date();
-  const todayStr = this.formatDate(today);
+  // ==========================================
+  // TODAY
+  // ==========================================
 
-  // normalize today (IMPORTANT FIX)
+  const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  const todayStr = this.formatDate(today);
+
+
+  // ==========================================
+  // START OF WEEK - MONDAY
+  // ==========================================
+
   const currentDay = today.getDay();
+
   const startOfWeek = new Date(today);
-  const diff = today.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
+
+  const diff =
+    today.getDate() -
+    currentDay +
+    (currentDay === 0 ? -6 : 1);
+
   startOfWeek.setDate(diff);
+  startOfWeek.setHours(0, 0, 0, 0);
 
-  // WEEKOFF SET (FAST LOOKUP)
-  const weekoffSet = new Set(this.weekoffDates);
 
+  // ==========================================
   // ATTENDANCE MAP
-  const map = new Map<string, number>();
-  this.weeklyData.forEach((x: any) => {
-    const key = this.formatDate(new Date(x.attendanceDate));
-    map.set(key, Number(x.totalHours || 0));
+  //
+  // IMPORTANT:
+  // HOURS ALWAYS BELONG TO CLOCK-IN DATE
+  // ==========================================
+
+  const attendanceMap = new Map<string, number>();
+
+
+  // ==========================================
+  // SORT ATTENDANCE
+  // ==========================================
+
+  const records = [...this.attendanceRecords].sort((a, b) => {
+
+    const dateA =
+      new Date(
+        `${this.formatDate(new Date(a.attendanceDate))}T${a.actionTime}`
+      );
+
+    const dateB =
+      new Date(
+        `${this.formatDate(new Date(b.attendanceDate))}T${b.actionTime}`
+      );
+
+    return dateA.getTime() - dateB.getTime();
   });
+
+
+  // ==========================================
+  // MATCH CLOCK-IN → CLOCK-OUT
+  // ==========================================
+
+  for (let i = 0; i < records.length; i++) {
+
+    const clockIn = records[i];
+
+    if (clockIn.actionType !== 'ClockIn') {
+      continue;
+    }
+
+    const clockInDate =
+      this.formatDate(
+        new Date(clockIn.attendanceDate)
+      );
+
+    let clockOut: any = null;
+
+
+    // Find the next ClockOut after this ClockIn
+    for (let j = i + 1; j < records.length; j++) {
+
+      if (records[j].actionType === 'ClockIn') {
+        break;
+      }
+
+      if (records[j].actionType === 'ClockOut') {
+        clockOut = records[j];
+        break;
+      }
+    }
+
+
+    // ==========================================
+    // COMPLETED CLOCK IN / CLOCK OUT
+    // ==========================================
+
+    if (clockOut) {
+
+      let start =
+        this.timeToMinutes(
+          clockIn.actionTime
+        );
+
+      let end =
+        this.timeToMinutes(
+          clockOut.actionTime
+        );
+
+
+      // ========================================
+      // NIGHT SHIFT
+      // ========================================
+
+      if (end < start) {
+        end += 24 * 60;
+      }
+
+
+      const workedMinutes =
+        Math.max(0, end - start);
+
+
+      const oldHours =
+        attendanceMap.get(clockInDate) || 0;
+
+
+      attendanceMap.set(
+        clockInDate,
+        oldHours + workedMinutes / 60
+      );
+    }
+  }
+
+
+  // ==========================================
+  // CURRENT OPEN CLOCK-IN
+  //
+  // VERY IMPORTANT FOR NIGHT SHIFT
+  //
+  // If ClockIn = Today 10 PM
+  // and ClockOut = Tomorrow 6 AM,
+  // keep the live hours against TODAY.
+  // ==========================================
+
+  let activeClockIn: any = null;
+
+  for (let i = records.length - 1; i >= 0; i--) {
+
+    if (records[i].actionType === 'ClockIn') {
+
+      let hasClockOut = false;
+
+      for (let j = i + 1; j < records.length; j++) {
+
+        if (records[j].actionType === 'ClockIn') {
+          break;
+        }
+
+        if (records[j].actionType === 'ClockOut') {
+          hasClockOut = true;
+          break;
+        }
+      }
+
+      if (!hasClockOut) {
+        activeClockIn = records[i];
+        break;
+      }
+    }
+  }
+
+
+  // ==========================================
+  // 7 DAYS
+  // ==========================================
 
   for (let i = 0; i < 7; i++) {
 
-  const dateObj = new Date(startOfWeek);
-  dateObj.setDate(startOfWeek.getDate() + i);
+    const dateObj =
+      new Date(startOfWeek);
 
-  const dateStr = this.formatDate(dateObj);
+    dateObj.setDate(
+      startOfWeek.getDate() + i
+    );
 
-  // 👇 LABEL (Mon, Tue...)
-  const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
-  labels.push(dayName);
+    dateObj.setHours(0, 0, 0, 0);
 
-  const dayNameFull = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
-  const isWeekoff = this.weekoffDates.includes(dayNameFull);
-  const isFuture = dateStr > todayStr;
-  const isToday = dateStr === todayStr;
 
-  let hours = 0;
-  let color = '#f4f5f6';
+    const dateStr =
+      this.formatDate(dateObj);
 
-  // ================= WEEKOFF =================
-  if (isWeekoff) {
-    hours = 8;
-    color = '#0d0d0d'; // BLACK
-  }
 
-  // ================= FUTURE =================
-  else if (isFuture) {
-    hours = 8;
-    color = '#f4f5f6'; // BLUE
-  }
-
-  // ================= TODAY =================
-  else if (isToday) {
-    const minutes = this.calculateTotalWorkedMinutes(this.attendanceRecords);
-    hours = +(minutes / 60).toFixed(2);
-
-    color = hours > 0 ? '#28a745' : '#dc3545';
-  }
-
-  // ================= PAST =================
-  else {
-    const h = map.get(dateStr);
-
-    if (h !== undefined && h > 0) {
-      hours = h;
-      color = '#ffc107'; // YELLOW
-    } else {
-      hours = 8;
-      color = '#dc3545'; // RED
-    }
-  }
-
-  data.push(hours);
-  colors.push(color);
-}
-
-  this.attendanceChart = new Chart("attendanceChart", {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Working Hours',
-        data,
-        backgroundColor: colors
-      }]
-    },
-    options: {
-      responsive: true,
-      animation: false,
-      scales: {
-        y: {
-          beginAtZero: true,
-          suggestedMax: 8
+    const dayName =
+      dateObj.toLocaleDateString(
+        'en-US',
+        {
+          weekday: 'short'
         }
+      );
+
+
+    const dayNameFull =
+      dateObj.toLocaleDateString(
+        'en-US',
+        {
+          weekday: 'long'
+        }
+      );
+
+
+    labels.push(dayName);
+
+
+    // ==========================================
+    // DAY CONDITIONS
+    // ==========================================
+
+    const isToday =
+      dateStr === todayStr;
+
+    const isFuture =
+      dateObj.getTime() > today.getTime();
+
+    const isPast =
+      dateObj.getTime() < today.getTime();
+
+
+    const isWeekoff =
+      this.weekoffDates.some(
+        x =>
+          String(x).trim().toLowerCase() ===
+          dayNameFull.trim().toLowerCase()
+      );
+
+
+    let hours = 0;
+    let color = '#f4f5f6';
+
+
+    // ==========================================
+    // 1. WEEKOFF
+    //
+    // NO 8 HOURS
+    // NO WORKING HOURS
+    // BLACK
+    // ==========================================
+
+    if (isWeekoff) {
+
+      hours = 0;
+
+      color = '#0d0d0d';
+    }
+
+
+    // ==========================================
+    // 2. TODAY
+    // ==========================================
+
+    else if (isToday) {
+
+      // ----------------------------------------
+      // Check today's attendance
+      // ----------------------------------------
+
+      const todayRecords =
+        records.filter(
+          x =>
+            this.formatDate(
+              new Date(x.attendanceDate)
+            ) === todayStr
+        );
+
+
+      // ----------------------------------------
+      // Calculate completed pairs
+      // ----------------------------------------
+
+      let totalMinutes =
+        this.calculateTotalWorkedMinutes(
+          todayRecords
+        );
+
+
+      // ----------------------------------------
+      // Check active ClockIn
+      // ----------------------------------------
+
+      if (
+        activeClockIn &&
+        this.formatDate(
+          new Date(activeClockIn.attendanceDate)
+        ) === todayStr
+      ) {
+
+        const start =
+          this.timeToMinutes(
+            activeClockIn.actionTime
+          );
+
+
+        const now =
+          new Date();
+
+        let current =
+          now.getHours() * 60 +
+          now.getMinutes();
+
+
+        // ======================================
+        // NIGHT SHIFT
+        //
+        // Example:
+        // ClockIn 22:00
+        // Current 01:00
+        //
+        // 01:00 becomes 25:00
+        // ======================================
+
+        if (current < start) {
+          current += 24 * 60;
+        }
+
+
+        const liveMinutes =
+          Math.max(0, current - start);
+
+
+        totalMinutes += liveMinutes;
+      }
+
+
+      // ----------------------------------------
+      // Maximum 8 hours for chart
+      // ----------------------------------------
+
+      hours =
+        Math.min(
+          8,
+          Number(
+            (totalMinutes / 60).toFixed(2)
+          )
+        );
+
+
+      // ======================================
+      // TODAY = GREEN
+      // ======================================
+
+      if (hours > 0) {
+
+        color = '#28a745';
+
+      } else {
+
+        // Today absent
+        hours = 8;
+        color = '#dc3545';
       }
     }
-  });
+
+
+    // ==========================================
+    // 3. FUTURE
+    // ==========================================
+
+    else if (isFuture) {
+
+      /*
+       * Future working day:
+       *
+       * 8 hours
+       * White
+       */
+
+      hours = 8;
+
+      color = '#f4f5f6';
+
+
+      // ----------------------------------------
+      // If attendance already exists for
+      // this future date, show actual hours
+      // in ORANGE.
+      // ----------------------------------------
+
+      const futureHours =
+        attendanceMap.get(dateStr);
+
+
+      if (
+        futureHours !== undefined &&
+        futureHours > 0
+      ) {
+
+        hours =
+          Math.min(
+            8,
+            Number(
+              futureHours.toFixed(2)
+            )
+          );
+
+        color = '#ffc107';
+      }
+    }
+
+
+    // ==========================================
+    // 4. PAST
+    // ==========================================
+
+    else if (isPast) {
+
+      const workedHours =
+        attendanceMap.get(dateStr);
+
+
+      // ========================================
+      // PRESENT
+      // ========================================
+
+      if (
+        workedHours !== undefined &&
+        workedHours > 0
+      ) {
+
+        hours =
+          Math.min(
+            8,
+            Number(
+              workedHours.toFixed(2)
+            )
+          );
+
+        // PRESENT = ORANGE
+        color = '#ffc107';
+
+      }
+
+
+      // ========================================
+      // ABSENT
+      // ========================================
+
+      else {
+
+        // ABSENT = FULL 8 HOURS
+        hours = 8;
+
+        // RED
+        color = '#dc3545';
+      }
+    }
+
+
+    // ==========================================
+    // PUSH
+    // ==========================================
+
+    data.push(hours);
+    colors.push(color);
+  }
+
+
+  // ==========================================
+  // CREATE CHART
+  // ==========================================
+
+  this.attendanceChart =
+    new Chart(
+      'attendanceChart',
+      {
+        type: 'bar',
+
+        data: {
+
+          labels,
+
+          datasets: [
+            {
+              label: 'Working Hours',
+
+              data,
+
+              backgroundColor: colors,
+
+              borderRadius: 6
+            }
+          ]
+        },
+
+        options: {
+
+          responsive: true,
+
+          maintainAspectRatio: false,
+
+          animation: false,
+
+          plugins: {
+
+            legend: {
+              display: false
+            },
+
+            tooltip: {
+
+              callbacks: {
+
+                label: (context: any) => {
+
+                  const value =
+                    context.raw as number;
+
+                  return ` ${value} Hours`;
+                }
+              }
+            }
+          },
+
+          scales: {
+
+            y: {
+
+              beginAtZero: true,
+
+              min: 0,
+
+              max: 8,
+
+              ticks: {
+
+                stepSize: 1,
+
+                callback: (value) =>
+                  `${value}h`
+              }
+            }
+          }
+        }
+      }
+    );
 }
 updateChartTodayHours(totalHours: number) {
   if (!this.attendanceChart) return;
