@@ -236,7 +236,8 @@ graceMinutes = 0;
   currentPage = 1;
   pageSize = 5;
   userId = sessionStorage.getItem('UserId') ? Number(sessionStorage.getItem('UserId')) : 0;
-
+  shiftDurationError = false;
+calculatedShiftHours = '';
   showForm = false; // toggle form visibility
 
   constructor(private userService: AdminService) { }
@@ -246,6 +247,52 @@ graceMinutes = 0;
     this.loadRegions();
     this.loadShifts();
   }
+  validateShiftDuration(): boolean {
+
+  this.shiftDurationError = false;
+  this.calculatedShiftHours = '';
+
+  if (!this.shift.shiftStartTime || !this.shift.shiftEndTime) {
+    return false;
+  }
+
+  const [startHour, startMinute] =
+    this.shift.shiftStartTime.split(':').map(Number);
+
+  const [endHour, endMinute] =
+    this.shift.shiftEndTime.split(':').map(Number);
+
+  let startMinutes =
+    (startHour * 60) + startMinute;
+
+  let endMinutes =
+    (endHour * 60) + endMinute;
+
+  
+  if (endMinutes <= startMinutes) {
+    endMinutes += 24 * 60;
+  }
+
+  const durationMinutes = endMinutes - startMinutes;
+
+  const hours = Math.floor(durationMinutes / 60);
+  const minutes = durationMinutes % 60;
+
+  this.calculatedShiftHours =
+    `${hours} hour${hours !== 1 ? 's' : ''}` +
+    (minutes > 0
+      ? ` ${minutes} minute${minutes !== 1 ? 's' : ''}`
+      : '');
+
+  // Minimum 8 hours
+  if (durationMinutes < 8 * 60) {
+    this.shiftDurationError = true;
+    return false;
+  }
+
+  this.shiftDurationError = false;
+  return true;
+}
 
   getEmptyShift(): ShiftMasterDto {
     return {
@@ -340,75 +387,171 @@ graceMinutes = 0;
   // Show/hide form
   openForm() {
     this.showForm = true;
+    this.shiftDurationError = false;
+  this.calculatedShiftHours = '';
   }
 
   // Save Shift (UI only)
   onSubmit() {
-    if (!this.shift.shiftName || !this.shift.companyID || !this.shift.regionID || !this.shift.shiftStartTime || !this.shift.shiftEndTime) {
-      Swal.fire('Warning', 'Please fill all required fields', 'warning');
-      return;
-    }
-  this.shift.graceTime = `00:${String(this.graceMinutes).padStart(2, '0')}`;
 
-    this.shift.userId = this.userId;
+  if (
+    !this.shift.shiftName ||
+    !this.shift.companyID ||
+    !this.shift.regionID ||
+    !this.shift.shiftStartTime ||
+    !this.shift.shiftEndTime
+  ) {
+    Swal.fire(
+      'Warning',
+      'Please fill all required fields',
+      'warning'
+    );
+    return;
+  }
 
-    if (this.isEditMode) {
-      this.userService.updateShift(this.shift).subscribe({
-        next: (res: any) => {
+  // ==========================================
+  // SHIFT DURATION VALIDATION
+  // ==========================================
 
-          if (!res.success) {
-            Swal.fire('Warning', res.message, 'warning');
-            return;
-          }
+  if (!this.validateShiftDuration()) {
+
+    Swal.fire(
+      'Invalid Shift Duration',
+      `Shift duration must be at least 8 hours.
+       Current duration: ${this.calculatedShiftHours}`,
+      'warning'
+    );
+
+    return;
+  }
+
+  // ==========================================
+  // GRACE TIME
+  // ==========================================
+
+  this.shift.graceTime =
+    `00:${String(this.graceMinutes).padStart(2, '0')}`;
+
+  this.shift.userId = this.userId;
+
+  // ==========================================
+  // UPDATE
+  // ==========================================
+
+  if (this.isEditMode) {
+
+    this.userService.updateShift(this.shift).subscribe({
+
+      next: (res: any) => {
+
+        if (!res.success) {
+
+          Swal.fire(
+            'Warning',
+            res.message,
+            'warning'
+          );
+
+          return;
+        }
+
+        this.loadShifts();
+
+        Swal.fire(
+          'Updated',
+          res.message,
+          'success'
+        );
+
+        this.resetForm();
+      },
+
+      error: (err: any) => {
+
+        console.error(err);
+
+        Swal.fire(
+          'Warning',
+          err.error?.message ||
+          'Failed to update shift.',
+          'warning'
+        );
+      }
+
+    });
+
+  }
+
+  // ==========================================
+  // CREATE
+  // ==========================================
+
+  else {
+
+    this.userService.addShift(this.shift).subscribe({
+
+      next: (res: any) => {
+
+        if (res.success) {
 
           this.loadShifts();
 
-          Swal.fire('Updated', res.message, 'success');
+          Swal.fire(
+            'Created',
+            res.message,
+            'success'
+          );
 
           this.resetForm();
-        },
 
-      });
-    } else {
-      this.userService.addShift(this.shift).subscribe({
-        next: (res: any) => {
-          if (res.success) {
-            this.loadShifts();
-            Swal.fire('Created', res.message, 'success');
-            this.resetForm();
+        } else {
 
-          } else {
-            Swal.fire('Error', res.message, 'error');
-          }
-        },
-        error: (err: any) => {
-
-          console.error(err);
-
-          // 🔥 SHOW BACKEND MESSAGE
           Swal.fire(
-            'Warning',
-            err.error?.message || 'Operation failed',
-            'warning'
+            'Error',
+            res.message,
+            'error'
           );
         }
-      });
+      },
 
-    }
+      error: (err: any) => {
+
+        console.error(err);
+
+        Swal.fire(
+          'Warning',
+          err.error?.message ||
+          'Failed to create shift.',
+          'warning'
+        );
+      }
+
+    });
   }
+}
 
-  editShift(s: any) {
-    this.shift = { ...s };
-     
+ editShift(s: any) {
+
+  this.shift = { ...s };
+
   if (this.shift.graceTime) {
-    this.graceMinutes = Number(this.shift.graceTime.split(':')[1]);
+    this.graceMinutes =
+      Number(this.shift.graceTime.split(':')[1]);
   } else {
     this.graceMinutes = 0;
   }
-    this.isEditMode = true;
-    this.showForm = true;
-    this.filteredRegions = this.regions.filter(r => r.companyID === Number(this.shift.companyID));
-  }
+
+  this.isEditMode = true;
+  this.showForm = true;
+
+  this.filteredRegions =
+    this.regions.filter(
+      r => r.companyID === Number(this.shift.companyID)
+    );
+
+  // Validate existing shift
+  this.validateShiftDuration();
+}
 
   deleteShift(s: ShiftMasterDto) {
   Swal.fire({
@@ -440,12 +583,22 @@ graceMinutes = 0;
 }
 
 
-  resetForm() {
-    this.shift = this.getEmptyShift();
-    this.isEditMode = false;
-    this.showForm = false;
-    this.filteredRegions = [];
-  }
+ resetForm() {
+
+  this.shift = this.getEmptyShift();
+
+  this.isEditMode = false;
+
+  this.showForm = false;
+
+  this.filteredRegions = [];
+
+  this.graceMinutes = 0;
+
+  this.shiftDurationError = false;
+
+  this.calculatedShiftHours = '';
+}
 
   generateNextEmployeeCode() {
     console.log('Next employee code generated');
