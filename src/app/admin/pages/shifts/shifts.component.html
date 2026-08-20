@@ -38,12 +38,19 @@
             </div>
             <div class="col-md-4">
               <label class="form-label fw-semibold">Shift Start Time</label>
-              <input type="time" class="form-control" [(ngModel)]="shift.shiftStartTime" name="shiftStartTime" required>
+              <input type="time" class="form-control" [(ngModel)]="shift.shiftStartTime" name="shiftStartTime" required (ngModelChange)="validateShiftDuration()">
             </div>
 
             <div class="col-md-4">
               <label class="form-label fw-semibold">Shift End Time</label>
-              <input type="time" class="form-control" [(ngModel)]="shift.shiftEndTime" name="shiftEndTime" required>
+              <input type="time" class="form-control" [(ngModel)]="shift.shiftEndTime" name="shiftEndTime" [class.is-invalid]="shiftDurationError" (ngModelChange)="validateShiftDuration()" required>
+              <div *ngIf="shiftDurationError" class="text-danger mt-1">
+                <small>
+                  <i class="fa-solid fa-circle-exclamation me-1"></i>
+                  Shift duration must be at least 8 hours.
+                  Current duration: {{ calculatedShiftHours }}
+                </small>
+              </div>
             </div>
             <div class="col-md-4">
   <label class="form-label fw-semibold">Grace Time (Minutes)</label>
@@ -65,7 +72,7 @@
             </div>
 
             <div class="col-md-2 d-flex align-items-end">
-              <button type="submit" class="btn btn-dark w-100" [disabled]="!shiftForm.valid">
+              <button type="submit" class="btn btn-dark w-100" [disabled]="!shiftForm.valid || shiftDurationError">
                 {{ isEditMode ? 'Update Shift' : 'Save Shift' }}
               </button>
             </div>
