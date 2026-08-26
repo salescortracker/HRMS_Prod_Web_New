@@ -73,6 +73,26 @@ loadCompanyDetails() {
     }
   });
 }
+formatDateOnly(dateValue: any): string {
+  if (!dateValue) {
+    return '-';
+  }
+
+  // Handle ISO date: 2026-06-15T00:00:00
+  const datePart = String(dateValue).split('T')[0];
+
+  const parts = datePart.split('-');
+
+  if (parts.length === 3) {
+    const year = parts[0];
+    const month = parts[1];
+    const day = parts[2];
+
+    return `${day}/${month}/${year}`;
+  }
+
+  return dateValue;
+}
 setDefaultLogo() {
   const defaultLogo = '/assets/images/cor-logo.png';
 
@@ -325,21 +345,32 @@ if (this.companyLogoBase64) {
     y += 20;
 
     doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0);
 
     doc.text(`Name: ${p.employeeName || ''}`, 20, y);
     doc.text(`Designation: ${p.designation || ''}`, 20, y + 6);
     doc.text(`Department: ${p.department || ''}`, 20, y + 12);
     doc.text(`Location: ${p.location || 'Hyderabad'}`, 20, y + 18);
-    doc.text(`Joining Date: ${p.joiningDate || ''}`, 20, y + 24);
+    doc.text(`Joining Date: ${this.formatDateOnly(p.joiningDate)}`, 20, y + 24);
 
     doc.text(`Employee No: ${p.employeeCode || ''}`, pageWidth / 2, y);
     doc.text(`Bank: ${p.bank || '-'}`, pageWidth / 2, y + 6);
     doc.text(`A/C No: ${p.accountNo || '-'}`, pageWidth / 2, y + 12);
     doc.text(`PAN: ${p.pan || '-'}`, pageWidth / 2, y + 18);
 
+    // ================= ATTENDANCE DETAILS =================
+
+doc.setFont('helvetica', 'bold');
+doc.setTextColor(0);
+
+doc.text(`Working Days: ${p.workingDays ?? 0}`, 20, y + 32);
+doc.text(`Present Days: ${p.presentDays ?? 0}`, pageWidth / 2, y + 32);
+doc.text(`Leave Days: ${p.leaveDays ?? 0}`, 20, y + 40);
+doc.text(`Half Days: ${p.halfDays ?? 0}`, pageWidth / 2, y + 40);
     /* ================= TABLE ================= */
 
-    let tableY = y + 35;
+    let tableY = y + 43;
 
     doc.setFillColor(245, 245, 245);
     doc.rect(20, tableY, pageWidth - 40, 10, 'F');

@@ -20,8 +20,6 @@ interface AttendanceRecord {
   styleUrl: './clockin-clockout.component.css'
 })
 export class ClockinClockoutComponent implements OnInit, OnDestroy {
-  shiftStartTime: string = ''; // e.g. "09:00"
-  earlyLateStatus: string = '';  // FINAL TEXT to show in UI
   graceTime: string = '';        // from API
   lastClockOut: string | null = null;
   isClockedIn = false;
@@ -142,7 +140,6 @@ openClockIn: AttendanceRecord | null = null;
           this.message = 'Attendance saved successfully';
           this.attendanceForm.patchValue({ clockType: '', time: '' });
           this.loadAttendance();
-          this.ngOnInit();
         },
         error: () => this.message = 'Failed to save attendance'
       });
@@ -162,62 +159,65 @@ openClockIn: AttendanceRecord | null = null;
 
     this.attendanceRecords = todayRecords;
 
-    this.findOpenClockIn(todayRecords);
-
-    this.setTodaySummary();
-    this.calculateLateLogin();
+    this.resolveAttendanceSession(todayRecords);
 
   });
 }
-findOpenClockIn(todayRecords: AttendanceRecord[]) {
 
-  // =====================================================
-  // STEP 1: Check today's records
-  // =====================================================
+// A night shift's ClockIn/ClockOut land on different calendar dates, so
+// comparing/diffing on actionTime ("HH:mm") alone is wrong once midnight
+// is crossed. This combines attendanceDate + actionTime into a real,
+// comparable Date.
+toDateTime(record: AttendanceRecord): Date {
+  const datePart = record.attendanceDate.split('T')[0];
+  return new Date(`${datePart}T${record.actionTime}`);
+}
 
-  const sortedToday = [...todayRecords].sort((a, b) => {
+sortByDateTime(records: AttendanceRecord[]): AttendanceRecord[] {
+  return [...records].sort(
+    (a, b) => this.toDateTime(a).getTime() - this.toDateTime(b).getTime()
+  );
+}
 
-    const dateA = new Date(
-      `${a.attendanceDate.split('T')[0]}T${a.actionTime}`
-    );
+resolveAttendanceSession(todayRecords: AttendanceRecord[]) {
 
-    const dateB = new Date(
-      `${b.attendanceDate.split('T')[0]}T${b.actionTime}`
-    );
+  const sortedToday = this.sortByDateTime(todayRecords);
 
-    return dateA.getTime() - dateB.getTime();
-  });
+  const startsWithOrphanClockOut =
+    sortedToday.length > 0 && sortedToday[0].actionType === 'ClockOut';
 
-  let openIn: AttendanceRecord | null = null;
-
-  for (const record of sortedToday) {
-
-    if (record.actionType === 'ClockIn') {
-      openIn = record;
-    }
-
-    if (
-      record.actionType === 'ClockOut' &&
-      openIn
-    ) {
-      openIn = null;
-    }
-  }
-
-  // Today's open ClockIn found
-  if (openIn) {
-
-    this.openClockIn = openIn;
-    this.isClockedIn = true;
-
+  // Today's own records already tell the full story: either nothing has
+  // happened yet today, or today's first punch is a ClockIn (i.e. this
+  // isn't the tail end of a shift that started yesterday).
+  if (sortedToday.length === 0 || !startsWithOrphanClockOut) {
+    this.applySession(this.pairLatestSession(sortedToday));
     return;
   }
-  
 
-  // =====================================================
-  // STEP 2: No open ClockIn today
-  // Check previous day
-  // =====================================================
+  // Today starts with an orphan ClockOut, so the matching ClockIn was
+  // made yesterday (night shift). Pull yesterday + today to resolve it.
+  this.resolvePreviousDaySession(sortedToday);
+}
+
+pairLatestSession(sortedRecords: AttendanceRecord[]):
+  { clockIn: AttendanceRecord | null, clockOut: AttendanceRecord | null } {
+
+  let clockIn: AttendanceRecord | null = null;
+  let clockOut: AttendanceRecord | null = null;
+
+  for (const record of sortedRecords) {
+    if (record.actionType === 'ClockIn') {
+      clockIn = record;
+      clockOut = null;
+    } else if (record.actionType === 'ClockOut' && clockIn) {
+      clockOut = record;
+    }
+  }
+
+  return { clockIn, clockOut };
+}
+
+resolvePreviousDaySession(sortedToday: AttendanceRecord[]) {
 
   const today = new Date();
 
@@ -236,55 +236,63 @@ findOpenClockIn(todayRecords: AttendanceRecord[]) {
     this.currentUser.regionId,
     fromDate,
     toDate
-  ).subscribe(records => {
+  ).subscribe(rangeRecords => {
 
-    const sortedRecords = [...records].sort((a, b) => {
+    const merged = this.sortByDateTime(
+      rangeRecords && rangeRecords.length ? rangeRecords : sortedToday
+    );
 
-      const dateA = new Date(
-        `${a.attendanceDate.split('T')[0]}T${a.actionTime}`
-      );
+    const session = this.pairLatestSession(merged);
 
-      const dateB = new Date(
-        `${b.attendanceDate.split('T')[0]}T${b.actionTime}`
-      );
-
-      return dateA.getTime() - dateB.getTime();
-    });
-
-    let previousOpenIn: AttendanceRecord | null = null;
-
-    for (const record of sortedRecords) {
-
-      if (record.actionType === 'ClockIn') {
-        previousOpenIn = record;
-      }
-
-      if (
-        record.actionType === 'ClockOut' &&
-        previousOpenIn
-      ) {
-        previousOpenIn = null;
-      }
+    if (session.clockIn && !session.clockOut) {
+      // Still clocked in from a previous day (night shift in progress)
+      this.applySession(session);
+      return;
     }
 
-    // =====================================================
-    // NIGHT SHIFT OPEN CLOCK-IN
-    // =====================================================
+    // Fully closed - only relevant to "today" if the ClockOut that
+    // closes it actually happened today. Otherwise it's just an
+    // already-finished shift from yesterday and has nothing to do with
+    // today (employee simply hasn't clocked in yet today).
+    const closesToday = !!session.clockOut && sortedToday.some(r =>
+      r.attendanceDate === session.clockOut!.attendanceDate &&
+      r.actionTime === session.clockOut!.actionTime &&
+      r.actionType === 'ClockOut'
+    );
 
-    if (previousOpenIn) {
-
-  this.openClockIn = previousOpenIn;
-  this.firstClockIn = previousOpenIn;
-  this.isClockedIn = true;
-
-} else {
-
-  this.openClockIn = null;
-  this.firstClockIn = null;
-  this.isClockedIn = false;
+    this.applySession(closesToday ? session : { clockIn: null, clockOut: null });
+  });
 }
 
-  });
+applySession(session: { clockIn: AttendanceRecord | null, clockOut: AttendanceRecord | null }) {
+
+  this.firstClockIn = session.clockIn;
+  this.openClockIn = session.clockIn && !session.clockOut ? session.clockIn : null;
+  this.isClockedIn = !!session.clockIn && !session.clockOut;
+
+  this.todayClockIn = session.clockIn ? session.clockIn.actionTime : '--:--';
+  this.todayClockOut = session.clockOut ? session.clockOut.actionTime : '--:--';
+  this.lastClockOut = session.clockOut ? session.clockOut.actionTime : null;
+
+  if (session.clockIn) {
+
+    const start = this.toDateTime(session.clockIn);
+    const end = session.clockOut ? this.toDateTime(session.clockOut) : new Date();
+    const totalMs = Math.max(0, end.getTime() - start.getTime());
+
+    const hours = Math.floor(totalMs / 3600000);
+    const minutes = Math.floor((totalMs % 3600000) / 60000);
+
+    this.todayDuration =
+      `${hours.toString().padStart(2, '0')}:` +
+      `${minutes.toString().padStart(2, '0')}`;
+
+  } else {
+    this.todayDuration = '--:--';
+  }
+
+  this.setAvailableActions();
+  this.calculateLateLogin();
 }
 isNightShift(): boolean {
 
@@ -306,164 +314,6 @@ isNightShift(): boolean {
 
   return endMinutes <= startMinutes;
 }
-  calculateStatus() {
-debugger;
-  const refTime = this.getReferenceTime();
-
-  if (!refTime || !this.shiftStartTime || !this.graceTime) {
-    this.earlyLateStatus = '';
-    return;
-  }
-
-  const time = this.parseTime(refTime);
-
-  const [sH, sM] = this.shiftStartTime.split(':').map(Number);
-
-  const shiftStart = new Date();
-  shiftStart.setHours(sH, sM, 0, 0);
-
-  // On Time Window = 5 mins
-  const onTimeEnd = new Date(
-    shiftStart.getTime() + (5 * 60000)
-  );
-
-  // Grace Window
-  const [gH, gM] = this.graceTime.split(':').map(Number);
-
-  const graceEnd = new Date(
-    shiftStart.getTime() + ((gH * 60) + gM) * 60000
-  );
-
-  // EARLY
-  if (time < shiftStart) {
-
-    const mins = Math.floor(
-      (shiftStart.getTime() - time.getTime()) / 60000
-    );
-
-    this.earlyLateStatus = `Early by ${this.formatDuration(mins)}`;
-  }
-   // ON TIME (0-5 mins)
-  else if (time <= onTimeEnd && time==time) {
-
-    this.earlyLateStatus = 'On Time';
-  }
-// GRACE
-  else if (time <= onTimeEnd) {
-
-    const mins = Math.floor(
-      (time.getTime() - shiftStart.getTime()) / 60000
-    );
-
-    this.earlyLateStatus = `Grace ${this.formatDuration(mins)}`;
-  }
- 
-
-  
-
-  // LATE
-  else {
-
-    const mins = Math.floor(
-      (time.getTime() - onTimeEnd.getTime()) / 60000
-    );
-
-    this.earlyLateStatus = `Late by ${this.formatDuration(mins)}`;
-  }
-}
-
-  getEarlyLateClass(): string {
-
-  if (!this.earlyLateStatus) {
-    return '';
-  }
-
-  const status = this.earlyLateStatus.toLowerCase();
-
-  if (status.includes('on time')) {
-    return 'status-ontime';
-  }
-
-  if (status.includes('early')) {
-    return 'status-early';
-  }
-
-  if (status.includes('grace')) {
-    return 'status-grace';
-  }
-
-  if (status.includes('late')) {
-    return 'status-late';
-  }
-
-  return '';
-}
-
-
-  parseTime(time: string): Date {
-    const [hours, minutes] = time.split(':').map(Number);
-    const d = new Date();
-    d.setHours(hours, minutes, 0, 0);
-    return d;
-  }
-
-  setTodaySummary() {
-    const today = new Date().toISOString().split('T')[0];
-
-    const todayRecords = this.attendanceRecords
-      .filter(r => r.attendanceDate.startsWith(today))
-      .sort((a, b) => a.actionTime.localeCompare(b.actionTime));
-
-    this.clockInRecords = todayRecords.filter(r => r.actionType === 'ClockIn');
-this.clockOutRecords = todayRecords.filter(r => r.actionType === 'ClockOut');
-
-    // First ClockIn
-    const sortedClockIns = this.clockInRecords
-  .sort((a, b) => a.actionTime.localeCompare(b.actionTime));
-
-this.firstClockIn = sortedClockIns.length ? sortedClockIns[0] : null;
-this.todayClockIn = this.firstClockIn ? this.firstClockIn.actionTime : '--:--';
-const lastClockOut = this.clockOutRecords.length
-  ? this.clockOutRecords[this.clockOutRecords.length - 1]
-  : null;
-
-this.todayClockOut = lastClockOut ? lastClockOut.actionTime : '--:--';
-this.lastClockOut = lastClockOut
-  ? lastClockOut.actionTime
-  : null;
-
-    // 🟢 Calculate duration
-    let totalMs = 0;
-let lastIn: Date | null = null;
-
-for (let r of todayRecords) {
-
-  const time = this.parseTime(r.actionTime);
-
-  if (r.actionType === 'ClockIn') {
-    lastIn = time;
-  }
-
-  else if (r.actionType === 'ClockOut' && lastIn) {
-    totalMs += (time.getTime() - lastIn.getTime());
-    lastIn = null;
-  }
-}
-
-// 🔥 if still clocked in (no final logout)
-if (lastIn) {
-  totalMs += (new Date().getTime() - lastIn.getTime());
-}
-
-// convert to HH:mm
-const hours = Math.floor(totalMs / 3600000);
-const minutes = Math.floor((totalMs % 3600000) / 60000);
-
-this.todayDuration =
-  `${hours.toString().padStart(2, '0')}:` +
-  `${minutes.toString().padStart(2, '0')}`;
-    this.calculateLateLogin();
-  }
 
   shiftAllocationName: string = '';
   ShiftstartTime: string = '';
@@ -480,9 +330,7 @@ this.todayDuration =
         this.ShiftstartTime = res.shiftStartTime;
         this.ShiftendTime = res.shiftEndTime;
 
-        this.graceTime = res.grassTime; // ✅ FIXED HERE
-
-        console.log('Grace Time:', this.graceTime);
+        this.graceTime = res.grassTime;
 
         this.calculateLateLogin();
       });
@@ -585,19 +433,7 @@ this.todayDuration =
 
   return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`;
 }
-  
- getReferenceTime(): string | null {
 
-  if (this.isClockedIn && this.firstClockIn) {
-    return this.firstClockIn.actionTime;
-  }
-
-  if (this.lastClockOut) {
-    return this.lastClockOut;
-  }
-
-  return null;
-}
 calculateLateLogin(): void {
 
   if (
@@ -610,15 +446,20 @@ calculateLateLogin(): void {
     return;
   }
 
-  const clockIn = this.parseTime(
-    this.firstClockIn.actionTime
-  );
+  // Use the ClockIn record's real date+time, and anchor shiftStart to
+  // that SAME calendar date (not "now") - otherwise a night shift
+  // viewed the next morning always compares against today's 22:00,
+  // which is always later than a clock-in that already happened
+  // yesterday, and gets misjudged as "Early".
+  const clockIn = this.toDateTime(this.firstClockIn);
 
   const [sH, sM] = this.ShiftstartTime
     .split(':')
     .map(Number);
 
-  const shiftStart = new Date();
+  const shiftStart = new Date(
+    `${this.firstClockIn.attendanceDate.split('T')[0]}T00:00:00`
+  );
   shiftStart.setHours(sH, sM, 0, 0);
 
   // First 5 minutes = On Time
