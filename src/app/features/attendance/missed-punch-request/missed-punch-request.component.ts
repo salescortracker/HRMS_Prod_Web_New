@@ -145,32 +145,6 @@ handleMissedTypeChanges() {
     }
   });
 }
-  // submitMissedPunch() {
-  //  // if (this.missedPunchForm.invalid) return;
-  //   const payload = {
-  //     ...this.missedPunchForm.value,
-  //     companyId: this.companyId,
-  //     regionId: this.regionId,
-  //     userId: this.userId,employeeId: this.userId,
-  //     reportingTo: Number(sessionStorage.getItem('reportingManagerId'))
-  //   };
-
-  //   if (this.isEditMode && this.editId) {
-  //     this.missedPunchService
-  //       .updateMissedPunch( payload)
-  //       .subscribe(() => {
-  //         this.resetForm();
-  //         this.loadMyRequests();
-  //       });
-  //   } else {
-  //     this.missedPunchService
-  //       .createMissedPunchRequest(payload)
-  //       .subscribe(() => {
-  //         this.resetForm();
-  //         this.loadMyRequests();
-  //       });
-  //   }
-  // }
   submitMissedPunch() {
   const payload = {
     ...this.missedPunchForm.value,
@@ -181,9 +155,16 @@ handleMissedTypeChanges() {
     reportingTo: Number(sessionStorage.getItem('reportingManagerId'))
   };
 
+  // ================= EDIT =================
   if (this.isEditMode && this.editId) {
-    this.missedPunchService.updateMissedPunch(payload).subscribe({
+
+    this.missedPunchService.updateMissedPunch({
+      ...payload,
+      missedPunchRequestID: this.editId
+    }).subscribe({
+
       next: () => {
+
         Swal.fire({
           icon: 'success',
           title: 'Updated!',
@@ -195,13 +176,36 @@ handleMissedTypeChanges() {
         this.resetForm();
         this.loadMyRequests();
       },
-      error: () => {
-        Swal.fire('Error', 'Failed to update request', 'error');
+
+      error: (error) => {
+
+        console.error('Update Error:', error);
+
+        const message =
+          error?.error?.message ||
+          error?.error?.title ||
+          error?.message ||
+          'Failed to update missed punch request.';
+
+        Swal.fire({
+          icon: 'error',
+          title: 'Unable to Update',
+          text: message,
+          confirmButtonText: 'OK'
+        });
       }
+
     });
-  } else {
+
+  }
+
+  // ================= CREATE =================
+  else {
+
     this.missedPunchService.createMissedPunchRequest(payload).subscribe({
+
       next: () => {
+
         Swal.fire({
           icon: 'success',
           title: 'Submitted!',
@@ -213,9 +217,25 @@ handleMissedTypeChanges() {
         this.resetForm();
         this.loadMyRequests();
       },
-      error: () => {
-        Swal.fire('Error', 'Failed to submit request', 'error');
+
+      error: (error) => {
+
+        console.error('Create Missed Punch Error:', error);
+
+        const message =
+          error?.error?.message ||
+          error?.error?.title ||
+          error?.message ||
+          'Failed to submit missed punch request.';
+
+        Swal.fire({
+          icon: 'error',
+          title: 'Cannot Submit Request',
+          text: message,
+          confirmButtonText: 'OK'
+        });
       }
+
     });
   }
 }
@@ -509,17 +529,31 @@ changeRejectedPageSize() {
       };
 
       this.missedPunchService.bulkApproveRejectPunch(payload)
-        .subscribe(() => {
+        .subscribe({
+          next: () => {
 
-          Swal.fire({
-            icon: 'success',
-            title: 'Approved!',
-            text: 'Request approved successfully',
-            timer: 2000,
-            showConfirmButton: false
-          });
+            Swal.fire({
+              icon: 'success',
+              title: 'Approved!',
+              text: 'Request approved successfully',
+              timer: 2000,
+              showConfirmButton: false
+            });
 
-          this.loadApprovalRequests();
+            this.loadApprovalRequests();
+          },
+          error: (error) => {
+
+            console.error('Approve Error:', error);
+
+            const message =
+              error?.error?.message ||
+              error?.error?.title ||
+              error?.message ||
+              'Failed to approve request.';
+
+            Swal.fire('Error', message, 'error');
+          }
         });
     }
   });
@@ -549,17 +583,31 @@ changeRejectedPageSize() {
       };
 
       this.missedPunchService.bulkApproveRejectPunch(payload)
-        .subscribe(() => {
+        .subscribe({
+          next: () => {
 
-          Swal.fire({
-            icon: 'success',
-            title: 'Rejected!',
-            text: 'Request rejected successfully',
-            timer: 2000,
-            showConfirmButton: false
-          });
+            Swal.fire({
+              icon: 'success',
+              title: 'Rejected!',
+              text: 'Request rejected successfully',
+              timer: 2000,
+              showConfirmButton: false
+            });
 
-          this.loadApprovalRequests();
+            this.loadApprovalRequests();
+          },
+          error: (error) => {
+
+            console.error('Reject Error:', error);
+
+            const message =
+              error?.error?.message ||
+              error?.error?.title ||
+              error?.message ||
+              'Failed to reject request.';
+
+            Swal.fire('Error', message, 'error');
+          }
         });
     }
   });
@@ -597,17 +645,31 @@ changeRejectedPageSize() {
       };
 
       this.missedPunchService.bulkApproveRejectPunch(payload)
-        .subscribe(() => {
+        .subscribe({
+          next: () => {
 
-          Swal.fire({
-            icon: 'success',
-            title: `${status}!`,
-            text: `Selected requests ${status.toLowerCase()} successfully`,
-            timer: 2000,
-            showConfirmButton: false
-          });
+            Swal.fire({
+              icon: 'success',
+              title: `${status}!`,
+              text: `Selected requests ${status.toLowerCase()} successfully`,
+              timer: 2000,
+              showConfirmButton: false
+            });
 
-          this.loadApprovalRequests();
+            this.loadApprovalRequests();
+          },
+          error: (error) => {
+
+            console.error('Bulk Approve/Reject Error:', error);
+
+            const message =
+              error?.error?.message ||
+              error?.error?.title ||
+              error?.message ||
+              `Failed to ${status.toLowerCase()} selected requests.`;
+
+            Swal.fire('Error', message, 'error');
+          }
         });
     }
   });
@@ -646,14 +708,6 @@ changeRejectedPageSize() {
 
     if (this.canViewPersonal) this.selectedTab = 'tab1';
     else if (this.canViewManager) this.selectedTab = 'tab2';
-
-    console.log("Menus:", menus);
-    console.log("Manager Approval:", managerapproval);
-
-    menus.forEach((m: any) => {
-      console.log("Menu Name:", m.menuName);
-    });
-
   }
   filterMyRequests() {
 

@@ -165,6 +165,29 @@
             <div><b>PAN:</b> {{selectedPayroll.pan || '-'}}</div>
           </div>
         </div>
+        <div class="row mb-3">
+
+  <div class="col-md-6">
+    <div class="attendance-box">
+      <b>Working Days:</b>
+      {{selectedPayroll.workingDays || 0}}
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="attendance-box">
+      <b>Present Days:</b>
+      {{ selectedPayroll.presentDays || 0 }}
+    </div>
+  </div>
+
+  <div class="col-md-6 text-end">
+    <div class="attendance-box">
+      <b>Leave Days:</b>
+      {{selectedPayroll.leaveDays || 0}}
+    </div>
+  </div>
+
+</div>
 
         <!-- TABLE -->
         <div class="row">
